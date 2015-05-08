@@ -16,7 +16,6 @@ from enum import Enum
 from epics import PV
 from py4syn.epics.StandardDevice import StandardDevice
 from py4syn.epics.ICountable import ICountable
-import random
 
 class ADFrameType_t(Enum):
     """
@@ -102,7 +101,7 @@ class PylonCCD(StandardDevice, ICountable):
         self._done = (value == 0)
 
     # PyLoN CCD constructor 
-    def __init__(self, pvName, mnemonic, scalerObject=""):
+    def __init__(self, pvName, mnemonic):
         StandardDevice.__init__(self, mnemonic)
         self.pvAcquire = PV(pvName + ":Acquire", callback=self.onAcquireChange)
         self.pvAcquire_RBV = PV(pvName + ":Acquire_RBV")
@@ -144,8 +143,7 @@ class PylonCCD(StandardDevice, ICountable):
         self.pvAutoIncrement = PV(pvName + ":AutoIncrement")
         self.pvAutoIncrement_RBV = PV(pvName + ":AutoIncrement_RBV")
         self.pvImageArrayData = PV(pvName + ":image1:ArrayData")
-        # Counter device object
-        #self.scaler = scalerObject
+        # Current state
         self._done = self.isDone()
         self.time = self.pvAcquireTime_RBV.get()
         self.countTime = 1
@@ -154,13 +152,10 @@ class PylonCCD(StandardDevice, ICountable):
         return (self.pvAcquire_RBV.get() == 0)
 
     def acquire(self, waitComplete=False):
-        #self.scaler.setCountTime(self.time)
-        #self.scaler.setCountStart()
         self.pvAcquire.put(1)
         self._done = False
         if(waitComplete):
             self.wait()
-        #self.scaler.setCountStop()
 
     def waitFinishAcquiring(self):
         while(not self._done):
@@ -236,8 +231,8 @@ class PylonCCD(StandardDevice, ICountable):
         return (not self.isDone())
 
     def readout(self):
-        #return self.pvImageArrayData.get()
-        return random.random()*100*self.countTime
+        # Because we process the CCD images in a diferent way, simply return ZERO for while...
+        return 0
 
     def getValue(self, **kwargs):
         """

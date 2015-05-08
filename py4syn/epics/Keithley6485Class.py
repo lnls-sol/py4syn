@@ -11,8 +11,7 @@ Python Class for EPICS Keithley control.
     .. note:: 16/04/2015 [douglas.beniz]  Make it derives from Keithley6514 class as suggested by Henrique Dante
 """
 from epics import Device, ca, PV
-from py4syn.epics.StandardDevice import StandardDevice
-from py4syn.epics.ICountable import ICountable
+from py4syn.epics.Keithley6514Class import Keithley6514
 
 class Keithley6485(Keithley6514):
     """
