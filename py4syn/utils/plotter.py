@@ -34,13 +34,13 @@ class ProcessPlotter(object):
         line_marker = params['line_marker']
         line_color = params['line_color']
         
-        parent = params['parent']            
+        parent = params['parent']
         if(parent == None):
             n = len(self.fig.axes)
             for i in range(n):
                 self.fig.axes[i].change_geometry(n+1, 1, i+1)
-                            
-            ax = self.fig.add_subplot(self.validAxesCount,1, self.validAxesCount)                                    
+
+            ax = self.fig.add_subplot(self.validAxesCount,1, self.validAxesCount)
             ax.grid(grid)
             ax.set_title(title)
             ax.set_xlabel(xlabel)
@@ -78,7 +78,7 @@ class ProcessPlotter(object):
         n = len(self.fig.axes) 
         for i in range(n):
             pylab.sca(self.fig.axes[i])
-            pylab.legend(loc='center left', bbox_to_anchor=(1, 0.5), fancybox=False, shadow=False, prop={'size':8})
+            plotterLegend = pylab.legend(loc='upper left', bbox_to_anchor=(1, 0.5), borderaxespad=1, fancybox=False, shadow=False, prop={'size':8})
 
     def __updateAxis(self, params):
         ax = params['axis']
@@ -88,7 +88,13 @@ class ProcessPlotter(object):
         line.set_data(x, y)
         ax.relim()
         ax.autoscale_view()
-        
+    
+    def __shriknAxisSpacing(self, factor_shrink_axis):
+        n = len(self.fig.axes) 
+        for i in range(n):
+            box = self.fig.axes[i].get_position()
+            self.fig.axes[i].set_position([box.x0, box.y0, box.width * factor_shrink_axis, box.height])
+
     def poll_draw(self):
         def call_back(arg=None):
             try:
@@ -131,6 +137,8 @@ class ProcessPlotter(object):
                         line = params['line']
                         line.set_label(command['label'])
                         self.__updateLegend()
+                    elif(cmd == "shrinkAxisSpacing"):
+                        self.__shriknAxisSpacing(command['factor_shrink_axis'])
                     else:
                         pass # not implemented
 
@@ -264,8 +272,13 @@ class Plotter(object):
         params['cmd'] = "updateLabel"
         params['idx'] = axis
         params['label'] = label
-        self.plot_queue.put(params)        
-        
+        self.plot_queue.put(params)
+    
+    def shrinkAxisSpacing(self, factor_shrink_axis=1):
+        params = {}
+        params['cmd'] = "shrinkAxisSpacing"
+        params['factor_shrink_axis'] = factor_shrink_axis
+        self.plot_queue.put(params)
          
     def clear(self, axis=1):
         """
