@@ -32,11 +32,13 @@ class PylonCCDTriggered(PylonCCD):
         self._done = (value == 0)
     
     # PyLoN CCD constructor
-    def __init__(self, pvName, pvNameIN, pvNameOUT, mnemonic):
+    def __init__(self, pvName, pvNameIN, pvNameOUT, mnemonic, accumulations=1):
         # IN   DXAS:DIO:bi8         # 1.0   (read TTL OUT from CCD)
         # OUT  DXAS:DIO:bo17        # 6.1   (write Trigger IN to CCD start acquisition)
         self.pvTriggerAcquire = PV(pvNameOUT)
         self.pvMonitor = PV(pvNameIN, callback=self.onAcquireChange)
+        # Number of accumulations per frame
+        self.accumulations = accumulations
         # Then call parent initializer
         PylonCCD.__init__(self, pvName, mnemonic)
 
@@ -44,25 +46,26 @@ class PylonCCDTriggered(PylonCCD):
         return (self.pvMonitor.get() == 0)
 
     def acquire(self, waitComplete=False):
-        self.pvTriggerAcquire.put(1)
-        sleep(0.01)
-        self.pvTriggerAcquire.put(0)
-        #######################################################################
-        # During the tests we observed that some times the trigger (in the resolution
-        # we are using) is faster than the 'capacity' of the CCD to read the input
-        # signal...
-        # 
-        # So, as any received trigger input during an acquisition is ignored, and
-        # e need to guarantee that all spectra is acquired, after the first trigger
-        # signal we wait 10 ms and send a new trigger.
-        sleep(0.01)
-        self.pvTriggerAcquire.put(1)
-        sleep(0.01)
-        self.pvTriggerAcquire.put(0)
-        # Set the attribute of done acquisition to False
-        self._done = False
-        if(waitComplete):
-            self.wait()
+        for currentAccumulation in range(self.accumulations):
+            self.pvTriggerAcquire.put(1)
+            sleep(0.01)
+            self.pvTriggerAcquire.put(0)
+            #######################################################################
+            # During the tests we observed that some times the trigger (in the resolution
+            # we are using) is faster than the 'capacity' of the CCD to read the input
+            # signal...
+            # 
+            # So, as any received trigger input during an acquisition is ignored, and
+            # e need to guarantee that all spectra is acquired, after the first trigger
+            # signal we wait 10 ms and send a new trigger.
+            sleep(0.01)
+            self.pvTriggerAcquire.put(1)
+            sleep(0.01)
+            self.pvTriggerAcquire.put(0)
+            # Set the attribute of done acquisition to False
+            self._done = False
+            if(waitComplete):
+                self.wait()
 
     def startLightFieldAcquisition(self):
         self.pvAcquire.put(1)
