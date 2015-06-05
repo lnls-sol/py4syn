@@ -597,6 +597,8 @@ class MarCCD(StandardDevice, ICountable):
         """
 
         state = self.getState(timeout)
+        if state & self.STATE_MASK_ERROR:
+            raise RuntimeError('Camera returned error: %x' % state)
         timer = Timer(timeout)
 
         while until ^ bool(state & condition) and timer.check():
