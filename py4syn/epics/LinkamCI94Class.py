@@ -8,10 +8,13 @@ Python class for Linkam CI94 temperature controllers
 .. moduleauthor:: Henrique Dante de Almeida <henrique.almeida@lnls.br>
 
 """
-from epics import Device
+from threading import Event
+
+from epics import Device, ca
 
 from py4syn.epics.IScannable import IScannable
 from py4syn.epics.StandardDevice import StandardDevice
+from py4syn.utils.timer import Timer
 
 class LinkamCI94(StandardDevice, IScannable):
     """
@@ -38,6 +41,13 @@ class LinkamCI94(StandardDevice, IScannable):
         self.linkam = Device(pvName + ':', ['setRate', 'setLimit', 'pending', 'temp',
                                             'stop', 'setSpeed', 'pumpMode', 'status',
                                             'start'])
+        self.done = Event()
+        self.newTemperature = Event()
+        self.pending = bool(self.linkam.get('pending'))
+        self.setRate(5)
+        self.linkam.add_callback('pending', self.onPendingChange)
+        self.linkam.add_callback('temp', self.onTemperatureChange)
+
     def __str__(self):
         return '%s (%s)' % (self.getMnemonic(), self.pvName)
 
@@ -76,6 +86,21 @@ class LinkamCI94(StandardDevice, IScannable):
         """
         return self.getValue()
 
+    def onPendingChange(self, value, **kwargs):
+        """
+        Helper callback that tracks when the IOC finished changing
+        to a requested temperature.
+        """
+        self.pending = bool(value)
+        if not self.pending:
+            self.done.set()
+
+    def onTemperatureChange(self, **kwargs):
+        """
+        Helper callback that indicates when the measured temperature changed.
+        """
+        self.newTemperature.set()
+
     def setRate(self, r):
         """
         Sets the ramp speed in degrees per minutes for use with :meth:`setValue`.
@@ -88,6 +113,45 @@ class LinkamCI94(StandardDevice, IScannable):
             Ramp speed in °C/min
         """
         self.linkam.put('setRate', r)
+
+    def setValue(self, v):
+        """
+        Changes the temperature to a new value. The speed that the new temperature is
+        reached is set with :meth:`setRate`. The default rate is 5 °C/minute.
+
+        See: :meth:`setRate`
+
+        Parameters
+        ----------
+        v : `float`
+            The target temperature in °C
+        """
+        self.done.clear()
+        self.pending = True
+        self.requestedValue = v
+        self.linkam.put('setLimit', v)
+
+        if not self.isRunning():
+            self.run()
+
+    def wait(self):
+        """
+        Blocks until the requested temperature is achieved.
+        """
+        if not self.pending:
+            return
+
+        # Waiting is done in two steps. First step waits until the IOC deasserts
+        # the pending flag to indicate a complete operation. Second step waits util the
+        # measured temperature reaches the requested temperature.
+        ca.flush_io()
+        self.done.wait()
+
+        self.newTemperature.clear()
+        timeout = Timer(7)
+        while self.getValue() != self.requestedValue and timeout.check():
+            self.newTemperature.wait(1)
+            self.newTemperature.clear()
 
     def getLowLimitValue(self):
         """
