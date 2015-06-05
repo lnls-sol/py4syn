@@ -22,6 +22,8 @@ class LinkamCI94(StandardDevice, IScannable):
     """
 
     STATUS_STOPPED = 0
+    PUMP_AUTOMATIC = 0
+    PUMP_MANUAL = 1
 
     def __init__(self, pvName, mnemonic):
         """
@@ -185,4 +187,30 @@ class LinkamCI94(StandardDevice, IScannable):
         the device in idle state. In the idle state, the device will not try to set a
         target temperature.
         """
+        self.setPumpSpeed(0)
         self.linkam.put('stop', 1)
+
+    def setPumpSpeed(self, speed):
+        """
+        Changes the nitrogen pump speed, or enables automatic pump speed control.
+
+        .. note::
+            The Linkam front panel only has 5 LEDs to indicate speed, but internally
+            it supports 30 different speed levels.
+
+        Parameters
+        ----------
+        speed : `int`
+            The requested pump speed, ranging from 0 (pump off) to 30 (pump top speed),
+            or -1 to enable automatic pump control.
+        """
+
+        if speed < -1 or speed > 30:
+            raise ValueError('Invalid speed')
+
+        if speed == -1:
+            self.linkam.put('pumpMode', self.PUMP_AUTOMATIC)
+            return
+
+        self.linkam.put('pumpMode', self.PUMP_MANUAL, wait=True)
+        self.linkam.put('setSpeed', speed)
