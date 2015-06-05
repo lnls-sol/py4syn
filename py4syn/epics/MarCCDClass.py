@@ -352,18 +352,9 @@ class MarCCD(StandardDevice, ICountable):
         if self.counting == True:
             raise RuntimeError('Already counting')
 
-        # Best effort wait for idle state
-        try:
-            self.waitWhile(self.STATE_MASK_ACQUIRING, self.URGENT_TIMEOUT)
-        except RuntimeError as e:
-            pass
-
-        # Wait for reading done when doing fast exposures
-        if self.timer.timeout < 1:
-            try:
-                self.waitWhile(self.STATE_MASK_READING, self.URGENT_TIMEOUT)
-            except RuntimeError as e:
-                pass
+        # Wait for idle state
+        self.waitWhile(self.STATE_MASK_ACQUIRING | self.STATE_MASK_READING,
+                       self.URGENT_TIMEOUT)
 
         self.socket.send(b'start\n')
         self.shutter.open()
