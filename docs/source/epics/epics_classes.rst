@@ -26,3 +26,4 @@ Available devices:
    epics_kepcobop
    epics_omrone5ck
    epics_marccd
+   epics_linkamci94
