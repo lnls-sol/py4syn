@@ -18,6 +18,7 @@ from py4syn.epics.IScannable import IScannable
 from py4syn.epics.StandardDevice import StandardDevice
 from py4syn.epics import MotorClass
 from py4syn.epics.MotorClass import Motor
+from scipy.optimize import minimize
 
 class motorTarget():
     """
@@ -430,6 +431,45 @@ class PseudoMotor(IScannable, StandardDevice):
 
         return self.description
 
+    def getLimitValue(self, high):
+        """
+        Auxiliary method called by :meth:`getHighLimitValue` and :meth:`getLowLimitValue`
+        to get the high and low limit values of a pseudo motor. The limits are calculated
+        based on a maximization or minimization, depending on the `high` parameter, of
+        the pseudo motor equation, considering the bounds of the real motors.
+
+        See :meth:`getHighLimitValue`, :meth:`getLowLimitValue`
+
+        Parameters
+        ----------
+        high : `bool`
+            True if the high limit value is requested, false if the low limit is requested.
+
+        Returns
+        -------
+        `double`
+        """
+
+        # Optimization function minimizes, so invert when requesting the high limit
+        sign = -1 if high else 1
+
+        def getPosition(args):
+                env = {motor: i for (i, motor) in enumerate(self.forwardDict)}
+                env['A'] = args
+
+                return sign*eval(self.backFormula, env)
+
+        bounds = []
+        x0 = []
+        for motor in self.forwardDict:
+                low = mtrDB[motor].getLowLimitValue()
+                high = mtrDB[motor].getHighLimitValue()
+                v = mtrDB[motor].getValue()
+                bounds.append((low, high))
+                x0.append(v)
+
+        return sign*minimize(getPosition, x0, bounds=bounds).fun
+
     def getHighLimitValue(self):
         """
         Read the motor high limit based on the `HLM` (User High Limit) field of
@@ -440,7 +480,7 @@ class PseudoMotor(IScannable, StandardDevice):
         `double`
         """
 
-        return numpy.nan
+        return self.getLimitValue(high=True)
 
     def getLowLimitValue(self):
         """
@@ -452,7 +492,7 @@ class PseudoMotor(IScannable, StandardDevice):
         `double`
         """
 
-        return numpy.nan
+        return self.getLimitValue(high=False)
 
     def getDialHighLimitValue(self):
         """
@@ -712,15 +752,15 @@ class PseudoMotor(IScannable, StandardDevice):
         .. note::
             Motor will **NOT** move until it is in in **USE mode**
         """
-
-        pass
+        for m in self.forwardDict:
+            mtrDB[m].setSETMode()
 
     def setUSEMode(self):
         """
         Put the motor in **USE mode**
         """
-
-        pass
+        for m in self.forwardDict:
+            mtrDB[m].setUSEMode()
 
     def setVariableOffset(self, val):
         """
