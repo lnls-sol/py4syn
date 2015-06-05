@@ -382,8 +382,6 @@ class MarCCD(StandardDevice, ICountable):
         if not self.counting:
             return
 
-        self.shutter.close()
-
         if self.subScan and self.subScanStep == 0:
             cmd = b'readout,2\n'
             self.subScanStep = 1
@@ -392,6 +390,7 @@ class MarCCD(StandardDevice, ICountable):
             self.subScanStep = 0
 
         self.socket.send(cmd)
+        self.shutter.close()
         self.counting = False
 
     def correct(self):
