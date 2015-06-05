@@ -486,17 +486,7 @@ class MarCCD(StandardDevice, ICountable):
         self.socket.send(cmd.encode())
 
         if wait:
-            # Wait some time for the camera to say it started writing. This
-            # is necessary because the server may return finished state (0)
-            # before it started writing.
-            try:
-                self.waitUntil(self.STATE_MASK_WRITING, self.URGENT_TIMEOUT)
-            except RuntimeError:
-                pass
-
-            self.waitWhile(self.STATE_MASK_ACQUIRING | self.STATE_MASK_READING |
-                           self.STATE_MASK_CORRECTING |self.STATE_MASK_WRITING |
-                           self.STATE_MASK_BUSY, self.TIMEOUT)
+            self.waitForImage()
 
     def canMonitor(self):
         return False
@@ -684,7 +674,9 @@ class MarCCD(StandardDevice, ICountable):
             pass
 
         try:
-            self.waitWhile(self.STATE_MASK_SAVING | self.STATE_MASK_BUSY)
+            self.waitWhile(self.STATE_MASK_ACQUIRING | self.STATE_MASK_READING |
+                           self.STATE_MASK_CORRECTING |self.STATE_MASK_WRITING |
+                           self.STATE_MASK_BUSY, self.TIMEOUT)
         except RuntimeError:
             raise RuntimeError('Camera took too long to write image file')
 
