@@ -130,6 +130,7 @@ class MarCCD(StandardDevice, ICountable):
     ...             camera.startCount()
     ...             camera.wait()
     ...             camera.stopCount()
+    ...             camera.waitForIdle()
     ...             camera.startCount()
     ...             camera.wait()
     ...             camera.stopCount()
@@ -441,6 +442,7 @@ class MarCCD(StandardDevice, ICountable):
             ...     marccd.startCount()
             ...     marccd.wait()
             ...     marccd.stopCount()
+            ...     marccd.waitForIdle()
             ...     marccd.startCount()
             ...     marccd.wait()
             ...     marccd.stopCount()
@@ -680,6 +682,23 @@ class MarCCD(StandardDevice, ICountable):
             self.waitWhile(self.STATE_MASK_SAVING | self.STATE_MASK_BUSY)
         except RuntimeError:
             raise RuntimeError('Camera took too long to write image file')
+
+    def waitForIdle(self):
+        """
+        Blocks until the camera server is completely idle. This is required because
+        the camera and the server are slow and certain operations, in particular,
+        multiple sequential acquisitions would fail without waiting for some
+        time. Acquiring two images and dezingering them only works with
+        this method being called between the acquisitions.
+        """
+        # Minimum reliable wait time between two acquisitions was empirically found
+        # to be 1.3 seconds. For wait times smaller than this, the camera server may
+        # return it's ready even though it's not.
+        timer = Timer(1.3)
+        self.waitWhile(self.STATE_MASK_ACQUIRING | self.STATE_MASK_READING |
+                       self.STATE_MASK_CORRECTING |self.STATE_MASK_WRITING |
+                       self.STATE_MASK_DEZINGERING | self.STATE_MASK_BUSY)
+        timer.wait()
 
     def setImageSize(self, width, height):
         """
