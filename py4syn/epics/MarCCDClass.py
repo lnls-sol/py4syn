@@ -152,6 +152,7 @@ class MarCCD(StandardDevice, ICountable):
     STATE_MASK_ERROR = 0x44444
     TIMEOUT = 60
     URGENT_TIMEOUT = 0.5
+    BASE_IMAGE_SIZE = 4096
 
     def __init__(self, mnemonic, address, shutterType, shutter=None,
                  shutterReadBack=None):
@@ -679,3 +680,27 @@ class MarCCD(StandardDevice, ICountable):
             self.waitWhile(self.STATE_MASK_SAVING | self.STATE_MASK_BUSY)
         except RuntimeError:
             raise RuntimeError('Camera took too long to write image file')
+
+    def setImageSize(self, width, height):
+        """
+        Chooses the acquired image size.
+
+        Parameters
+        ----------
+        width: `int`
+            Image width. Must be either 512, 1024 or 2048 and must be the equal to
+            the image height.
+        height: `int`
+            Image height. Must be either 512, 1024 or 2048 and must be the equal to
+            the image width.
+        """
+        if width != height:
+            raise ValueError('Image dimensions must be the same')
+
+        if width not in (512, 1024, 2048):
+            raise ValueError('Invalid dimensions')
+
+        binning = int(self.BASE_IMAGE_SIZE/width)
+        cmd = 'set_bin,%d,%d\n' % (binning, binning)
+        self.socket.send(cmd.encode())
+        self.waitWhile(self.STATE_MASK_BUSY)
