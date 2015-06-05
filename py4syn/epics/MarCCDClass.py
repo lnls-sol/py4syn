@@ -360,6 +360,13 @@ class MarCCD(StandardDevice, ICountable):
         # Open the shutter after starting acquiring to try to allow the camera some
         # initial time to clear its pixels
         self.shutter.open()
+
+        # Best effort wait for acquisition to start
+        try:
+            self.waitUntil(self.STATE_MASK_ACQUIRING, self.URGENT_TIMEOUT)
+        except RuntimeError:
+            pass
+
         self.timer.mark()
         self.counting = True
 
