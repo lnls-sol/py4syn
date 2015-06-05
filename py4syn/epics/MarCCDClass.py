@@ -357,6 +357,8 @@ class MarCCD(StandardDevice, ICountable):
                        self.URGENT_TIMEOUT)
 
         self.socket.send(b'start\n')
+        # Open the shutter after starting acquiring to try to allow the camera some
+        # initial time to clear its pixels
         self.shutter.open()
         self.timer.mark()
         self.counting = True
