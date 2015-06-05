@@ -124,7 +124,11 @@ class PseudoCounter(ICountable, StandardDevice):
         global counterDB
         global C
         exec(self.__defineCounters())
-        return eval(self.backFormula)
+        try:
+            return eval(self.backFormula)
+        except Exception as e:
+            print('Warning while getting pseudo counter value:', e)
+            return 0.0
 
     def setCountTime(self, t):
         """
