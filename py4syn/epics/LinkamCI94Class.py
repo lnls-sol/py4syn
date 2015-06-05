@@ -19,6 +19,47 @@ from py4syn.utils.timer import Timer
 class LinkamCI94(StandardDevice, IScannable):
     """
     Class to control Linkam CI94 temperature controllers via EPICS.
+
+    Examples
+    --------
+    >>> from py4syn.epics.LinkamCI94Class import LinkamCI94
+    >>> 
+    >>> def showTemperature(pv='', name=''):
+    ...     ci94 = LinkamCI94(pv, name)
+    ...     print('Temperature is: %d' % ci94.getValue())
+    ...
+    >>> def fastRaiseTemperature(ci94, amount, rate=30):
+    ...     ci94.setRate(rate)
+    ...     ci94.setValue(ci94.getValue() + amount)
+    ...
+    >>> def complexRamp(ci94):
+    ...     ci94.setPumpSpeed(-1)
+    ...     ci94.setRate(10)
+    ...     ci94.setValue(200)
+    ...     ci94.wait()
+    ...     ci94.setRate(2)
+    ...     ci94.setValue(220)
+    ...     ci94.wait()
+    ...     sleep(500)
+    ...     ci94.setRate(5)
+    ...     ci94.setValue(100)
+    ...     ci94.wait()
+    ...     ci94.stop()
+    ...
+    >>> import py4syn
+    >>> from py4syn.epics.ScalerClass import Scaler
+    >>> from py4syn.utils.counter import createCounter
+    >>> from py4syn.utils.scan import scan
+    >>> 
+    >>> def temperatureScan(start, end, rate, pv='', counter='', channel=2):
+    ...     ci94 = LinkamCI94(pv, 'ci94')
+    ...     py4syn.mtrDB['ci94'] = ci94
+    ...     c = Scaler(counter, channel, 'simcountable')
+    ...     createCounter('counter', c, channel)
+    ...     ci94.setRate(rate)
+    ...     scan('ci94', start, end, 10, 1)
+    ...     ci94.stop()
+    ...
     """
 
     STATUS_STOPPED = 0
