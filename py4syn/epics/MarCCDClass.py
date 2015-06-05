@@ -264,18 +264,24 @@ class MarCCD(StandardDevice, ICountable):
         closed = not self.shutter.isOpen()
 
         if not closed and moveShutter:
-            self.shutter.close()
+            self.shutter.close(wait=True)
 
         self.socket.send(b'start\n')
+        self.waitUntil(self.STATE_MASK_ACQUIRING)
         sleep(delay)
         self.socket.send(b'readout,2\n')
+        self.waitForIdle()
         self.socket.send(b'start\n')
+        self.waitUntil(self.STATE_MASK_ACQUIRING)
         sleep(delay)
         self.socket.send(b'readout,1\n')
+        self.waitWhile(self.STATE_MASK_BUSY | self.STATE_MASK_ACQUIRING |
+                       self.STATE_MASK_READING)
         self.socket.send(b'dezinger,1\n')
+        self.waitWhile(self.STATE_MASK_BUSY | self.STATE_MASK_DEZINGERING)
 
         if not closed and moveShutter:
-            self.shutter.open()
+            self.shutter.open(wait=True)
 
     def getValue(self, **kwargs):
         """
