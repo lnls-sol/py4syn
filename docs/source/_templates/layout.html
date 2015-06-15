@@ -1,0 +1,25 @@
+{% extends "!layout.html" %}
+{% block rootrellink %}
+   <li>[<a href="{{ pathto('overview') }}">Overview</a></li>
+   <li>|<a href="{{ pathto('setup') }}">Environment Setup</a></li>
+   <li>|<a href="{{ pathto('installation') }}">Installation</a></li>
+   <li>|<a href="{{ pathto('epics') }}">EPICS</a></li>
+   <li>|<a href="{{ pathto('utils') }}">Utils</a></li>
+   <li>|<a href="{{ pathto('writing') }}">Writing</a></li>
+   <li>|<a href="{{ pathto('release_notes') }}">Release Notes</a>]</li>
+{% endblock %}
+
+{% block relbar1 %}
+<div style="background-color: #E7F0F3; text-align: left; padding: 8px 4px 8px 4px">
+  <font size=+3><a href="{{ pathto('index') }}">
+      <img src="{{pathto("_static/lnls_logo.jpg", 1) }}" height=50 border="0" alt="pyepics"/>
+    &nbsp; Py4Syn: Python for Synchrotron</a>
+  </font>
+</div>
+{{ super() }}
+{% endblock %}
+
+
+{# put the sidebar before the body #}
+{% block sidebar1 %}{{ sidebar() }}{% endblock %}
+{% block sidebar2 %}{% endblock %}

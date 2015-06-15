@@ -1,0 +1,116 @@
+**Version 0.2.1:**
+
+- Release Date: 2015-03-18
+    - Scan and Mesh now support a Delay array as optional parameter.
+    - New Pseudo-Counters class.   
+    - New PylonCCD class. 
+    - New library dependency - LMFit 0.8.3 or higher.
+    - New fit function based on LMFit package.
+    - New 1-D Total Variation Denoising function.
+    - New Partial Write behaviour in scan through the setPartial Write configuration.
+    - New interface for custom data output - FileWriter.
+    - Default writer set to DefaultWriter - PyMCA/SPEC-like data output.
+    - Pre and Post scan callbacks are available without the need to rewrite code from Py4Syn.
+    - Scan now returns the fit data and fit results also.
+    - PostPointCallback was never being called on Mesh and Timescan.    
+    - Positions and Indexes array in callbacks were never being cleaned.
+    - Updates on MarCCD class.
+    - KepcoBOP is now a IScannable.
+    - Fix on scan YFIELD when no counters were present.
+    - Fix on Plotter valid axes count.
+    - Fix on Scan XField and YField when running on iPython.
+    - Improvements on documentations.
+    - General performance improvements.
+    
+**Version 0.2.0:**
+
+- Release Date: 2014-11-19
+    - Fixed some documentation issues.
+    - Keithley now supports Time Preset when needed.
+    - Fixed bug on scan and mesh when count time was not integer.
+    
+**Version 0.1.9:**
+
+- Release Date: 2014-10-31
+    - Fixed some documentation issues.
+    - Added Release Notes to online documentation and PDF.
+    - Added option to choose wether or not to Fit the Scan Data.
+    - New format routine at Scan Module to print data using scientific format where needed.
+    - Upgrade on Mythen class to work as a Countable Device.
+    - Upgrade on Shutter class to select the if the operation is direct or inverse.
+    - Adjusts on Counter module to accept arrays as return.
+    - Adjusts on ICountable Interface to set Infinty as 32bits.
+    - Added array support to plotter, improvements on performance.
+    - Added RRBV and RVAL fields to Motor and PseudoMotor classes.
+    - Removing unused prints at Plotter module.
+
+**Version 0.1.8:**
+
+- Release Date: 2014-10-21
+    - Fixed scannable device position in scan, was getting the setpoint and not the real value.
+    - Added Simulated Countable Device.
+    - Now the plotter supports multiple plots in one windows and also axis overlay.
+    - Improvements in Documentation.
+
+**Version 0.1.7:**
+
+- Release Date: 2014-10-11
+    - Fixed error on ScanToFile, the columns count were not counting the user defined data fields. This could lead to a problem in the file analysis using PyMCA like tools.
+
+**Version 0.1.6:**
+
+- Release Date: 2014-10-11
+    - Possibility to set the default plotter as a daemon process at Scan Module.
+    - Variable time for each point and proper documentation.
+    - Keithley6514 - OneMeasure field added allowing better precision with lower deadtime.
+    - MANIFEST - removed dist folder.
+
+**Version 0.1.5:**
+
+- Release Date: 2014-10-07
+    - Kepco BOP power supply class added.
+    - Adjusts in scan callbacks.
+    - Added user defined fields.
+    - Moved timescan to the scan module.
+    - Added the possibility to disable or enable counters.
+    - Removed empty lines from motor functions. 
+
+**Version 0.1.4:**
+
+- Release Date: 2014-09-26
+    - New class CountablePV to provide ICountable functionality to any PV.
+    - Added wait method to ICountable Interface that was missing.
+    - Refactor in CanPerformMovementCalc from MotorClass
+    - Fixed problem when FILENAME was equals to empty at Scan Module.
+    - Adjusted ScanToFile header and separator to work with PyMCA and NewPlot.
+    - Created Getter and Setter for all Global Variables.
+    - Adjusted Fit Class to return the value of other statistics either if was not possible to fit the gaussian.
+    - Sometimes the Scaler value returned was one before the last. Fixed with auto_monitor = False on S# pvs.
+    - Improvements on Scan Documentation.
+    - Added CountablePV documentation.
+
+**Version 0.1.3b:**
+
+- Release Date: 2014-09-22
+    - Getters and Setters for Globals on scan module.
+    - Added support for ICountable on Keithley.
+    - Added the EPEL Repo step to Setup Documentation.
+    - Updated the examples to change the callbacks in Scan Documentation.
+
+**Version 0.1.2b:**
+
+- Release Date: 2014-09-17
+    - Fixed bug on Plotter.
+    - Fixed bug on scan, when interrupted was not saving data correctly and was not able to calculate the elapsed time.
+
+**Version 0.1.1b:**
+
+- Release Date: 2014-09-16
+    - Fixed bug in FitGauss, under a certain condition data was not returning.
+    - Fixed bug in PseudoMotorClass, after moving mtrDB to py4syn __init__ PseudoMotor reference was not updated.
+    - Improves in documentation.
+
+**Version 0.1.0b:**
+
+- Release Date: 2014-09-15
+    - Beta Version Released

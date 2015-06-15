@@ -1,0 +1,9 @@
+include README.txt CHANGES.txt MANIFEST.in PKG-INFO LICENSE.txt setup.py build.sh
+exclude *.pyc core.* *~
+recursive-include docs *
+exclude docs/Makefile
+exclude update-py4syn.sh
+recursive-exclude dist *
+recursive-exclude docs/source *
+recursive-exclude docs/build/doctrees *
+recursive-exclude docs/build/latex *
