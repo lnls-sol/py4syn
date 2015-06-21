@@ -84,7 +84,7 @@ class OmronE5CK(StandardDevice, IScannable):
         self.device = Device(pvName + ':', ['termopar', 'target', 'status', 'stepNum',
                              'programTable', 'programming', 'run', 'stop', 'advance',
                              'setPatternCount', 'timeScale', 'level1', 'reset', 'pause',
-                             'sendCommand', 'pidtable', 'numPIDElements')
+                             'sendCommand', 'pidtable', 'numPIDElements']
 
         self.programmingDone = Event()
         self.newTemperature = Event()
