@@ -280,7 +280,7 @@ class OmronE5CK(StandardDevice, IScannable):
         """
         Set a PIDtable to the furnace
         """
-        self.device.put('pidtable', array(pidTable)
+        self.device.put('pidtable', array(pidTable))
     
     def getPIDTable(self):
         """
