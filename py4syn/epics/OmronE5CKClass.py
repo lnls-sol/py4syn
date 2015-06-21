@@ -84,7 +84,7 @@ class OmronE5CK(StandardDevice, IScannable):
         self.device = Device(pvName + ':', ['termopar', 'target', 'status', 'stepNum',
                              'programTable', 'programming', 'run', 'stop', 'advance',
                              'setPatternCount', 'timeScale', 'level1', 'reset', 'pause',
-                             'sendCommand'])
+                             'sendCommand', 'pidtable', 'numPIDElements')
 
         self.programmingDone = Event()
         self.newTemperature = Event()
@@ -275,6 +275,36 @@ class OmronE5CK(StandardDevice, IScannable):
         self.device.put('programTable', array(programTable))
         ca.flush_io()
         self.programmingDone.wait(10)
+
+    def setPIDTable(self, pidTable):
+        """
+        Set a PIDtable to the furnace
+        """
+        self.device.put('pidtable', array(pidTable)
+    
+    def getPIDTable(self):
+        """
+        Return the current PID table at the furnace
+
+        Returns
+        -------
+        `array`
+        """
+        pidTablePV = self.device.PV('pidtable')
+        
+        return pidTablePV.get()
+    
+    def getNumPIDElements(self):
+        """
+        Return the number of all parameters at a PID table
+        
+        Returns
+        -------
+        `int`
+        """
+        numPIDElementsPV = self.device.PV('numPIDElements')
+        
+        return numPIDElementsPV.get()
 
     def getTimeScale(self):
         """
