@@ -267,6 +267,15 @@ class OmronE5CK(StandardDevice, IScannable):
         self.run()
         self.presetDone = True
 
+    def program(self, programTable):
+        """
+        Set a programTable to the furnace
+        """
+        self.programmingDone.clear()
+        self.device.put('programTable', array(programTable))
+        ca.flush_io()
+        self.programmingDone.wait(10)
+
     def getTimeScale(self):
         """
         Returns the time scale being used by the controller. The timescale can either
