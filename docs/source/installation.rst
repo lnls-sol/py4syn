@@ -15,9 +15,7 @@ The version of Py4Syn is |release|. You can download this version by clicking on
 +===================+================+=================================================================+
 | Source tarball    | 3.x or Higher  | |Py4SynTarball|_                                                |
 +-------------------+----------------+-----------------------------------------------------------------+
-| Development       | 3.x or Higher  | `LNLS Py4Syn SVN Repo <https://svn.lnls.br/LNLS/Py4Syn/trunk>`_ |
-+-------------------+----------------+-----------------------------------------------------------------+
-| Previous Versions | 3.x or Higher  | `LNLS Py4Syn SVN Tags <https://svn.lnls.br/LNLS/Py4Syn/tags/>`_ |
+| Development       | 3.x or Higher  | `Py4Syn GitHub Repo <https://github.com/hhslepicka/py4syn>`_    |
 +-------------------+----------------+-----------------------------------------------------------------+
 
 Installing
@@ -38,17 +36,15 @@ Getting Help
 For questions, bug reports, feature request, please consider using the
 following methods:
 
- 1.  Send email to LNLS SOL group <sol@lnls.br>.
+ 1.  Create an Issue for Py4Syn on `GitHub <https://github.com/hhslepicka/py4syn/issues>`_.
 
- 2.  Create an Issue for Py4Syn on `SSLinhas <https://sslinhas.lnls.br/index.php>`_.
-
- 3.  If you're sure you've found a bug in existing code, or have some code
-     you think would be useful to add to Py4Syn send an email to <sol@lnls.br>.
+ 2.  If you're sure you've found a bug in existing code, or have some code
+     you think would be useful to add to Py4Syn create a pull request on GitHub.
 
 License
 ~~~~~~~
 
-.. include:: ../../LICENSE.txt
+.. include:: ../../LICENSE
 
 Acknowledgments
 ~~~~~~~~~~~~~~~

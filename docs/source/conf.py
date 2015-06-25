@@ -14,6 +14,17 @@
 import sys, os
 from distutils.sysconfig import get_python_lib
 
+import sys
+from unittest.mock import MagicMock
+
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+            return Mock()
+
+MOCK_MODULES = ['numpy', 'h5py', 'matplotlib', 'matplotlib.lines', 'epics', 'epics.ca', 'pylab']
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -106,8 +117,12 @@ pygments_style = 'sphinx'
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #####
-html_theme_path = ['sphinx/theme']
-html_theme = 'py4syndoc'
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+
+if not on_rtd:  # only import and set the theme if we're building docs locally
+    import sphinx_rtd_theme
+    html_theme_path = ['sphinx/theme']
+    html_theme = 'py4syndoc'
 #####
 
 # Theme options are theme-specific and customize the look and feel of a theme

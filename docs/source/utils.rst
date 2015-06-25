@@ -3,7 +3,7 @@
 Utils module
 ============
 
-Available classes:
+Available entities at `py4syn.utils` library:
 
 .. toctree::
    :maxdepth: 2
