@@ -46,6 +46,11 @@ class PylonCCDTriggered(PylonCCD):
         return (self.pvMonitor.get() == 0)
 
     def acquire(self, waitComplete=False):
+        # Necessary wait if a pause command was sent to the system
+        # This is being used by furnace experiments (temperature scan)
+        while (self.isPaused):
+            sleep(0.2)
+        
         for currentAccumulation in range(self.accumulations):
             self.pvTriggerAcquire.put(1)
             sleep(0.01)

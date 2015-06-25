@@ -84,7 +84,7 @@ class OmronE5CK(StandardDevice, IScannable):
         self.device = Device(pvName + ':', ['termopar', 'target', 'status', 'stepNum',
                              'programTable', 'programming', 'run', 'stop', 'advance',
                              'setPatternCount', 'timeScale', 'level1', 'reset', 'pause',
-                             'sendCommand', 'pidtable', 'numPIDElements'])
+                             'sendCommand', 'pidtable', 'numPIDElements', 'paused'])
 
         self.programmingDone = Event()
         self.newTemperature = Event()
@@ -116,6 +116,18 @@ class OmronE5CK(StandardDevice, IScannable):
             self.presetDone = False
 
         return r
+
+    def isPaused(self):
+        """
+        Returns true if the controller is paused (keep temperature).
+
+        Returns
+        -------
+        `bool`
+        """
+        paused = self.device.get('paused')
+
+        return paused
 
     def getValue(self):
         """

@@ -147,6 +147,7 @@ class PylonCCD(StandardDevice, ICountable):
         self._done = self.isDone()
         self.time = self.pvAcquireTime_RBV.get()
         self.countTime = 1
+        self.paused = False
 
     def isDone(self):
         return (self.pvAcquire_RBV.get() == 0)
@@ -161,6 +162,12 @@ class PylonCCD(StandardDevice, ICountable):
         while(not self._done):
             sleep(0.001)
 
+    def setPause(self, paused):
+        self.paused = paused
+    
+    def isPaused(self):
+        return self.paused
+    
     def setCountTime(self, t):
         """
         Abstract method to set the count time of a countable target device.
