@@ -48,7 +48,7 @@ class PylonCCDTriggered(PylonCCD):
     def acquire(self, waitComplete=False):
         # Necessary wait if a pause command was sent to the system
         # This is being used by furnace experiments (temperature scan)
-        while (self.isPaused):
+        while (self.isPaused()):
             sleep(0.2)
         
         for currentAccumulation in range(self.accumulations):
