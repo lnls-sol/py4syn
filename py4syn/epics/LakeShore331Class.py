@@ -56,9 +56,7 @@ class LakeShore331 (IScannable, StandardDevice):
                                 'GetKTempB', 'SetAHeaterRange', 'SetAPIDD', 'SetAPIDI', 'SetAPIDP', 
                                 'SetASetPoint', 'SetBHeaterRange', 'SetBPIDD', 'SetBPIDI', 'SetBPIDP',
                                 'SetBSetPoint'))
-        self.control_setAPID = PV(pvName + ':CONTROL:SetAPID')
-        self.control_setBPID = PV(pvName + ':CONTROL:SetBPID')
-        self.control_trigger = PV(pvName + ':CONTROL:Trigger')
+        self.ls331_control = Device(pvName + ':CONTROL:', ['SetAPID', 'SetBPID', 'Trigger'])
 
     def getAHeat(self):
         """
@@ -316,6 +314,150 @@ class LakeShore331 (IScannable, StandardDevice):
         """
 
         return self.lakeshore331.get('GetKTempB')
+
+    def setAHeaterRange(self, heaterRange):
+        """
+        Heater range command for channel A.
+            
+        Parameters
+        ----------
+        heaterRange : `float`
+        """
+
+        self.lakeshore331.put('SetAHeaterRange', heaterRange, wait=True)
+
+    def setBHeaterRange(self, heaterRange):
+        """
+        Heater range command for channel B.
+            
+        Parameters
+        ----------
+        heaterRange : `float`
+        """
+
+        self.lakeshore331.put('SetBHeaterRange', heaterRange, wait=True)
+
+    def setASetPoint(self, setPoint):
+        """
+        Set a setpoint value for channel A.
+            
+        Parameters
+        ----------
+        setPoint : `float`
+        """
+
+        self.lakeshore331.put('SetASetPoint', setPoint, wait=True)
+
+    def setBSetPoint(self, setPoint):
+        """
+        Set a setpoint value for channel B.
+            
+        Parameters
+        ----------
+        setPoint : `float`
+        """
+
+        self.lakeshore331.put('SetBSetPoint', setPoint, wait=True)
+
+    def setAPIDD(self, pid_d):
+        """
+        D parameter value of PID for channel A.
+            
+        Parameters
+        ----------
+        pid_d : `integer`
+        """
+
+        self.lakeshore331.put('SetAPIDD', pid_d, wait=True)
+
+    def setBPIDD(self, pid_d):
+        """
+        D parameter value of PID for channel B.
+            
+        Parameters
+        ----------
+        pid_d : `integer`
+        """
+
+        self.lakeshore331.put('SetBPIDD', pid_d, wait=True)
+
+    def setAPIDI(self, pid_i):
+        """
+        I parameter value of PID for channel A.
+            
+        Parameters
+        ----------
+        pid_i : `integer`
+        """
+
+        self.lakeshore331.put('SetAPIDI', pid_i, wait=True)
+
+    def setBPIDI(self, pid_i):
+        """
+        I parameter value of PID for channel B.
+            
+        Parameters
+        ----------
+        pid_i : `integer`
+        """
+
+        self.lakeshore331.put('SetBPIDI', pid_i, wait=True)
+        
+    def setAPIDP(self, pid_p):
+        """
+        P parameter value of PID for channel A.
+            
+        Parameters
+        ----------
+        pid_p : `integer`
+        """
+
+        self.lakeshore331.put('SetAPIDP', pid_p, wait=True)
+
+    def setBPIDP(self, pid_p):
+        """
+        P parameter value of PID for channel B.
+            
+        Parameters
+        ----------
+        pid_p : `integer`
+        """
+
+        self.lakeshore331.put('SetBPIDP', pid_p, wait=True)
+
+
+    def setControlAPID(self, a_pid):
+        """
+        PID for channel A.
+            
+        Parameters
+        ----------
+        a_pid : `integer`
+        """
+
+        self.ls331_control.put('SetAPID', a_pid, wait=True)
+
+    def setControlBPID(self, b_pid):
+        """
+        PID for channel B.
+            
+        Parameters
+        ----------
+        b_pid : `integer`
+        """
+
+        self.ls331_control.put('SetBPID', b_pid, wait=True)
+
+    def setControlTrigger(self, trigger):
+        """
+        Trigger.
+            
+        Parameters
+        ----------
+        trigger : `integer`
+        """
+
+        self.ls331_control.put('Trigger', trigger, wait=True)
 
     def getValue(self):
         """
