@@ -14,6 +14,13 @@ from time import sleep
 from py4syn.epics.IScannable import IScannable
 from py4syn.epics.StandardDevice import StandardDevice
 
+class LakeShore_t(Enum):
+    """
+    Enumeration of LakeShore channels.
+    """
+    Channel_A = 0       # channel A
+    Channel_B = 1       # channel B
+
 class LakeShore331 (IScannable, StandardDevice):
     """
     Python class to help configuration and control of LakeShore 331 devices via Hyppie
@@ -36,7 +43,7 @@ class LakeShore331 (IScannable, StandardDevice):
     ...    return new_motor
     """
 
-    def __init__ (self, pvPrefix="", mnemonic=""):
+    def __init__ (self, pvPrefix="", mnemonic="", channel=0):
         """
         **Constructor**
         See :class:`py4syn.epics.StandardDevice`
@@ -57,6 +64,12 @@ class LakeShore331 (IScannable, StandardDevice):
                                 'SetASetPoint', 'SetBHeaterRange', 'SetBPIDD', 'SetBPIDI', 'SetBPIDP',
                                 'SetBSetPoint'))
         self.ls331_control = Device(pvName + ':CONTROL:', ['SetAPID', 'SetBPID', 'Trigger'])
+        
+        if (channel == 1):
+            self.ls331_channel = LakeShore_t.Channel_B
+        else:
+            # Default
+            self.ls331_channel = LakeShore_t.Channel_A
 
     def getAHeat(self):
         """
@@ -465,19 +478,27 @@ class LakeShore331 (IScannable, StandardDevice):
 
         Returns
         -------
-            `float`
+            `float`, Temperature in Celsius degrees
         """
 
-        return 0
+        if (self.ls331_channel == LakeShore_t.Channel_A):
+            return self.getCTempA()
+        else:
+            return self.getCTempB()
 
-    def setValue(self, v):
+    def setValue(self, temperature):
         """
         Sets ...
 
         Parameters
         ----------
-        v : `float`
+        temperature : `float`, Temperature in Celsius degrees
         """
+
+        if (self.ls331_channel == LakeShore_t.Channel_A):
+            self.setASetPoint(temperature)
+        else:
+            self.setBSetPoint(temperature)
 
     def wait(self):
         """
@@ -494,8 +515,8 @@ class LakeShore331 (IScannable, StandardDevice):
         -------
             `float`
         """
-
-        return 0
+        # Mininum is 0 K... -272.15 .oC
+        return -272.15
 
     def getHighLimitValue(self):
         """
@@ -505,5 +526,5 @@ class LakeShore331 (IScannable, StandardDevice):
         -------
             `float`
         """
-
-        return 0
+        # Unsure about maximum... let's put 325 K... 51.85 .oC
+        return 51.85
