@@ -11,6 +11,7 @@ from queue import Empty
 from matplotlib.lines import Line2D
 import pylab
 import collections
+import os
 
 
 class ProcessPlotter(object):
@@ -137,6 +138,11 @@ class ProcessPlotter(object):
                         line = params['line']
                         line.set_label(command['label'])
                         self.__updateLegend()
+                    elif(cmd == "updateTitle"):
+                        title = command['title']
+                        ax = self.axes[idx]['axis']
+                        ax.set_title(title)
+                        self.__updateTitle()
                     elif(cmd == "shrinkAxisSpacing"):
                         self.__shriknAxisSpacing(command['factor_shrink_axis'])
                     else:
@@ -168,8 +174,9 @@ class Plotter(object):
     """
     Python class to represent an almost real-time plotter.
     This Plotter spawn another process responsible for the data plot and graph update.
+    Priority should be between 0 (default) and 19 (maximum allowed).
     """
-    def __init__(self, title, daemon=True):#, **kwargs):
+    def __init__(self, title, daemon=True, priority=0):#, **kwargs):
         """
         **Constructor**
 
@@ -190,6 +197,9 @@ class Plotter(object):
         self.plot_process = ctx.Process( target = self.plotter,args = (self.plot_queue,title,) )
         self.plot_process.daemon = daemon
         self.plot_process.start()
+        # Setting a lower priority to the graphic process (it should be between -20 and 19, but we only set it between 0 and 19)
+        if (priority >= 0 and priority <= 19):
+            os.setpriority(os.PRIO_PROCESS, self.plot_process.pid, priority)
 
     def createAxis(self, title = '', label = '', xlabel = '', ylabel = '', grid=True, line_style='-', line_marker='o', line_color='red', parent=None):
         """
@@ -272,6 +282,23 @@ class Plotter(object):
         params['cmd'] = "updateLabel"
         params['idx'] = axis
         params['label'] = label
+        self.plot_queue.put(params)
+
+    def updateTitle(self, axis=1, title=""):
+        """
+        Update the label in a given axis.
+        
+        Parameters
+        ----------
+        axis : `int`
+            The axis index to be cleaned.
+        title: `string`
+            The new title.
+        """
+        params = {}
+        params['cmd'] = "updateTitle"
+        params['idx'] = axis
+        params['title'] = title
         self.plot_queue.put(params)
     
     def shrinkAxisSpacing(self, factor_shrink_axis=1):
