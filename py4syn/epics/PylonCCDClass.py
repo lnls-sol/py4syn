@@ -239,7 +239,7 @@ class PylonCCD(StandardDevice, ICountable):
 
     def readout(self):
         # Because we process the CCD images in a diferent way, simply return ZERO for while...
-        return 0
+        return 1
 
     def getValue(self, **kwargs):
         """
