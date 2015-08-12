@@ -31,6 +31,7 @@ class ControoLoopMode_t(Enum):
     CLM_OpenLoop     = 3
     CLM_AutoTune_PID = 4
     CLM_AutoTune_PI  = 5
+    CLM_AutoTune_P   = 6
 
 class LakeShore331 (IScannable, StandardDevice):
     """
