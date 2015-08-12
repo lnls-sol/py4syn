@@ -10,6 +10,7 @@ Python Class for EPICS LakeShore 331
 """
 
 from epics import PV
+from enum import Enum
 from time import sleep
 from py4syn.epics.IScannable import IScannable
 from py4syn.epics.StandardDevice import StandardDevice
