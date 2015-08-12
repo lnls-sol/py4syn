@@ -21,6 +21,16 @@ class LakeShore_t(Enum):
     Channel_A = 0       # channel A
     Channel_B = 1       # channel B
 
+class ControoLoopMode_t(Enum):
+    """
+    Enumeration of Control Loop Modes.
+    """
+    CLM_Manual_PID   = 1
+    CLM_Zone         = 2
+    CLM_OpenLoop     = 3
+    CLM_AutoTune_PID = 4
+    CLM_AutoTune_PI  = 5
+
 class LakeShore331 (IScannable, StandardDevice):
     """
     Python class to help configuration and control of LakeShore 331 devices via Hyppie
@@ -57,12 +67,12 @@ class LakeShore331 (IScannable, StandardDevice):
         """
         StandardDevice.__init__(self, mnemonic)
         self.lakeshore331 = Device(pvName+':', 
-                               ('GetAHEAT', 'GetAHeaterRange', 'GetAPIDD', 'GetAPIDI', 'GetAPIDP',
-                                'GetASetPoint', 'GetBHEAT', 'GetBHeaterRange', 'GetBPIDD', 'GetBPIDI',
+                               ('GetHEAT', 'GetHeaterRange', 'GetAPIDD', 'GetAPIDI', 'GetAPIDP',
+                                'GetASetPoint', 'GetBPIDD', 'GetBPIDI',
                                 'GetBPIDP', 'GetBSetPoint', 'GetCTempA', 'GetCTempB', 'GetKTempA', 
-                                'GetKTempB', 'SetAHeaterRange', 'SetAPIDD', 'SetAPIDI', 'SetAPIDP', 
-                                'SetASetPoint', 'SetBHeaterRange', 'SetBPIDD', 'SetBPIDI', 'SetBPIDP',
-                                'SetBSetPoint'))
+                                'GetKTempB', 'SetHeaterRange', 'SetAPIDD', 'SetAPIDI', 'SetAPIDP', 
+                                'SetASetPoint', 'SetBPIDD', 'SetBPIDI', 'SetBPIDP',
+                                'SetBSetPoint', 'GetCmode', 'SetCmode'))
         self.ls331_control = Device(pvName + ':CONTROL:', ['SetAPID', 'SetBPID', 'Trigger'])
         
         if (channel == 1):
@@ -71,9 +81,9 @@ class LakeShore331 (IScannable, StandardDevice):
             # Default
             self.ls331_channel = LakeShore_t.Channel_A
 
-    def getAHeat(self):
+    def getHeat(self):
         """
-        Heater output query for A channel.
+        Heater output query
 
         Returns
         -------
@@ -81,15 +91,15 @@ class LakeShore331 (IScannable, StandardDevice):
 
         Examples
         --------
-        >>> ls331.getAHeat()
+        >>> ls331.getHeat()
         >>> 51.530
         """
 
-        return self.lakeshore331.get('GetAHEAT')
+        return self.lakeshore331.get('GetHEAT')
 
-    def getBHeat(self):
+    def getHeaterRange(self):
         """
-        Heater output query for B channel.
+        Heater range command.
 
         Returns
         -------
@@ -97,43 +107,11 @@ class LakeShore331 (IScannable, StandardDevice):
 
         Examples
         --------
-        >>> ls331.getBHeat()
+        >>> ls331.getHeaterRange()
         >>> 51.530
         """
 
-        return self.lakeshore331.get('GetBHEAT')
-
-    def getAHeaterRange(self):
-        """
-        Heater range command for A channel.
-
-        Returns
-        -------
-        Value: Float, e.g.: 0.001
-
-        Examples
-        --------
-        >>> ls331.getAHeaterRange()
-        >>> 51.530
-        """
-
-        return self.lakeshore331.get('GetAHeaterRange')
-
-    def getBHeaterRange(self):
-        """
-        Heater range command for B channel.
-
-        Returns
-        -------
-        Value: Float, e.g.: 0.001
-
-        Examples
-        --------
-        >>> ls331.getBHeaterRange()
-        >>> 51.530
-        """
-
-        return self.lakeshore331.get('GetBHeaterRange')
+        return self.lakeshore331.get('GetHeaterRange')
 
     def getAPIDD(self):
         """
@@ -328,27 +306,16 @@ class LakeShore331 (IScannable, StandardDevice):
 
         return self.lakeshore331.get('GetKTempB')
 
-    def setAHeaterRange(self, heaterRange):
+    def setHeaterRange(self, heaterRange):
         """
-        Heater range command for channel A.
+        Heater range command.
             
         Parameters
         ----------
         heaterRange : `float`
         """
 
-        self.lakeshore331.put('SetAHeaterRange', heaterRange, wait=True)
-
-    def setBHeaterRange(self, heaterRange):
-        """
-        Heater range command for channel B.
-            
-        Parameters
-        ----------
-        heaterRange : `float`
-        """
-
-        self.lakeshore331.put('SetBHeaterRange', heaterRange, wait=True)
+        self.lakeshore331.put('SetHeaterRange', heaterRange, wait=True)
 
     def setASetPoint(self, setPoint):
         """
@@ -438,6 +405,13 @@ class LakeShore331 (IScannable, StandardDevice):
 
         self.lakeshore331.put('SetBPIDP', pid_p, wait=True)
 
+    # Get Control Loop Mode
+    def getCMode(self):
+    	return self.lakeshore331.get('GetCmode')
+
+    # Set CMode (Control Loop Mode)
+    def setCMode(self, cmode):
+        self.lakeshore331.put('SetCmode', cmode, wait=True)
 
     def setControlAPID(self, a_pid):
         """
@@ -528,3 +502,4 @@ class LakeShore331 (IScannable, StandardDevice):
         """
         # Unsure about maximum... let's put 325 K... 51.85 .oC
         return 51.85
+
