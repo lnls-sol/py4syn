@@ -9,7 +9,7 @@ Python Class for EPICS LakeShore 331
     .. note:: 06/07/2015 [douglas.beniz]  first version released
 """
 
-from epics import PV
+from epics import PV, Device
 from enum import Enum
 from time import sleep
 from py4syn.epics.IScannable import IScannable
@@ -42,13 +42,13 @@ class LakeShore331 (IScannable, StandardDevice):
     --------
     >>> from py4syn.epics.MotorClass import Motor
     >>>    
-    >>> def createMotor(pvName=""):
+    >>> def createMotor(pvPrefix=""):
     ...    
     ...    new_motor = ''
     ...    
     ...    try:
     ...        new_motor = Motor(PV)
-    ...            print "Motor " + pvName + " created with success!"
+    ...            print "Motor " + pvPrefix + " created with success!"
     ...    except Exception,e:
     ...        print "Error: ",e
     ...    
@@ -68,14 +68,14 @@ class LakeShore331 (IScannable, StandardDevice):
             LakeShore331's mnemonic
         """
         StandardDevice.__init__(self, mnemonic)
-        self.lakeshore331 = Device(pvName+':', 
+        self.lakeshore331 = Device(pvPrefix+':', 
                                ('GetHEAT', 'GetHeaterRange', 'GetAPIDD', 'GetAPIDI', 'GetAPIDP',
                                 'GetASetPoint', 'GetBPIDD', 'GetBPIDI',
                                 'GetBPIDP', 'GetBSetPoint', 'GetCTempA', 'GetCTempB', 'GetKTempA', 
                                 'GetKTempB', 'SetHeaterRange', 'SetAPIDD', 'SetAPIDI', 'SetAPIDP', 
                                 'SetASetPoint', 'SetBPIDD', 'SetBPIDI', 'SetBPIDP',
                                 'SetBSetPoint', 'GetCmode', 'SetCmode'))
-        self.ls331_control = Device(pvName + ':CONTROL:', ['SetAPID', 'SetBPID', 'Trigger'])
+        self.ls331_control = Device(pvPrefix + ':CONTROL:', ['SetAPID', 'SetBPID', 'Trigger'])
         
         if (channel == 1):
             self.ls331_channel = LakeShore_t.Channel_B
