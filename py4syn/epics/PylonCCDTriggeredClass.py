@@ -17,6 +17,8 @@ from enum import Enum
 from epics import PV
 from py4syn.epics.PylonCCDClass import PylonCCD
 
+MAXIMUM_TRIES = 60
+
 class PylonCCDTriggered(PylonCCD):
     """
     Python class to help configuration and control of Charge-Coupled Devices
@@ -29,7 +31,11 @@ class PylonCCDTriggered(PylonCCD):
     
     # PyLoN CCD callback function for acquire status
     def onAcquireChange(self, value, **kw):
-        self._done = (value == 0)
+        # If 'Output Signal' of Trigger in LF is 'Waiting For Trigger',
+        #     then value when done (waiting) is 1 (one);
+        # Otherwise, if output signal is 'Reading Out', then value when
+        #     done (read) is 0 (zero).
+        self._done = (value == 1)
     
     # PyLoN CCD constructor
     def __init__(self, pvName, pvNameIN, pvNameOUT, mnemonic, accumulations=1):
@@ -43,33 +49,35 @@ class PylonCCDTriggered(PylonCCD):
         PylonCCD.__init__(self, pvName, mnemonic)
 
     def isDone(self):
-        return (self.pvMonitor.get() == 0)
+        # If 'Output Signal' of Trigger in LF is 'Waiting For Trigger',
+        #     then value when done (waiting) is 1 (one);
+        # Otherwise, if output signal is 'Reading Out', then value when
+        #     done (read) is 0 (zero).
+        return (self.pvMonitor.get() == 1)
 
     def acquire(self, waitComplete=False):
         # Necessary wait if a pause command was sent to the system
         # This is being used by furnace experiments (temperature scan)
         while (self.isPaused()):
             sleep(0.2)
-        
+
         for currentAccumulation in range(self.accumulations):
-            self.pvTriggerAcquire.put(1)
-            sleep(0.01)
-            self.pvTriggerAcquire.put(0)
             #######################################################################
             # During the tests we observed that some times the trigger (in the resolution
             # we are using) is faster than the 'capacity' of the CCD to read the input
             # signal...
             # 
             # So, as any received trigger input during an acquisition is ignored, and
-            # e need to guarantee that all spectra is acquired, after the first trigger
-            # signal we wait 10 ms and send a new trigger.
-            sleep(0.01)
-            self.pvTriggerAcquire.put(1)
-            sleep(0.01)
-            self.pvTriggerAcquire.put(0)
+            # we need to guarantee that all spectra is acquired, a set of tries (60) is
+            # performed sending HIGH and LOW signal in sequence until exposition starts.
+            tries = 0
+            while ((self._done) and (tries < MAXIMUM_TRIES)):
+                self.pvTriggerAcquire.put(1)
+                self.pvTriggerAcquire.put(0)
+                tries += 1
             # Set the attribute of done acquisition to False
             self._done = False
-            if(waitComplete):
+            if ((waitComplete) and (tries < MAXIMUM_TRIES)):
                 self.wait()
 
     def startLightFieldAcquisition(self):
@@ -77,7 +85,7 @@ class PylonCCDTriggered(PylonCCD):
 
     def waitFinishAcquiring(self):
         while(not self._done):
-            sleep(0.005)
+            sleep(0.0005)
 
     def wait(self):
         """

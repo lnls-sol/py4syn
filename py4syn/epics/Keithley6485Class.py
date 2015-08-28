@@ -39,7 +39,7 @@ class Keithley6485(Keithley6514):
         >>> name = Keithley('SOL:K6514', 'k1')
 
         """
-        StandardDevice.__init__(self, mnemonic)
+        Keithley6514.__init__(self, pvName, mnemonic)
         self.pvName = pvName
         self.timeBased = timeBased
         self.keithley = Device(pvName+':', 
