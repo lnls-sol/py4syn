@@ -84,7 +84,8 @@ class OmronE5CK(StandardDevice, IScannable):
         self.device = Device(pvName + ':', ['termopar', 'target', 'status', 'stepNum',
                              'programTable', 'programming', 'run', 'stop', 'advance',
                              'setPatternCount', 'timeScale', 'level1', 'reset', 'pause',
-                             'sendCommand', 'pidtable', 'numPIDElements', 'paused'])
+                             'sendCommand', 'pidtable', 'numPIDElements', 'paused', 'getP',
+                             'getI', 'getD', 'power'])
 
         self.programmingDone = Event()
         self.newTemperature = Event()
@@ -305,7 +306,55 @@ class OmronE5CK(StandardDevice, IScannable):
         pidTablePV = self.device.PV('pidtable')
         
         return pidTablePV.get()
-    
+
+    def getP(self):
+        """
+        Return the current P value at the furnace
+
+        Returns
+        -------
+        `double`
+        """
+        getPV = self.device.PV('getP')
+        
+        return getPV.get()
+
+    def getI(self):
+        """
+        Return the current I value at the furnace
+
+        Returns
+        -------
+        `double`
+        """
+        getPV = self.device.PV('getI')
+        
+        return getPV.get()
+
+    def getD(self):
+        """
+        Return the current D value at the furnace
+
+        Returns
+        -------
+        `double`
+        """
+        getPV = self.device.PV('getD')
+        
+        return getPV.get()
+
+    def getPower(self):
+        """
+        Return the current Power value at the furnace
+
+        Returns
+        -------
+        `double`
+        """
+        getPV = self.device.PV('power')
+        
+        return getPV.get()
+
     def getNumPIDElements(self):
         """
         Return the number of all parameters at a PID table

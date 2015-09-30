@@ -36,7 +36,9 @@ class PylonCCDTriggered(PylonCCD):
         self._done = (value == 0)
     
     # PyLoN CCD constructor
-    def __init__(self, pvName, pvNameIN, pvNameOUT, mnemonic, accumulations=1):
+    #     readoutMode = 0 (FullFrame)
+    #     readoutMode = 1 (Kinetics)
+    def __init__(self, pvName, pvNameIN, pvNameOUT, mnemonic, accumulations=1, readoutMode=0):
         # IN   DXAS:DIO:bi8         # 1.0   (read TTL OUT from CCD)
         # OUT  DXAS:DIO:bo17        # 6.1   (write Trigger IN to CCD start acquisition)
         self.pvTriggerAcquire = PV(pvNameOUT)
@@ -44,6 +46,8 @@ class PylonCCDTriggered(PylonCCD):
         # Number of accumulations per frame
         self.accumulations = accumulations
         # Then call parent initializer
+        # Operation Mode of readout control
+        self.readoutMode = readoutMode
         PylonCCD.__init__(self, pvName, mnemonic)
 
     def isDone(self):
@@ -59,7 +63,15 @@ class PylonCCDTriggered(PylonCCD):
         while (self.isPaused()):
             sleep(0.2)
 
-        for currentAccumulation in range(self.accumulations):
+        #print(self.readoutMode)
+        if (self.readoutMode == 0):
+            # FullFrame
+            repeatTimes = self.accumulations
+        elif (self.readoutMode == 1):
+            # Kinetics
+            repeatTimes = 1
+        
+        for currentAccumulation in range(repeatTimes):
             #######################################################################
             # During the tests we observed that some times the trigger (in the resolution
             # we are using) is faster than the 'capacity' of the CCD to read the input
@@ -69,6 +81,7 @@ class PylonCCDTriggered(PylonCCD):
             # we need to guarantee that all spectra is acquired, a set of tries (60) is
             # performed sending HIGH and LOW signal in sequence until exposition starts.
             while ((self._done)):
+                #print('acquire...')
                 self.pvTriggerAcquire.put(1)
                 self.pvTriggerAcquire.put(0)
                 sleep(0.001)
@@ -84,6 +97,7 @@ class PylonCCDTriggered(PylonCCD):
 
     def waitFinishAcquiring(self):
         while(not self._done):
+            #print('wait...')
             sleep(0.001)
 
     def wait(self):
