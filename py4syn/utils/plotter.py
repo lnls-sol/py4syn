@@ -13,13 +13,11 @@ import pylab
 import collections
 import os
 
-
 class ProcessPlotter(object):
     def __init__(self):
         self.axesCount = 1
         self.validAxesCount = 1
         self.axes = {}
-        self.closed = False
 
     def __createAxis(self, params):
         NUM_COLORS = 100
@@ -151,7 +149,6 @@ class ProcessPlotter(object):
                 self.fig.canvas.draw()
                 self.fig.canvas.flush_events()
             except Exception as e:
-                print(e)
                 pass
             return True
         return call_back  
@@ -166,10 +163,6 @@ class ProcessPlotter(object):
         self.timer = self.fig.canvas.new_timer(interval=5)
         self.timer.add_callback(self.poll_draw(), ())
         self.timer.start()
-
-        def handle_close(event):
-            self.closed = True
-        self.fig.canvas.mpl_connect('close_event', handle_close)
 
         try:
             pylab.show()
@@ -200,13 +193,16 @@ class Plotter(object):
         ctx = multiprocessing.get_context('spawn')  # @UndefinedVariable
         self.plot_queue =  ctx.Queue()
         self.plotter = ProcessPlotter()
-        self.plot_process = ctx.Process( target = self.plotter,args = (self.plot_queue,title,) )
+        self.plot_process = ctx.Process( target = self.plotter,args = (self.plot_queue,title) )
         self.plot_process.daemon = daemon
         self.plot_process.start()
 
         # Setting a lower priority to the graphic process (it should be between -20 and 19, but we only set it between 0 and 19)
         if (priority >= 0 and priority <= 19):
             os.setpriority(os.PRIO_PROCESS, self.plot_process.pid, priority)
+
+    def isPlotterAlive(self):
+        return self.plot_process.is_alive()
 
     def createAxis(self, title = '', label = '', xlabel = '', ylabel = '', grid=True, line_style='-', line_marker='o', line_color='red', parent=None):
         """
@@ -273,7 +269,7 @@ class Plotter(object):
         params['x'] = x
         params['y'] = y        
         self.plot_queue.put(params)       
-         
+
     def updateLabel(self, axis=1, label=""):
         """
         Update the label in a given axis.
