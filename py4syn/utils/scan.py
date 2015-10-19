@@ -163,6 +163,8 @@ def createUniqueFileName(name):
     leadingZeros = 4
     fileName, fileExtension = os.path.splitext(name)
     
+    filePath, fileName = os.path.split(fileName)
+
     # check if fileName contains the number part and if so ignores it to generate the next part
     expression = r'_\d{'+str(leadingZeros)+'}'
     fileName = re.sub(expression,'', fileName, count=1)
@@ -177,7 +179,7 @@ def createUniqueFileName(name):
         else:
             break
 
-    return newName
+    return os.path.join(filePath, newName)
 
 def scanHeader():
     global not_data_fields

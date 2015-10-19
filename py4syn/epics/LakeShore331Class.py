@@ -226,7 +226,7 @@ class LakeShore331 (IScannable, StandardDevice):
         >>> 67.87
         """
 
-        return self.lakeshore331.get('GetASetPoint')
+        return self.lakeshore331.get('SetASetPoint')
 
     def getBSetPoint(self):
         """
