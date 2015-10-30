@@ -538,8 +538,6 @@ def mesh(*kwargs):
                 waitingDevice = True
                 waitingTime = True
                 continue
-            elif not isinstance(item, int):
-                raise Exception("Step value is not a valid integer. Please check.")
             
             if(start == None):
                 start = item
@@ -550,6 +548,9 @@ def mesh(*kwargs):
                 continue
             
             if(steps == None):
+                if not isinstance(item, int):
+                    raise Exception("Step value is not a valid integer. Please check.")
+
                 steps = item                
                 param.setPoints(start, end, steps)
                 s.addScanParam(param)
