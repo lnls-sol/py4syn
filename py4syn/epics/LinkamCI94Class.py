@@ -157,6 +157,19 @@ class LinkamCI94(StandardDevice, IScannable):
         """
         self.linkam.put('setRate', r)
 
+    def setVelocity(self, velo):
+        """
+        Same as :meth:`setRate`.
+
+        See: :meth:`setRate`
+
+        Parameters
+        ----------
+        r : `float`
+            Ramp speed in °C/min
+        """
+        self.setRate(velo)
+
     def setValue(self, v):
         """
         Changes the temperature to a new value. The speed that the new temperature is
