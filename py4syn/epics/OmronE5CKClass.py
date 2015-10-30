@@ -518,6 +518,19 @@ class OmronE5CK(StandardDevice, IScannable):
         """
         self.rate = r
 
+    def setVelocity(self, velo):
+        """
+        Same as :meth:`setRate`.
+
+        See: :meth:`setRate`
+
+        Parameters
+        ----------
+        r : `float`
+            Ramp speed in °C/min
+        """
+        self.setRate(velo)
+
     def setValue(self, v):
         """
         Changes the temperature to a new value. This method calls preset if it has not
