@@ -1,5 +1,6 @@
+from threading import Event
 from time import sleep
-from epics import PV
+from epics import PV, ca
 from py4syn.epics.StandardDevice import StandardDevice
 
 
@@ -58,3 +59,80 @@ class Shutter(StandardDevice):
         else:
             return self.pvStatus.get()        
             
+class ToggleShutter(StandardDevice):
+    def __init__(self, mnemonic, shutter, shutterReadback):
+        super().__init__(mnemonic)
+
+        self.read = PV(shutterReadback)
+        self.toggle = PV(shutter)
+
+        self._open = self.read.get()
+        self.changed = Event()
+        self.read.add_callback(self.onReadChange)
+
+    def isOpen(self):
+        return self._open
+
+    def onReadChange(self, value, **kwargs):
+        self._open = value
+        self.changed.set()
+
+    def wait(self, timeout=3):
+        ca.flush_io()
+        self.changed.wait(timeout)
+
+    def change(self, open, wait=False):
+        if self.isOpen() == open:
+            self.changed.set()
+            return
+
+        self.changed.clear()
+        self.toggle.put(1)
+        ca.flush_io()
+
+        if wait:
+            self.wait()
+
+    def open(self, wait=False):
+        self.change(open=True, wait=wait)
+
+    def close(self, wait=False):
+        self.change(open=False, wait=wait)
+
+class SimpleShutter(StandardDevice):
+    SHUTTER_OPEN = 0
+    SHUTTER_CLOSE = 1
+
+    def __init__(self, mnemonic, shutter):
+        super().__init__(mnemonic)
+
+        self.shutter = PV(shutter)
+
+    def isOpen(self):
+        return self.shutter.get() == self.SHUTTER_OPEN
+
+    def wait(self, timeout=3):
+        pass
+
+    def open(self, wait=False):
+        self.shutter.put(self.SHUTTER_OPEN, wait=wait)
+
+    def close(self, wait=False):
+        self.shutter.put(self.SHUTTER_CLOSE, wait=wait)
+
+class NullShutter(StandardDevice):
+    def __init__(self, mnemonic):
+        super().__init__(mnemonic)
+        self.o = False
+
+    def isOpen(self):
+        return self.o
+
+    def wait(self, timeout=3):
+        pass
+
+    def open(self, wait=False):
+        self.o = True
+
+    def close(self, wait=False):
+        self.o = False
