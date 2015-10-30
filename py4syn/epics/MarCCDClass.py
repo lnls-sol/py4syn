@@ -14,7 +14,6 @@ from time import sleep
 from epics import ca
 
 from py4syn.epics.ICountable import ICountable
-from py4syn.epics.ShutterClass import ToggleShutter, SimpleShutter, NullShutter
 from py4syn.epics.StandardDevice import StandardDevice
 from py4syn.utils.timer import Timer
 
@@ -26,22 +25,24 @@ class MarCCD(StandardDevice, ICountable):
     --------
     >>> from shutil import move
     >>> from py4syn.epics.MarCCDClass import MarCCD
+    >>> from py4syn.epics.ShutterClass import SimpleShutter
     >>> 
     >>> def getImage(host='localhost', port=2222, fileName='image.tif', shutter=''):
-    ...     camera = MarCCD(name, (host, port), shutterType='simple', shutter=shutter)
+    ...     shutter = SimpleShutter(shutter, shutter)
+    ...     camera = MarCCD(name, (host, port))
     ...     camera.setCountTime(10)
     ...     camera.startCount()
+    ...     shutter.open()
     ...     camera.wait()
     ...     camera.stopCount()
+    ...     shutter.close()
     ...     camera.writeImage('/remote/' + fileName)
     ...     move('/remote/' + fileName, '/home/user/' + fileName)
     ...     camera.close()
     ...
-    >>> def cameraWithoutShutter(name='', host='localhost', port=2222):
-    ...     return MarCCD(name, (host, port), shutterType='null')
-    ...
-    >>> def acquireSetWithCorrection(camera, exposure=10, count=10, prefix='data'):
+    >>> def acquireSetWithCorrection(camera, shutter, exposure=10, count=10, prefix='data'):
     ...     try:
+    ...         shutter.close()
     ...         camera.darkNoise()
     ...         camera.setCountTime(exposure)
     ...         camera.setSubScan(count=2)
@@ -50,18 +51,23 @@ class MarCCD(StandardDevice, ICountable):
     ...             remote = '/remote/%s-%02d.tif' % (prefix, i)
     ...             local = '/home/user/%s-%02d.tif' % (prefix, i)
     ...             camera.startCount()
+    ...             shutter.open()
     ...             camera.wait()
     ...             camera.stopCount()
+    ...             shutter.close()
     ...             camera.waitForIdle()
     ...             camera.startCount()
+    ...             shutter.open()
     ...             camera.wait()
     ...             camera.stopCount()
+    ...             shutter.close()
     ...             camera.dezinger()
     ...             camera.correct()
     ...             camera.writeImage(remote)
     ...             move(remote, local)
     ...     finally:
     ...         camera.close()
+    ...         shutter.close()
     ...
     """
 
@@ -77,8 +83,7 @@ class MarCCD(StandardDevice, ICountable):
     URGENT_TIMEOUT = 0.5
     BASE_IMAGE_SIZE = 4096
 
-    def __init__(self, mnemonic, address, shutterType, shutter=None,
-                 shutterReadBack=None):
+    def __init__(self, mnemonic, address):
         """
         **Constructor**
         See :class:`py4syn.epics.StandardDevice`
@@ -89,17 +94,6 @@ class MarCCD(StandardDevice, ICountable):
             Camera mnemonic
         address : `tuple`
             Camera host server Internet address
-        shutterType : `string`
-            The type of software controlled shutter. The type can be "simple", "toggle"
-            or "null". The null shutter completely disables software controlled shutter.
-            The simple shutter is an EPICS PV that must be set to 0 to open the shutter
-            and 1 to close the shutter. The toggle shutter uses two PVs, one that
-            changes the shutter state whenever written to and another to read back the
-            current shutter state.
-        shutter :  `string`
-            The shutter PV name. Only meaningful if the shutter type is not null.
-        shutterReadBack : `string`
-            The toggle shutter read back PV.
         """
         super().__init__(mnemonic)
         self.socket = socket(AF_INET, SOCK_STREAM)
@@ -108,17 +102,6 @@ class MarCCD(StandardDevice, ICountable):
         self.timer = Timer(1)
         self.subScan = False
         self.subScanStep = 0
-
-        shutterName = mnemonic + '_shutter'
-
-        if shutterType == 'toggle':
-            self.shutter = ToggleShutter(shutterName, shutter, shutterReadback)
-        elif shutterType == 'simple':
-            self.shutter = SimpleShutter(shutterName, shutter)
-        else:
-            self.shutter = NullShutter(shutterName)
-
-        self.shutter.close(wait=True)
 
         # Force clearing busy and error flags. Both busy and error flags
         # May get stuck after exceptional conditions.
@@ -139,7 +122,6 @@ class MarCCD(StandardDevice, ICountable):
         finishing operation with the camera.
         """
         self.stopCount()
-        self.shutter.close()
 
         # If we caused an error, send an abort to try to fix things
         try:
@@ -153,7 +135,7 @@ class MarCCD(StandardDevice, ICountable):
     def __str__(self):
         return '%s %s' % (self.getMnemonic(), str(self.socket.getpeername()))
 
-    def darkNoise(self, delay=0, moveShutter=True):
+    def darkNoise(self, delay=0):
         """
         Prepares a dark noise image to be used as a correction image by the server.
         One of the steps after acquiring an image is to correct it by subtracting the
@@ -180,14 +162,7 @@ class MarCCD(StandardDevice, ICountable):
             dark frame acquisition). Note that 2 background acquisitions are done.
             They are then passed through the dezinger algorithm, which averages and
             removes outlier spots in the image.
-        moveShutter : 'bool'
-            Set to True to close and restore the shutter while acquiring the dark image.
         """
-        closed = not self.shutter.isOpen()
-
-        if not closed and moveShutter:
-            self.shutter.close(wait=True)
-
         self.socket.send(b'start\n')
         self.waitUntil(self.STATE_MASK_ACQUIRING)
         sleep(delay)
@@ -201,9 +176,6 @@ class MarCCD(StandardDevice, ICountable):
                        self.STATE_MASK_READING)
         self.socket.send(b'dezinger,1\n')
         self.waitWhile(self.STATE_MASK_BUSY | self.STATE_MASK_DEZINGERING)
-
-        if not closed and moveShutter:
-            self.shutter.open(wait=True)
 
     def getValue(self, **kwargs):
         """
@@ -251,7 +223,7 @@ class MarCCD(StandardDevice, ICountable):
     def startCount(self):
         """
         Starts acquiring an image. This will acquire image data until asked to stop
-        with :meth:`stopCount`. This method automatically opens the shutter.
+        with :meth:`stopCount`.
 
         .. note::
             Due to way the camera protocol is currently implemented, this method
@@ -279,9 +251,6 @@ class MarCCD(StandardDevice, ICountable):
                        self.URGENT_TIMEOUT)
 
         self.socket.send(b'start\n')
-        # Open the shutter after starting acquiring to try to allow the camera some
-        # initial time to clear its pixels
-        self.shutter.open()
 
         # Best effort wait for acquisition to start
         try:
@@ -296,7 +265,6 @@ class MarCCD(StandardDevice, ICountable):
         """
         Stops acquiring the image and stores it into server memory. The acquired image
         will be available to apply corrections and to be written to an output file.
-        This method closes the shutter.
 
         If no call to :meth:`startCount` was done before calling this method, then
         nothing is done.
@@ -312,7 +280,6 @@ class MarCCD(StandardDevice, ICountable):
             self.subScanStep = 0
 
         self.socket.send(cmd)
-        self.shutter.close()
         self.counting = False
 
     def correct(self):
