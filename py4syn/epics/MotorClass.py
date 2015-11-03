@@ -65,7 +65,7 @@ class Motor(IScannable, StandardDevice):
                                          'STOP','MOVN','LLS','HLS','SSET','SUSE',
                                          'SET','VELO','EGU','DMOV','STUP', 'DESC',
                                          'BDST', 'HLM', 'LLM', 'DHLM', 'DLLM',
-                                         'VOF','FOF','OFF', 'DIR','LVIO'))
+                                         'VOF','FOF','OFF', 'DIR','LVIO', 'HOMF', 'HOMR'))
 
         self.motor.add_callback('DMOV',self.onStatusChange)
         self._moving = self.isMovingPV()
@@ -762,3 +762,16 @@ class Motor(IScannable, StandardDevice):
         """
         self.setAbsolutePosition(v)
 
+    def homeForward(self):
+        """
+        Move the motor until it hits the forward limit switch or the software limit.
+        """
+        self._moving = True
+        self.motor.put('HOMF', 1)
+
+    def homeReverse(self):
+        """
+        Move the motor until it hits the reverse limit switch or the software limit.
+        """
+        self._moving = True
+        self.motor.put('HOMR', 1)
