@@ -1,3 +1,28 @@
+**Version 0.3.0:**
+- Release Date: 2015-11-05
+    - New RotaryMagnet class.
+    - New Keithley6485 class.
+    - New PylonCCDTriggered class.
+    - Plotter now supports shrinking method to improve plot window appearance.
+    - MarCCD now supports binning (changing the acquired image size).
+    - New LinkamCI94 class.
+    - Fix handling MarCCD delays.
+    - Pseudo counter now does not crash if the user formula raises exception.
+    - Pseudo motors now support setting the reference position and getting limits.
+    - E5CK now supports programming ramps with the raw IOC table.
+    - E5CK now has PID methods.
+    - E5CK now has a method to check if the ramp is paused and to read the power.
+    - New LakeShore331 class.
+    - Plotter now supports updating the plot title.
+    - Plotter now has a method to check if the window was closed.
+    - Shutters used by MarCCD were moved to their own file and can be generally used.
+    - Fixed invalid exception in the mesh function.
+    - Motor class now has methods for performing homing.
+    - Removed warning from Kepco BOP documentation, since it's correctly working.
+    - Fixes in motor set/use mode logic.
+    - New Pilatus class.
+    - Other minor bug fixes.
+
 **Version 0.2.1:**
 
 - Release Date: 2015-03-18
