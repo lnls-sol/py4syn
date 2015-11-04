@@ -656,11 +656,11 @@ class Motor(IScannable, StandardDevice):
         # Moving to high limit
         if(target > self.getRealPosition()):
             if(self.isAtHighLimitSwitch()):
-                return False, "Motor at high limit switch"
+                return False, "Motor at hardware high limit switch"
         # Moving to low limit
         else:
             if(self.isAtLowLimitSwitch()):
-                return False, "Motor at low limit switch"
+                return False, "Motor at hardware low limit switch"
 
         if(self.getLVIO()==0):
             return True, ""
