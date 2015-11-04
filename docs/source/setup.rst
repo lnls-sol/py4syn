@@ -148,7 +148,7 @@ Scipy Installation
 Prior to install Scipy some requirements must be filled, please install the required packages with::
 
     yum install gcc-gfortran
-    yum install openblas
+    yum install openblas-devel
 
 To correctly install the lastest version in your Python3.4 environment do::
 
