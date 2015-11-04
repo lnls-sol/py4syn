@@ -83,8 +83,9 @@ class PylonCCDTriggered(PylonCCD):
             while ((self._done)):
                 #print('acquire...')
                 self.pvTriggerAcquire.put(1)
+                sleep(0.005)
                 self.pvTriggerAcquire.put(0)
-                sleep(0.001)
+                sleep(0.005)
 
             # Set the attribute of done acquisition to False
             self._done = False

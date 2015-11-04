@@ -145,7 +145,7 @@ class KepcoBOP(IScannable, StandardDevice):
         self.blockStopCommand = False
         self.oneShotTime = 0
 
-    def setVoltage(self, voltage):
+    def setVoltage(self, voltage, wait=True):
         """
         Sets the voltage value. This method can only be used when in voltage mode.
         The voltage values must be within the power supply acceptable range and
@@ -164,9 +164,9 @@ class KepcoBOP(IScannable, StandardDevice):
         if abs(voltage) > self.MAX_VOLTAGE*1.01:
             raise ValueError('Voltage out of range: %g' % voltage)
 
-        self.voltage.put('SET', voltage, wait=True)
+        self.voltage.put('SET', voltage, wait)
 
-    def setCurrent(self, current):
+    def setCurrent(self, current, wait=True):
         """
         Sets the current value. This method can only be used when in current mode.
         The current values must be within the power supply acceptable range and
@@ -185,7 +185,7 @@ class KepcoBOP(IScannable, StandardDevice):
         if abs(current) > self.MAX_CURRENT*1.01:
             raise ValueError('Current out of range: %g' % current)
 
-        self.current.put('SET', current, wait=True)
+        self.current.put('SET', current, wait)
 
     def getVoltage(self):
         """
@@ -1057,7 +1057,7 @@ class KepcoBOP(IScannable, StandardDevice):
 
         return self.getCurrent()
 
-    def setValue(self, v):
+    def setValue(self, v, wait=True):
         """
         Sets either the current voltage or current, depending on operating mode.
 
@@ -1067,9 +1067,9 @@ class KepcoBOP(IScannable, StandardDevice):
             Either voltage, or current to set, depending on operating mode.
         """
         if self.cachedMode() == self.MODE_VOLTAGE:
-            self.setVoltage(v)
+            self.setVoltage(v, wait)
         else:
-            self.setCurrent(v)
+            self.setCurrent(v, wait)
 
     def wait(self):
         """
