@@ -448,6 +448,16 @@ class Motor(IScannable, StandardDevice):
 
         self.motor.put('SSET', 1, wait=True)
 
+    def getSETMode(self):
+        """
+        Checks if the motor is in SET mode
+
+        .. note::
+            Motor will **NOT** move until it is in in **USE mode**
+        """
+
+        return self.motor.PV('SET').get(use_monitor=False) == 1
+
     def setUSEMode(self):
         """
         Put the motor in **USE mode**
