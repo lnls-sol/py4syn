@@ -446,14 +446,14 @@ class Motor(IScannable, StandardDevice):
             Motor will **NOT** move until it is in in **USE mode**
         """
 
-        self.motor.put('SSET',1)
+        self.motor.put('SSET', 1, wait=True)
 
     def setUSEMode(self):
         """
         Put the motor in **USE mode**
         """
 
-        self.motor.put('SUSE',1)
+        self.motor.put('SUSE', 1, wait=True)
 
 
     def setVariableOffset(self, val):
