@@ -653,6 +653,9 @@ class Motor(IScannable, StandardDevice):
             - **True** -- Motor CAN perform the desired movement;
             - **False** -- Motor **CANNOT** perform the desired movement.
         """
+        if self.getSETMode():
+            return True
+
         # Moving to high limit
         if(target > self.getRealPosition()):
             if(self.isAtHighLimitSwitch()):
@@ -680,6 +683,9 @@ class Motor(IScannable, StandardDevice):
             - **True** -- Motor CAN perform the desired movement;
             - **False** -- Motor **CANNOT** perform the desired movement.
         """
+
+        if self.getSETMode():
+            return True
         
         if self.getHighLimitValue() == 0.0 and self.getLowLimitValue() == 0.0:
                 return True
