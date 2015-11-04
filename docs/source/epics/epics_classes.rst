@@ -27,3 +27,4 @@ Available devices:
    epics_omrone5ck
    epics_marccd
    epics_linkamci94
+   epics_pilatus
