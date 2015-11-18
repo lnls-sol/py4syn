@@ -13,7 +13,7 @@ is implemented as a standard ICountable, but instead of returning values to be p
 the acquired images are stored into files.
 
 Using EPICS Pilatus camera module
-================================
+=================================
 
 Usage of Python class for EPICS Pilatus cameras.
 
