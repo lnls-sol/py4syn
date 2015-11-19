@@ -168,6 +168,7 @@ def createUniqueFileName(name):
     # check if fileName contains the number part and if so ignores it to generate the next part
     expression = r'_\d{'+str(leadingZeros)+'}'
     fileName = re.sub(expression,'', fileName, count=1)
+    fileName = os.path.join(filePath, fileName)
     
     newName = ""
     cont = 0
@@ -179,7 +180,7 @@ def createUniqueFileName(name):
         else:
             break
 
-    return os.path.join(filePath, newName)
+    return newName
 
 def scanHeader():
     global not_data_fields
