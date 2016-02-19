@@ -90,6 +90,9 @@ class AmptekMCA():
         self.udp_sock.sendall(bytes.fromhex(ENABLE_MCA))
         rcv_data, udp_server = self.udp_sock.recvfrom(128)
 
+        # it is necessary to wai for MCA integration (configured to 1 sec.)
+        sleep(1.1)
+        
         # send a request of information
         self.udp_sock.sendall(bytes.fromhex(REQUEST_PACKET))
         rcv_data, udp_server = self.udp_sock.recvfrom(128)
