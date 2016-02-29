@@ -72,26 +72,19 @@ class PylonCCDTriggered(PylonCCD):
             repeatTimes = 1
         
         for currentAccumulation in range(repeatTimes):
-            #######################################################################
-            # During the tests we observed that some times the trigger (in the resolution
-            # we are using) is faster than the 'capacity' of the CCD to read the input
-            # signal...
-            # 
-            # So, as any received trigger input during an acquisition is ignored, and
-            # we need to guarantee that all spectra is acquired, a set of tries (60) is
-            # performed sending HIGH and LOW signal in sequence until exposition starts.
-            while ((self._done)):
-                #print('acquire...')
-                self.pvTriggerAcquire.put(1)
-                sleep(0.005)
-                self.pvTriggerAcquire.put(0)
-                sleep(0.005)
-
             # Set the attribute of done acquisition to False
             self._done = False
 
+            ####################################################################
+            # The digital output port which trigger the CCD should be pulsed.
+            # Minor pulse width in tests were 10 ms.
+            ####################################################################
+            self.pvTriggerAcquire.put(1)
+
             if ((waitComplete)):
                 self.wait()
+
+            self.pvTriggerAcquire.put(0)
 
     def startLightFieldAcquisition(self):
         self.pvAcquire.put(1)
