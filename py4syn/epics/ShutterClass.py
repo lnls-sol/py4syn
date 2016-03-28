@@ -103,22 +103,32 @@ class SimpleShutter(StandardDevice):
     SHUTTER_OPEN = 0
     SHUTTER_CLOSE = 1
 
-    def __init__(self, mnemonic, shutter):
+    def __init__(self, mnemonic, shutter, invert=False):
         super().__init__(mnemonic)
 
         self.shutter = PV(shutter)
+        self.invert = invert
 
     def isOpen(self):
-        return self.shutter.get() == self.SHUTTER_OPEN
+        if (self.invert):
+            return (1 - self.shutter.get()) == self.SHUTTER_OPEN
+        else:
+            return self.shutter.get() == self.SHUTTER_OPEN
 
     def wait(self, timeout=3):
         pass
 
     def open(self, wait=False):
-        self.shutter.put(self.SHUTTER_OPEN, wait=wait)
+        if (self.invert):
+            self.shutter.put((1 - self.SHUTTER_OPEN), wait=wait)
+        else:
+            self.shutter.put(self.SHUTTER_OPEN, wait=wait)
 
     def close(self, wait=False):
-        self.shutter.put(self.SHUTTER_CLOSE, wait=wait)
+        if (self.invert):
+            self.shutter.put((1 - self.SHUTTER_CLOSE), wait=wait)
+        else:
+            self.shutter.put(self.SHUTTER_CLOSE, wait=wait)
 
 class NullShutter(StandardDevice):
     def __init__(self, mnemonic):
