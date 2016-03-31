@@ -77,7 +77,7 @@ class RotaryMagnet(StandardDevice, IScannable):
         """
         return self.pvRotaryMagnetVAL.get()            
     
-    def setValue(self, v):
+    def setValue(self, v, wait=True):
         """
         Method to set a value to the rotary magnet device.
         
@@ -89,7 +89,7 @@ class RotaryMagnet(StandardDevice, IScannable):
             - **1**  -- Active rotary magnet;
             - **0**  -- Inactive rotary magnet.
         """
-        self.pvRotaryMagnetVAL.put(v)
+        self.pvRotaryMagnetVAL.put(v, wait=wait)
     
     def isActive(self):
         """
