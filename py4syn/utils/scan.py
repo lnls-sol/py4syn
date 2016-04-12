@@ -1197,7 +1197,7 @@ class Scan(object):
 
         self.__initialize()
 
-        pointIdx = 1
+        pointIdx = 0
         while(True):
             # Pre Point Callback
             if(self.__prePointCallback):
