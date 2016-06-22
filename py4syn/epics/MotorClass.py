@@ -613,6 +613,18 @@ class Motor(IScannable, StandardDevice):
 
         self.motor.put('VELO',velo)
 
+    def getAcceleration(self):
+        """
+        Get the motor acceleration time based on the `ACCL` (Seconds to
+        Velocity) field from Motor Record
+        
+        Returns
+        -------
+        `double`
+        """ 
+
+        return self.motor.get('ACCL')
+
     def setAcceleration(self, accl):
         """
         Set the motor acceleration time based on the `ACCL` (Seconds to
