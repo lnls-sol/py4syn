@@ -588,6 +588,18 @@ class Motor(IScannable, StandardDevice):
         if(waitComplete):
             self.wait()
 
+    def getVelocity(self):
+        """
+        Get the motor velocity based on the `VELO` (Velocity, EGU/s) field
+        from Motor Record
+        
+        Returns
+        -------
+        `double`
+        """ 
+
+        return self.motor.get('VELO')
+
     def setVelocity(self, velo):
         """
         Set the motor velocity up based on the `VELO` (Velocity, EGU/s) field
