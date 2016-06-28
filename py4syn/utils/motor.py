@@ -6,7 +6,7 @@ from py4syn.epics.MotorClass import Motor
 from py4syn.epics.PseudoMotorClass import PseudoMotor
 
 polling = 0.1
-show_info = True
+show_info = False
 
     
 def print_no_newline(s):
