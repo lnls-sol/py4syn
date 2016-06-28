@@ -20,19 +20,7 @@ class Lauda(StandardDevice):
 
     Examples
     --------
-    >>> from py4syn.epics.MotorClass import Motor
-    >>>    
-    >>> def createMotor(pvName=""):
-    ...    
-    ...    new_motor = ''
-    ...    
-    ...    try:
-    ...        new_motor = Motor(PV)
-    ...            print "Motor " + pvName + " created with success!"
-    ...    except Exception,e:
-    ...        print "Error: ",e
-    ...    
-    ...    return new_motor
+    
     """
 
     def __init__ (self,pvPrefix="", mnemonic=""):
