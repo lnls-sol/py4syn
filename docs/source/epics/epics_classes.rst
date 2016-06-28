@@ -14,6 +14,7 @@ Available devices:
    epics_keithley_6514
    epics_kepcobop
    epics_lauda
+   epics_lakeshore_331
    epics_linkamci94
    epics_marccd
    epics_modem

@@ -15,12 +15,16 @@ from py4syn.epics.StandardDevice import StandardDevice
 
 class Lauda(StandardDevice):
     """
-    Python class to help configuration and control of Lauda devices via Hyppie
-    over EPICS.
+    Python class to help configuration and control of Lauda devices via Hyppie over EPICS.
 
     Examples
     --------
-    
+    >>> from py4syn.epics.LaudaClass import Lauda
+    >>> lauda = Lauda("TEST:LAUDA", 'lauda1')
+    >>> lauda.changeSetPoint(20)
+    >>> lauda.start()
+    >>> lauda.getInternalTemp()
+    >>>
     """
 
     def __init__ (self,pvPrefix="", mnemonic=""):

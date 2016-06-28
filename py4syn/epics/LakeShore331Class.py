@@ -40,7 +40,9 @@ class LakeShore331 (IScannable, StandardDevice):
 
     Examples
     --------
-    
+    >>> from py4syn.epics.LakeShore331 import LakeShore331
+    >>> ls331 = LakeShore331("DXAS:LS331", "ls331", channel=0)  # Use 1 for Ch B
+    >>> ls331.setValue(120)  # 120 degrees Celsius 
     """
 
     def __init__ (self, pvPrefix="", mnemonic="", channel=0):

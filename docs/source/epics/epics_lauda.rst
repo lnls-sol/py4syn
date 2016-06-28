@@ -6,7 +6,7 @@ Lauda thermostats
 .. module:: py4syn.epics.LaudaClass
    :synopsis: Python class for EPICS Lauda thermostats
 
-This is the basic Python class to ...
+This is the basic Python class to control Lauda thermostats over EPICS.
 
 Using EPICS Lauda thermostats module
 ====================================
