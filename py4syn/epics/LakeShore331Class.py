@@ -40,19 +40,7 @@ class LakeShore331 (IScannable, StandardDevice):
 
     Examples
     --------
-    >>> from py4syn.epics.MotorClass import Motor
-    >>>    
-    >>> def createMotor(pvPrefix=""):
-    ...    
-    ...    new_motor = ''
-    ...    
-    ...    try:
-    ...        new_motor = Motor(PV)
-    ...            print "Motor " + pvPrefix + " created with success!"
-    ...    except Exception,e:
-    ...        print "Error: ",e
-    ...    
-    ...    return new_motor
+    
     """
 
     def __init__ (self, pvPrefix="", mnemonic="", channel=0):
