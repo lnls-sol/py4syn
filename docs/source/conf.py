@@ -15,12 +15,15 @@ import sys, os
 from distutils.sysconfig import get_python_lib
 
 import sys
-from unittest.mock import MagicMock
 
-class Mock(MagicMock):
-    @classmethod
-    def __getattr__(cls, name):
-            return Mock()
+
+class Mock(object):
+    def __init__(self, *args):
+        pass
+
+    def __getattr__(self, name):
+        return Mock
+
 
 MOCK_MODULES = ['numpy', 'h5py', 'matplotlib', 'matplotlib.lines', 'epics', 'epics.ca', 'pylab', 'scipy', 'ca','scipy.optimize']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
