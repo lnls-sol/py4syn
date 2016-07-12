@@ -8,25 +8,25 @@ from py4syn.epics.PseudoMotorClass import PseudoMotor
 polling = 0.1
 show_info = False
 
-    
+
 def print_no_newline(s):
     """
     Print information without an new line
-    
+
     Parameters
     ----------
     s : `string`
         Text to be printed
-        
+
     """
 
     sys.stdout.write('\r'+s)
     sys.stdout.flush()
 
-def createPseudoMotor(name ="", description="", backFormula="", forwardDict={}): 
+def createPseudoMotor(name ="", description="", backFormula="", forwardDict={}):
     """
     Create and add a pseudo-motor to the mtrDB dictionary
-    
+
     Parameters
     ----------
     name : `string`
@@ -40,64 +40,64 @@ def createPseudoMotor(name ="", description="", backFormula="", forwardDict={}):
             - **Numpy** and **Math** functions can be used on formulas, specially form numpy users must explicit declare it, e.g. `numpy.linalg.solve(..)`
             - **T** refers to the motor **Target** position
             - **A** refers to the motor **Actual** position
-            
+
     forwardDict : `dictionary`
         A dictionary that contains a formula to be applied for each motor when the pseudo-motor is moved
-        
+
         .. note::
             - **Numpy** and **Math** functions can be used on formulas, specially form numpy users must explicit declare it, e.g. `numpy.linalg.solve(..)`
             - **T** refers to the motor **Target** position
             - **A** refers to the motor **Actual** position
-            
+
     Examples
     ----------
     >>> from py4syn.utils.motor import *
-    >>> 
+    >>>
     >>> # Define the formula to calculate the Bragg Value
     >>> braggBackFormula = "asin(1.977/A[energy])"
-    >>> 
+    >>>
     >>> # Define the relationship between thetaCrystal and bragg target value
     >>> braggForwardDict = {"thetaCrystal": "T[bragg]"}
-    >>> 
+    >>>
     >>> # Define the formula to calculate the Energy Value
     >>> energyBackFormula = "1.977/sin(A[thetaCrystal])"
-    >>> 
+    >>>
     >>> # Define the relationship between the needed motors and the energy target value
     >>> energyForwardDict = {"bragg": "asin(1.977/T[energy])",
     >>>                      "gap": "A[beamOffset]*tan(T[bragg])/ (sin(T[bragg])+(cos(T[bragg])*tan(T[bragg])))",
     >>>                      "trans":"A[beamOffset]/(sin(T[bragg])+(cos(T[bragg])*tan(T[bragg])))"}
-    >>> 
+    >>>
     >>> # Define the formula to calculate the Beam Offset and the 
     >>> beamOffsetBackFormula = "2*A[trans]*tan(A[bragg])*cos(A[bragg])"
-    >>> 
+    >>>
     >>> # Define the relationship between the needed motors and the beam offset 
     >>> beamOffsetForwardDict = {"trans": "T[beamOffset]/(sin(A[bragg])+cos(A[bragg])*tan(A[bragg]))",
     >>>                          "gap": "(T[beamOffset]*tan(A[bragg]))/(sin(A[bragg])+(cos(A[bragg])*tan(A[bragg])))"}
-    >>> 
+    >>>
     >>> # Crete a simple motor for the 2nd Crystal Translation
     >>> createMotor("trans", "SOL:DMC1:m1")
-    >>> 
+    >>>
     >>> # Crete a simple motor for the 2nd Crystal Gap
     >>> createMotor("gap", "SOL:DMC1:m3")
-    >>> 
+    >>>
     >>> # Crete a simple motor for the 1st Crystal Rotation
     >>> createMotor("thetaCrystal", "SOL:DMC1:m4")
-    >>> 
-    >>> 
+    >>>
+    >>>
     >>> # Create the Pseudo motor Bragg, Energy and BeamOffset with the respective formulas and relationships
     >>> createPseudoMotor("bragg", "Bragg Angle (radians)", backFormula=braggBackFormula, forwardDict=braggForwardDict)
     >>> createPseudoMotor("energy", "Energy (kev)", backFormula=energyBackFormula, forwardDict=energyForwardDict)
     >>> createPseudoMotor("beamOffset", "Beam offset (mm)", backFormula=beamOffsetBackFormula, forwardDict=beamOffsetForwardDict)
-    >>> 
+    >>>
     >>> # Print all motor positions
     >>> wa()
-    >>> 
+    >>>
     >>> # Move the motor Energy to the value 2.
     >>> mv("energy", 4, wait=True)
-    >>> 
+    >>>
     >>> # Print all motor positions
-    >>> wa()    
-        
+    >>> wa()
+
     """
     try:
         if name not in py4syn.mtrDB:
@@ -107,14 +107,14 @@ def createPseudoMotor(name ="", description="", backFormula="", forwardDict={}):
                 print("\tMotor " + name + " created with success.")
         else:
             print("")
-            print("\tName " + name + " already created") 
+            print("\tName " + name + " already created")
     except Exception as e:
         print ("\tError: ",e)
 
-def createMotor(name ="",PV=""): 
+def createMotor(name ="",PV=""):
     """
     Create and add a motor to the mtrDB dictionary
-    
+
     Parameters
     ----------
     name : `string`
@@ -133,7 +133,7 @@ def createMotor(name ="",PV=""):
     >>> wa() # print the position of all motors registered.
     >>> mtopPosition = wmr(mtop) # store the motor mtop position in the variable mtopPosition.
 
-    """ 
+    """
     try:
         if name not in py4syn.mtrDB:
             py4syn.mtrDB[name] = Motor(PV, name)
@@ -142,7 +142,7 @@ def createMotor(name ="",PV=""):
                 print("\tMotor " + name + " at " + str(PV) + " created with success")
         else:
             print("")
-            print("\tName " + name + " already created") 
+            print("\tName " + name + " already created")
     except Exception as e:
         print("\tError: ",e)
 
@@ -150,7 +150,7 @@ def createMotor(name ="",PV=""):
 def umv(motor,position):
     """
     Move the desired motor to an absolute position, waiting until movement ends,and show the position while it happens.
-    
+
     Parameters
     ----------
     motor : `string`
@@ -158,7 +158,7 @@ def umv(motor,position):
     position : `double`
         The desired absolute position
 
-    """ 
+    """
     try:
         print("")
         if py4syn.mtrDB[motor].getRealPosition()!= position:
@@ -167,9 +167,9 @@ def umv(motor,position):
             time.sleep(polling)
             while py4syn.mtrDB[motor].isMoving():
                 print_no_newline("\t%5.4f"%py4syn.mtrDB[motor].getRealPosition())
-                time.sleep(polling) 
+                time.sleep(polling)
             print_no_newline("\t%5.4f"%py4syn.mtrDB[motor].getRealPosition())
-            py4syn.mtrDB[motor].validateLimits()         
+            py4syn.mtrDB[motor].validateLimits()
             print("")
     except(KeyboardInterrupt):
         py4syn.mtrDB[motor].stop()
@@ -181,7 +181,7 @@ def umv(motor,position):
 def mv(motor,position,wait=True):
     """
     Move the desired motor to an absolute position, can or not wait until movement ends,**don't** show the position while moving.
-    
+
     Parameters
     ----------
     motor : `string`
@@ -190,10 +190,10 @@ def mv(motor,position,wait=True):
         The desired absolute position
     wait : `bool`
         Optional parameter that indicates if this function must wait until the movement finishes. Default value is True
-        
+
         .. note::
-            - If `wait` is set to **False** the code will follow as the motor moves.        
-    """ 
+            - If `wait` is set to **False** the code will follow as the motor moves.
+    """
     try:
         py4syn.mtrDB[motor].setAbsolutePosition(position,wait)
         time.sleep(polling)
@@ -205,14 +205,14 @@ def mv(motor,position,wait=True):
     except Exception as e:
         py4syn.mtrDB[motor].stop()
         print("\tError: ",e)
-        
-   
+
+
 #####################################
 
 def umvr(motor,position):
     """
     Move the desired motor to a **relative** position, waiting until movement ends,and show the position while it happens.
-    
+
     Parameters
     ----------
     motor : `string`
@@ -220,7 +220,7 @@ def umvr(motor,position):
     position : `double`
         The desired relative position
 
-    """ 
+    """
     try:
         print("")
         print("\t" + "Moving",str(position))
@@ -239,12 +239,12 @@ def umvr(motor,position):
     except Exception as e:
         py4syn.mtrDB[motor].stop()
         print("\tError: ",e)
-        
+
 
 def mvr(motor,position,wait=True):
     """
     Move the desired motor to a **relative** position, can or not wait until movement ends,**don't** show the position while moving.
-    
+
     Parameters
     ----------
     motor : `string`
@@ -253,10 +253,10 @@ def mvr(motor,position,wait=True):
         The desired relative position
     wait : `bool`
         Optional parameter that indicates if this function must wait until the movement finishes. Default value is True
-        
+
         .. note::
-            - If `wait` is set to **False** the code will follow as the motor moves.        
-    """ 
+            - If `wait` is set to **False** the code will follow as the motor moves.
+    """
 
     try:
         py4syn.mtrDB[motor].setRelativePosition(position,wait)
@@ -274,22 +274,22 @@ def mvr(motor,position,wait=True):
 def tw(mtr,step):
     """
     Move the desired motor relative, wait the movement end and ask if you need to move again
-    
+
     Parameters
     ----------
     mtr : `string`
         Mnemonic of the motor used on the `createMotor` and `createPseudoMotor` functions
     step : `double`
         Desired relative step size
-        
-    """ 
-    
+
+    """
+
     def is_numeric(s):
         """ Verify if the string is numeric
         :param s: string to verify
         :type s: string
         :return: boolean
-    
+
         ::
          None -- NAN
          True -- Number
@@ -298,17 +298,16 @@ def tw(mtr,step):
             float(s)
             return True
         except(ValueError):
-            pass    
+            pass
 
-    try:  
-  
+    try:
         value = "+"
         print("")
         while True:
             target = step
             value = input("\t"+mtr+" = %5.4f, Direction (%s):" %(py4syn.mtrDB[mtr].getRealPosition(),value) ) or value
-            
-            if value != "-" and  value != "+" and is_numeric(value) == None:
+
+            if value != "-" and  value != "+" and is_numeric(value) is None:
                 break
             else:
                 if value == "-":

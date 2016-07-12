@@ -3,13 +3,13 @@
 Python Class for EPICS LakeShore 331
 
 :platform: Unix
-:synopsis: Python Class for EPICS LakeShore 331 
+:synopsis: Python Class for EPICS LakeShore 331
 
 .. moduleauthor:: Douglas Bezerra Beniz <douglas.beniz@lnls.br>
     .. note:: 06/07/2015 [douglas.beniz]  first version released
 """
 
-from epics import PV, Device
+from epics import Device
 from enum import Enum
 from time import sleep
 from py4syn.epics.IScannable import IScannable
@@ -49,7 +49,7 @@ class LakeShore331 (IScannable, StandardDevice):
         """
         **Constructor**
         See :class:`py4syn.epics.StandardDevice`
-        
+
         Parameters
         ----------
         pvPrefix : `string`
@@ -58,15 +58,18 @@ class LakeShore331 (IScannable, StandardDevice):
             LakeShore331's mnemonic
         """
         StandardDevice.__init__(self, mnemonic)
-        self.lakeshore331 = Device(pvPrefix+':', 
-                               ('GetHEAT', 'GetHeaterRange', 'GetAPIDD', 'GetAPIDI', 'GetAPIDP',
-                                'GetASetPoint', 'GetBPIDD', 'GetBPIDI',
-                                'GetBPIDP', 'GetBSetPoint', 'GetCTempA', 'GetCTempB', 'GetKTempA', 
-                                'GetKTempB', 'SetHeaterRange', 'SetAPIDD', 'SetAPIDI', 'SetAPIDP', 
-                                'SetASetPoint', 'SetBPIDD', 'SetBPIDI', 'SetBPIDP',
-                                'SetBSetPoint', 'GetCmode', 'SetCmode'))
+        self.lakeshore331 = Device(pvPrefix+':',
+                               ('GetHEAT', 'GetHeaterRange', 'GetAPIDD',
+                                'GetAPIDI', 'GetAPIDP', 'GetASetPoint',
+                                'GetBPIDD', 'GetBPIDI', 'GetBPIDP',
+                                'GetBSetPoint', 'GetCTempA', 'GetCTempB',
+                                'GetKTempA', 'GetKTempB', 'SetHeaterRange',
+                                'SetAPIDD', 'SetAPIDI', 'SetAPIDP',
+                                'SetASetPoint', 'SetBPIDD', 'SetBPIDI',
+                                'SetBPIDP', 'SetBSetPoint', 'GetCmode',
+                                'SetCmode'))
         self.ls331_control = Device(pvPrefix + ':CONTROL:', ['SetAPID', 'SetBPID', 'Trigger'])
-        
+
         if (channel == 1):
             self.ls331_channel = LakeShore_t.Channel_B
         else:
@@ -136,7 +139,7 @@ class LakeShore331 (IScannable, StandardDevice):
         """
 
         return self.lakeshore331.get('GetBPIDD')
-    
+
     def getAPIDI(self):
         """
         Returns Value I of PID for channel A.
@@ -208,8 +211,8 @@ class LakeShore331 (IScannable, StandardDevice):
 
         Returns
         -------
-        Value: float, e.g.: 0.001 
-        
+        Value: float, e.g.: 0.001
+
         Examples
         --------
         >>> ls331.getASetPoint()
@@ -224,8 +227,8 @@ class LakeShore331 (IScannable, StandardDevice):
 
         Returns
         -------
-        Value: float, e.g.: 0.001 
-        
+        Value: float, e.g.: 0.001
+
         Examples
         --------
         >>> ls331.getBSetPoint()
@@ -301,7 +304,7 @@ class LakeShore331 (IScannable, StandardDevice):
     def setHeaterRange(self, heaterRange):
         """
         Heater range command.
-            
+
         Parameters
         ----------
         heaterRange : `float`
@@ -312,7 +315,7 @@ class LakeShore331 (IScannable, StandardDevice):
     def setASetPoint(self, setPoint):
         """
         Set a setpoint value for channel A.
-            
+
         Parameters
         ----------
         setPoint : `float`
@@ -323,7 +326,7 @@ class LakeShore331 (IScannable, StandardDevice):
     def setBSetPoint(self, setPoint):
         """
         Set a setpoint value for channel B.
-            
+
         Parameters
         ----------
         setPoint : `float`
@@ -334,7 +337,7 @@ class LakeShore331 (IScannable, StandardDevice):
     def setAPIDD(self, pid_d):
         """
         D parameter value of PID for channel A.
-            
+
         Parameters
         ----------
         pid_d : `integer`
@@ -345,7 +348,7 @@ class LakeShore331 (IScannable, StandardDevice):
     def setBPIDD(self, pid_d):
         """
         D parameter value of PID for channel B.
-            
+
         Parameters
         ----------
         pid_d : `integer`
@@ -356,7 +359,7 @@ class LakeShore331 (IScannable, StandardDevice):
     def setAPIDI(self, pid_i):
         """
         I parameter value of PID for channel A.
-            
+
         Parameters
         ----------
         pid_i : `integer`
@@ -367,18 +370,18 @@ class LakeShore331 (IScannable, StandardDevice):
     def setBPIDI(self, pid_i):
         """
         I parameter value of PID for channel B.
-            
+
         Parameters
         ----------
         pid_i : `integer`
         """
 
         self.lakeshore331.put('SetBPIDI', pid_i, wait=True)
-        
+
     def setAPIDP(self, pid_p):
         """
         P parameter value of PID for channel A.
-            
+
         Parameters
         ----------
         pid_p : `integer`
@@ -389,7 +392,7 @@ class LakeShore331 (IScannable, StandardDevice):
     def setBPIDP(self, pid_p):
         """
         P parameter value of PID for channel B.
-            
+
         Parameters
         ----------
         pid_p : `integer`
@@ -399,7 +402,7 @@ class LakeShore331 (IScannable, StandardDevice):
 
     # Get Control Loop Mode
     def getCMode(self):
-    	return self.lakeshore331.get('GetCmode')
+        return self.lakeshore331.get('GetCmode')
 
     # Set CMode (Control Loop Mode)
     def setCMode(self, cmode):
@@ -408,7 +411,7 @@ class LakeShore331 (IScannable, StandardDevice):
     def setControlAPID(self, a_pid):
         """
         PID for channel A.
-            
+
         Parameters
         ----------
         a_pid : `integer`
@@ -419,7 +422,7 @@ class LakeShore331 (IScannable, StandardDevice):
     def setControlBPID(self, b_pid):
         """
         PID for channel B.
-            
+
         Parameters
         ----------
         b_pid : `integer`
@@ -430,7 +433,7 @@ class LakeShore331 (IScannable, StandardDevice):
     def setControlTrigger(self, trigger):
         """
         Trigger.
-            
+
         Parameters
         ----------
         trigger : `integer`

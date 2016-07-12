@@ -197,7 +197,6 @@ def fitGauss(xarray, yarray):
     return (peak, peak_position, minv, minv_position, fwhm, fwhm_position, COM, result)
 
 if __name__ == '__main__':
-    import datetime
     import pylab as pl
 
     #file = '/home/ABTLUS/hugo.slepicka/devfiles/workspacePython/FIT_Test/teste'
