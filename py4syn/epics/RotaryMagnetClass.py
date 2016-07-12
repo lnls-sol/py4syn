@@ -22,13 +22,13 @@ class RotaryMagnet(StandardDevice, IScannable):
     >>>
     >>> myMagnet = RotaryMagnet('myMagnet')
     >>> myMagnet.setValue(0)
-    >>>     
+    >>>
     """
-    
+
     # Callback function for the RotaryMagnet's PV value change
     def onValChange(self, value, **kw):
         self._active = (value == 1)
-    
+
     # Constructor of RotaryMagnet
     def __init__(self, pvRotaryMagnetName="", mnemonic=""):
         StandardDevice.__init__(self, mnemonic)
@@ -36,22 +36,22 @@ class RotaryMagnet(StandardDevice, IScannable):
         self._done = self.isDone()
         self.pvRotaryMagnetDESC = PV(pvRotaryMagnetName+".DESC")
         self.pvRotaryMagnetVAL = PV(pvRotaryMagnetName+".VAL", self.onValChange)
-    
+
     def getDescription(self):
         """
         Obtain the current description of rotary magnet device or its identification.
-        
+
         Returns
         -------
         `String`
             A detail about the device or its identification.
         """
-        return self.pvRotaryMagnetDESC.get()            
-    
+        return self.pvRotaryMagnetDESC.get()
+
     def setDescription(self, magnetDescription):
         """
         Method to set a description to the rotary magnet device.
-        
+
         Parameters
         ----------
         `String`
@@ -59,81 +59,81 @@ class RotaryMagnet(StandardDevice, IScannable):
 
         Returns
         -------
-        `None` 
+        `None`
         """
         self.pvRotaryMagnetDESC.put(magnetDescription)
-    
+
     def getValue(self):
         """
         Obtain the current value of rotary magnet device or its identification.
-        
+
         Returns
         -------
         `integer`
-        
+
         .. note::
             - **1**  -- Active rotary magnet;
             - **0**  -- Inactive rotary magnet.
         """
-        return self.pvRotaryMagnetVAL.get()            
-    
+        return self.pvRotaryMagnetVAL.get()
+
     def setValue(self, v, wait=True):
         """
         Method to set a value to the rotary magnet device.
-        
+
         Parameters
         ----------
         `integer`
-        
+
         .. note::
             - **1**  -- Active rotary magnet;
             - **0**  -- Inactive rotary magnet.
         """
         self.pvRotaryMagnetVAL.put(v, wait=wait)
-    
+
     def isActive(self):
         """
         Return whether Rotary Magnet is currently active (set to 1).
-        
+
         Returns
         -------
         `boolean`
-        
+
         .. note::
             - **True**  -- Rotary magnet is active (1);
-            - **False** -- Rotary magnet is inactive (0). 
+            - **False** -- Rotary magnet is inactive (0).
         """
         return self._active
-    
+
     def isDone(self):
         return True
-    
+
     def wait(self):
         while(not self._done):
-            sleep(0.001)
+            ca.poll(0.001)
 
     def getLowLimitValue(self):
         """
         Obtain low limit value of rotary magnet.
-        
+
         Parameters
         ----------
         None
-        
+
         Returns
         -------
         `double`
         """
         return -1
-    
+
     def getHighLimitValue(self):
         """
         Obtain high limit value of rotary magnet.
-        
+
         Parameters
         ----------
         None
-        
+
         Returns
         -------
         `double`
