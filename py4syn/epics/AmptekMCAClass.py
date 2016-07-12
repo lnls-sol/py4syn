@@ -27,7 +27,7 @@ class AmptekMCA():
     mca_status = ''
 
     def __init__(self, mca_ip='10.2.48.34', udp_port=10001):
-        self.openConnection(mca_ip='10.2.48.34', udp_port=10001)
+        self.openConnection(mca_ip=mca_ip, udp_port=udp_port)
 
     def __del__(self):
         self.mca_alive = False
@@ -53,7 +53,6 @@ class AmptekMCA():
             self.mca_status = 'connected'
         except socket.timeout as e:
             self.mca_status = e
-            pass
 
         self.mca_alive = True
         self.mca_pause_alive = False
@@ -64,19 +63,18 @@ class AmptekMCA():
                 try:
                     while self.mca_pause_alive:
                         sleep(0.2)
-                    
+
                     self.udp_sock.sendall(bytes.fromhex(KEEP_ALIVE))
                     rcv_data, udp_server = self.udp_sock.recvfrom(128)
-                    
+
                     self.mca_status = rcv_data
-                    
+
                 except socket.timeout as e:
                     self.mca_status = e
-                    pass
                 except OSError:
                     break
                 sleep(2)
-        
+
         threadToKeepAlive = Thread(target=keepAmptekAlive)
         threadToKeepAlive.start()
 
@@ -92,7 +90,7 @@ class AmptekMCA():
 
         # it is necessary to wai for MCA integration (configured to 1 sec.)
         sleep(1.1)
-        
+
         # send a request of information
         self.udp_sock.sendall(bytes.fromhex(REQUEST_PACKET))
         rcv_data, udp_server = self.udp_sock.recvfrom(128)
@@ -121,9 +119,8 @@ class AmptekMCA():
 
         try:
             deadTime = round(float((float(inputCount) - float(totalCount)) / float(inputCount)) * 100, 2)
-        except:
-            print('Exception when calculating dead-time!')
-            pass
+        except Exception as ex:
+            print('Exception when calculating dead-time! Error: {0}'.format(ex))
 
         # send an end of counting
         self.udp_sock.sendall(bytes.fromhex(DISABLE_MCA))
@@ -141,7 +138,7 @@ class AmptekMCA():
 
         try:
             self.udp_sock.close()
-        except:
+        except Exception:
             pass
-        
+
         self.mca_status = 'disconnected'
