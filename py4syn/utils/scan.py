@@ -154,8 +154,7 @@ def findDevice(device):
     if(isinstance(d, IScannable)):
         return d
     else:
-        raise Exception("Error. Only Scannable devices can be used on a scan.
-                        Please Check.")
+        raise Exception("Error. Only Scannable devices can be used on a scan. Please Check.")
 
 def createUniqueFileName(name):
     import re
@@ -449,11 +448,10 @@ def scan(*args, **kwargs):
             countTime = item
             if(isinstance(countTime, collections.Iterable)):
                 if(s.getNumberOfPoints() != len(countTime)):
-                    raise Exception("Error creating the scan. The time array
-                                    ("+str(len(countTime))+" points) and the
-                                    scan ("+str(s.getNumberOfPoints())+"
-                                          points) must have the same number of
-                                    points. Please check.")
+                    err_msg = 'Error creating the scan. The time array ({} ' \
+                              'points) and the scan ({} points) must have '\
+                              'the same number of points. Please check.'
+                    raise Exception(err_msg.format(len(countTime),s.getNumberOfPoints()))
 
             s.setCountTime(countTime)
             waitingTime = False
@@ -464,12 +462,10 @@ def scan(*args, **kwargs):
             delayTime = item
             if(isinstance(delayTime, collections.Iterable)):
                 if(s.getNumberOfPoints() != len(delayTime)):
-                    raise Exception("Error creating the scan. The delay array
-                                    ("+str(len(delayTime))+" points) and the
-                                    scan ("+str(s.getNumberOfPoints())+"
-                                          points) must have the same number of
-                                    points. Please check.")
-
+                    err_msg = 'Error creating the scan. The delay array ({} ' \
+                              'points) and the scan ({} points) must have '\
+                              'the same number of points. Please check.'
+                    raise Exception(err_msg.format(len(delayTime),s.getNumberOfPoints()))
             s.setDelayTime(delayTime)
             continue
 
@@ -564,18 +560,18 @@ def mesh(*kwargs):
                 waitingTime = True
                 continue
 
-            if(start == None):
+            if(start is None):
                 start = item
                 continue
 
-            if(end == None):
+            if(end is None):
                 end = item
                 continue
 
-            if(steps == None):
+            if(steps is None):
                 if not isinstance(item, int):
-                    raise Exception("Step value is not a valid integer. Please
-                                    check.")
+                    raise Exception('Step value is not a valid integer.' \
+                                    'Please check.')
 
                 steps = item
                 param.setPoints(start, end, steps)
@@ -589,11 +585,10 @@ def mesh(*kwargs):
             countTime = item
             if(isinstance(countTime, collections.Iterable)):
                 if(s.getNumberOfPoints() != len(countTime)):
-                    raise Exception("Error creating the mesh. The time array
-                                    ("+str(len(countTime))+" points) and the
-                                    mesh ("+str(s.getNumberOfPoints())+"
-                                          points) must the same number of
-                                    points. Please check.")
+                    err_msg = 'Error creating the mesh. The time array ({} '\
+                              'points) and the mesh ({} points) must have '\
+                              'the same number of points. Please check.'
+                    raise Exception(err_msg.format(len(countTime),s.getNumberOfPoints()))
 
             s.setCountTime(countTime)
             waitingDelay = True
@@ -604,11 +599,10 @@ def mesh(*kwargs):
             delayTime = item
             if(isinstance(delayTime, collections.Iterable)):
                 if(s.getNumberOfPoints() != len(delayTime)):
-                    raise Exception("Error creating the mesh. The delay array
-                                    ("+str(len(delayTime))+" points) and the
-                                    mesh ("+str(s.getNumberOfPoints())+"
-                                          points) must have the same number of
-                                    points. Please check.")
+                    err_msg = 'Error creating the mesh. The delay array ({} '\
+                              'points) and the mesh ({} points) must have '\
+                              'the same number of points. Please check.'
+                    raise Exception(err_msg.format(len(delayTime),s.getNumberOfPoints()))
 
             s.setDelayTime(delayTime)
             continue
@@ -721,8 +715,8 @@ class Scan(object):
         if(self.__scanType == ScanType.SCAN):
             if (len(self.__scanParams) != 0) and (param.getNumberOfPoints() !=
                                                   self.__minNumberOfPoints):
-                raise Exception("All devices must have the same number of
-                                points, please check.")
+                raise Exception('All devices must have the same number of'\
+                                'points, please check.')
             else:
                 self.__minNumberOfPoints = param.getNumberOfPoints()
 
@@ -1322,12 +1316,15 @@ class ScanParam(object):
 
         if(isinstance(d, PseudoMotor)):
             if(not d.canPerformMovement(min(p))[0]):
-                raise Exception("Error. The lower value exceeds the Low Limit
-                                Value for this device. Device: "+str(d))
+                err_msg = 'Error. The lower value exceeds the Low Limit Value'\
+                          ' for this device. Device: {}'
 
+                raise Exception(err_msg.format(str(d)))
             if(not d.canPerformMovement(max(p))[0]):
-                raise Exception("Error. The lower value exceeds the High Limit
-                                Value for this device. Device: "+str(d))
+                err_msg = 'Error. The higher value exceeds the High Limit Value'\
+                          ' for this device. Device: {}'
+
+                raise Exception(err_msg.format(str(d)))
         else:
             ll = d.getLowLimitValue()
             hl = d.getHighLimitValue()
@@ -1336,14 +1333,16 @@ class ScanParam(object):
                 return
 
             if(ll > min(p)):
-                raise Exception("Error. The lower value exceeds the Low Limit
-                                Value for this device. Device: "+str(d)+", Low
-                                Limit: "+str(ll))
+                err_msg = 'Error. The lower value exceeds the Low Limit Value'\
+                          ' for this device. Device: {}, Low Limit: {}'
+
+                raise Exception(err_msg.format(str(d), str(ll)))
 
             if(hl < max(p)):
-                raise Exception("Error. The higher value exceeds the High Limit
-                                Value for this device. Device: "+str(d)+", High
-                                Limit: "+str(hl))
+                err_msg = 'Error. The higher value exceeds the High Limit Value'\
+                          ' for this device. Device: {}, High Limit: {}'
+
+                raise Exception(err_msg.format(str(d), str(hl)))
 
     def getPoints(self):
         return self.__points
@@ -1451,8 +1450,8 @@ def setPreScanCallback(c):
     """
     global PRE_SCAN_CALLBACK
     if not callable(c):
-        raise Exception("Error. Only functions can be used as callbacks. Please
-                        check.")
+        raise Exception('Error. Only functions can be used as callbacks.'\
+                        'Please check.')
     PRE_SCAN_CALLBACK = c
 
 def setPrePointCallback(c):
@@ -1478,8 +1477,8 @@ def setPrePointCallback(c):
     """
     global PRE_POINT_CALLBACK
     if not callable(c):
-        raise Exception("Error. Only functions can be used as callbacks. Please
-                        check.")
+        raise Exception('Error. Only functions can be used as callbacks. '\
+                        'Please check.')
     PRE_POINT_CALLBACK = c
 
 def setPreOperationCallback(c):
@@ -1505,8 +1504,8 @@ def setPreOperationCallback(c):
     """
     global PRE_OPERATION_CALLBACK
     if not callable(c):
-        raise Exception("Error. Only functions can be used as callbacks. Please
-                        check.")
+        raise Exception('Error. Only functions can be used as callbacks. '\
+                        'Please check.')
     PRE_OPERATION_CALLBACK = c
 
 def setOperationCallback(c):
@@ -1532,8 +1531,8 @@ def setOperationCallback(c):
     """
     global OPERATION_CALLBACK
     if not callable(c):
-        raise Exception("Error. Only functions can be used as callbacks. Please
-                        check.")
+        raise Exception('Error. Only functions can be used as callbacks. '\
+                        'Please check.')
     OPERATION_CALLBACK = c
 
 def setPostOperationCallback(c):
@@ -1559,8 +1558,8 @@ def setPostOperationCallback(c):
     """
     global POST_OPERATION_CALLBACK
     if not callable(c):
-        raise Exception("Error. Only functions can be used as callbacks. Please
-                        check.")
+        raise Exception('Error. Only functions can be used as callbacks. '\
+                        'Please check.')
     POST_OPERATION_CALLBACK = c
 
 def setPostPointCallback(c):
@@ -1586,8 +1585,8 @@ def setPostPointCallback(c):
     """
     global POST_POINT_CALLBACK
     if not callable(c):
-        raise Exception("Error. Only functions can be used as callbacks. Please
-                        check.")
+        raise Exception('Error. Only functions can be used as callbacks. '\
+                        'Please check.')
     POST_POINT_CALLBACK = c
 
 def setPostScanCallback(c):
@@ -1613,8 +1612,8 @@ def setPostScanCallback(c):
     """
     global POST_SCAN_CALLBACK
     if not callable(c):
-        raise Exception("Error. Only functions can be used as callbacks. Please
-                        check.")
+        raise Exception('Error. Only functions can be used as callbacks. '\
+                        'Please check.')
     POST_SCAN_CALLBACK = c
 
 def getPreScanCallback(c):
@@ -1711,8 +1710,8 @@ def setFileWriter(writer):
     global FILE_WRITER
 
     if not isinstance(writer, FileWriter):
-        raise Exception("Error. The parameter is not a valid File Writer.
-                        Please check.")
+        raise Exception('Error. The parameter is not a valid File Writer. '\
+                        'Please check.')
 
     FILE_WRITER = writer
 
@@ -2101,8 +2100,8 @@ def setScanPlotter(p):
         global SCAN_PLOTTER
         SCAN_PLOTTER = p
     else:
-        raise Exception("Error. Parameter is not a valid Plotter. Please
-                        check.")
+        raise Exception('Error. Parameter is not a valid Plotter. '\
+                        'Please check.')
 
 def getScanPlotter():
     """
