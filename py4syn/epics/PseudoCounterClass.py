@@ -41,11 +41,11 @@ class counterValue():
 
         v = counterDB[m]
         dev = v['device']
-        cnt = 0 
-        if(v['channel'] != None):
+        cnt = 0
+        if(v['channel'] is not None):
             cnt = dev.getValue(channel=v['channel'])
         else:
-            cnt = dev.getValue()   
+            cnt = dev.getValue()
 
         return cnt
 
@@ -57,20 +57,20 @@ class PseudoCounter(ICountable, StandardDevice):
     --------
     >>> # Create a Simulated Counter    
     >>> scaler = SimCountable("SOL:SCALER01", 2)
-    >>> 
+    >>>
     >>> # Create two channels: det and mon
     >>> createCounter("mon", scaler, 1)
     >>> createCounter("det", scaler, 2)
-    >>> 
+    >>>
     >>> # Create a Pseudo counter with the formula
     >>> pseudoCounter = PseudoCounter("relation", "C[det]/C[mon]")
     >>>
     >>> # Create a new channel based on this pseudo-counter
     >>> createCounter("relation", pseudoCounter)
-    >>> 
+    >>>
     >>> # Start a count process
     >>> ct(1)
-    >>> 
+    >>>
     """
 
     def __init__(self, mnemonic, backwardFormula):
@@ -85,7 +85,7 @@ class PseudoCounter(ICountable, StandardDevice):
         backwardFormula : `string`
             Mathematical Formula used to calculate the Pseudo counter value position based on other counters
         """
-        StandardDevice.__init__(self, mnemonic)        
+        StandardDevice.__init__(self, mnemonic)
         self.name = mnemonic
         self.backFormula = backwardFormula
 
@@ -95,7 +95,7 @@ class PseudoCounter(ICountable, StandardDevice):
     def __defineCounters(self):
         """
         Define a set of virtual counters based on devices in the global `mtrDB`
-        
+
         Returns
         -------
         `string`
@@ -120,14 +120,14 @@ class PseudoCounter(ICountable, StandardDevice):
         -------
         out : value
             Returns the current value of the device. Type of the value depends on device settings.
-        """        
+        """
         global counterDB
         global C
         exec(self.__defineCounters())
         try:
             return eval(self.backFormula)
-        except Exception as e:
-            print('Warning while getting pseudo counter value:', e)
+        except Exception as ex:
+            print('Warning while getting pseudo counter value:', ex)
             return 0.0
 
     def setCountTime(self, t):
@@ -142,9 +142,9 @@ class PseudoCounter(ICountable, StandardDevice):
         Returns
         -------
         out : None
-        """        
+        """
         pass
-    
+
     def setPresetValue(self, channel, val):
         """
         Abstract method to set the preset count of a countable target device.
@@ -159,16 +159,16 @@ class PseudoCounter(ICountable, StandardDevice):
         Returns
         -------
         out : None
-        """        
+        """
         pass
-    
+
     def startCount(self):
         """
         Abstract method trigger a count in a counter
 
         """
         pass
-    
+
     def stopCount(self):
         """
         Abstract method stop a count in a counter
@@ -183,7 +183,7 @@ class PseudoCounter(ICountable, StandardDevice):
         Returns
         -------
         out : `bool`
-        """        
+        """
         return False
 
     def canStopCount(self):
@@ -193,9 +193,9 @@ class PseudoCounter(ICountable, StandardDevice):
         Returns
         -------
         out : `bool`
-        """        
+        """
         return True
-    
+
     def isCounting(self):
         """
         Abstract method to check if the device is counting or not.
@@ -203,9 +203,9 @@ class PseudoCounter(ICountable, StandardDevice):
         Returns
         -------
         out : `bool`
-        """        
+        """
         return False
-        
+
     def wait(self):
         """
         Abstract method to wait for a count to finish.
@@ -213,8 +213,8 @@ class PseudoCounter(ICountable, StandardDevice):
         Returns
         -------
         out : `bool`
-        """        
+        """
         pass
-        
+
 
 C = counterValue()

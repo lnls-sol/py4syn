@@ -490,7 +490,7 @@ class OmronE5CK(StandardDevice, IScannable):
             value = 100*hours + minutes
 
             if hours > 99:
-                raise OverflowError('Ramp time is too large: %g' % rampTime)
+                raise OverflowError('Ramp time is too large: %g' % t)
         else:
             minutes = int(t)
 

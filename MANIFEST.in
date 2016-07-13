@@ -7,3 +7,5 @@ recursive-exclude dist *
 recursive-exclude docs/source *
 recursive-exclude docs/build/doctrees *
 recursive-exclude docs/build/latex *
+include versioneer.py
+include py4syn/_version.py

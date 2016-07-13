@@ -1,7 +1,7 @@
 Welcome to Py4Syn
 =================
 
-|docs|
+|docs|  |health|
 
 Purpose
 -------
@@ -14,3 +14,7 @@ Synchrotron Light Laboratory (LNLS).
     :alt: Documentation Status
     :scale: 100%
     :target: https://readthedocs.org/projects/py4syn/
+
+.. |health| image:: https://landscape.io/github/hhslepicka/py4syn/master/landscape.svg?style=flat
+    :target: https://landscape.io/github/hhslepicka/py4syn/master
+    :alt: Code Health
