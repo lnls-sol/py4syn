@@ -430,7 +430,7 @@ def scan(*args, **kwargs):
             steps = item
             for i in range(len(devs)):
                 param = ScanParam(devs[i])
-                if(starts[i] == None):
+                if(starts[i] is None):
                     param.setPoints(points[i])
                 else:
                     param.setPoints(starts[i], ends[i], steps)
@@ -706,7 +706,7 @@ class Scan(object):
         return self.__delayTime
 
     def setScanType(self, t):
-        if(not t in ScanType):
+        if(t not in ScanType):
             raise Exception(t + " is not a valid ScanType, please check!")
 
         self.__scanType = t
@@ -805,8 +805,8 @@ class Scan(object):
         global SCAN_CMD
 
         # Setup of File Writer
-        if FILE_WRITER == None:
-            if(FILENAME != None and FILENAME != ""):
+        if FILE_WRITER is None:
+            if(FILENAME is not None and FILENAME != ""):
                 FILENAME = createUniqueFileName(FILENAME)
                 FILE_WRITER = DefaultWriter(FILENAME)
 
@@ -818,26 +818,26 @@ class Scan(object):
         for p in self.getScanParams():
             dev = p.getDevice()
             SCAN_DATA[dev.getMnemonic()] = []
-            if(FILE_WRITER != None):
+            if(FILE_WRITER is not None):
                 FILE_WRITER.insertDevice(dev.getMnemonic())
 
         for c in py4syn.counterDB:
             if(py4syn.counterDB[c]['enable']):
                 SCAN_DATA[c] = []
-                if(FILE_WRITER != None):
+                if(FILE_WRITER is not None):
                     FILE_WRITER.insertSignal(c)
 
         for u in USER_DATA_FIELDS:
             SCAN_DATA[u] = []
-            if(FILE_WRITER != None):
+            if(FILE_WRITER is not None):
                 FILE_WRITER.insertSignal(u)
 
         # if no value is passed, assume the first device of the scan
-        if(XFIELD == None or XFIELD == "" or (XFIELD not in SCAN_DATA)):
+        if(XFIELD is None or XFIELD == "" or (XFIELD not in SCAN_DATA)):
             XFIELD = self.getScanParams()[0].getDevice().getMnemonic()
 
         # if no value is passed, assume the first device of the scan
-        if(YFIELD == None or YFIELD == "" or (YFIELD not in SCAN_DATA)):
+        if(YFIELD is None or YFIELD == "" or (YFIELD not in SCAN_DATA)):
             try:
                 YFIELD = list(py4syn.counterDB.keys())[0]
             except IndexError:
@@ -848,7 +848,7 @@ class Scan(object):
             self.__startTimestamp = datetime.datetime.now()
 
             # Header Fields
-            if(FILE_WRITER != None):
+            if(FILE_WRITER is not None):
                 FILE_WRITER.setStartDate(self.__startTimestamp)
                 FILE_WRITER.insertComment(SCAN_COMMENT)
                 FILE_WRITER.setUsername(os.getlogin())
@@ -857,7 +857,7 @@ class Scan(object):
 
 
             # If its a partial write the header must be ready
-            if(PARTIAL_WRITE and FILE_WRITER != None):
+            if(PARTIAL_WRITE and FILE_WRITER is not None):
                 FILE_WRITER.writeHeader()
 
             if(self.__scanType == ScanType.SCAN):
@@ -873,7 +873,7 @@ class Scan(object):
 
             self.__endTimestamp = datetime.datetime.now()
 
-            if not PARTIAL_WRITE and FILE_WRITER != None:
+            if not PARTIAL_WRITE and FILE_WRITER is not None:
                 print("\tSaving data to file")
                 FILE_WRITER.setEndDate(self.__endTimestamp)
                 FILE_WRITER.writeHeader()
@@ -885,10 +885,10 @@ class Scan(object):
             print("\tUser Interrupted")
             if(FILENAME is not None and FILENAME != "" and not PARTIAL_WRITE
                and FILE_WRITER is not None):
-                    print("\tSaving data to file")
-                    FILE_WRITER.setEndDate(self.__endTimestamp)
-                    FILE_WRITER.writeHeader()
-                    FILE_WRITER.writeData(idx=-1)
+                print("\tSaving data to file")
+                FILE_WRITER.setEndDate(self.__endTimestamp)
+                FILE_WRITER.writeHeader()
+                FILE_WRITER.writeData(idx=-1)
 
         try:
             if(FILE_WRITER is not None):
@@ -976,7 +976,7 @@ class Scan(object):
         global FILE_WRITER
         global SCAN_DATA
 
-        if (FILE_WRITER != None):
+        if (FILE_WRITER is not None):
             for d in FILE_WRITER.getDevices():
                 try:
                     FILE_WRITER.insertDeviceData(d, SCAN_DATA[d][idx])

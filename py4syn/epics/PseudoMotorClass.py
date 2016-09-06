@@ -454,19 +454,19 @@ class PseudoMotor(IScannable, StandardDevice):
         sign = -1 if high else 1
 
         def getPosition(args):
-                env = {motor: i for (i, motor) in enumerate(self.forwardDict)}
-                env['A'] = args
+            env = {motor: i for (i, motor) in enumerate(self.forwardDict)}
+            env['A'] = args
 
-                return sign*eval(self.backFormula, env)
+            return sign*eval(self.backFormula, env)
 
         bounds = []
         x0 = []
         for motor in self.forwardDict:
-                low = mtrDB[motor].getLowLimitValue()
-                high = mtrDB[motor].getHighLimitValue()
-                v = mtrDB[motor].getValue()
-                bounds.append((low, high))
-                x0.append(v)
+            low = mtrDB[motor].getLowLimitValue()
+            high = mtrDB[motor].getHighLimitValue()
+            v = mtrDB[motor].getValue()
+            bounds.append((low, high))
+            x0.append(v)
 
         return sign*minimize(getPosition, x0, bounds=bounds).fun
 

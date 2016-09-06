@@ -239,16 +239,14 @@ class KepcoBOP(IScannable, StandardDevice):
         """
         pv = 'LIMIT' if self.cachedMode() == mode else 'PROTECTION'
 
-        if not negative is None:
-            if negative < 0:
+        if negative is not None and negative < 0:
                 raise ValueError('Value must be absolute: %g' % negative)
 
             if negative > maximum:
                 raise ValueError('Value out of range: %g (max: %g)' % (negative, maximum))
 
             device.put('SET:%s:NEGATIVE' % pv, negative, wait=True)
-        if not positive is None:
-            if positive < 0:
+        if positive is not None and positive < 0:
                 raise ValueError('Value must be absolute: %g' % positive)
 
             if positive > maximum:

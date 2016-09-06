@@ -33,9 +33,9 @@ class ProcessPlotter(object):
         line_style = params['line_style']
         line_marker = params['line_marker']
         line_color = params['line_color']
-        
+
         parent = params['parent']
-        if(parent == None):
+        if(parent is None):
             n = len(self.fig.axes)
             for i in range(n):
                 self.fig.axes[i].change_geometry(n+1, 1, i+1)
@@ -46,7 +46,7 @@ class ProcessPlotter(object):
             ax.set_xlabel(xlabel)
             ax.set_ylabel(ylabel)
             line = Line2D([],[])
-            if label != None and label.strip() != "":
+            if label is not None and label.strip() != "":
                 line.set_label(label)
             line.set_linestyle(line_style)
             line.set_marker(line_marker)
@@ -55,27 +55,27 @@ class ProcessPlotter(object):
         else:
             ax = self.axes[parent]['axis']
             line = Line2D([],[])
-            if label != None and label.strip() != "":
+            if label is not None and label.strip() != "":
                 line.set_label(label)
             line.set_linestyle(line_style)
             line.set_marker(line_marker)
             color = cm(5.*self.axesCount/NUM_COLORS)  # color will now be an RGBA tuple
             line.set_color(color)
-        
+
         ax.add_line(line)
-        
+
         self.axes[idx] = {}
         self.axes[idx]['axis'] = ax
         self.axes[idx]['line'] = line
         self.axes[idx]['x'] = []
         self.axes[idx]['y'] = []
-        
+
         self.axesCount += 1
-        
+
         self.__updateLegend()
 
     def __updateLegend(self):
-        n = len(self.fig.axes) 
+        n = len(self.fig.axes)
         for i in range(n):
             pylab.sca(self.fig.axes[i])
             plotterLegend = pylab.legend(loc='upper left', bbox_to_anchor=(1, 0.5), borderaxespad=1, fancybox=False, shadow=False, prop={'size':8})
@@ -88,9 +88,9 @@ class ProcessPlotter(object):
         line.set_data(x, y)
         ax.relim()
         ax.autoscale_view()
-    
+
     def __shriknAxisSpacing(self, factor_shrink_axis):
-        n = len(self.fig.axes) 
+        n = len(self.fig.axes)
         for i in range(n):
             box = self.fig.axes[i].get_position()
             self.fig.axes[i].set_position([box.x0, box.y0, box.width * factor_shrink_axis, box.height])
@@ -102,7 +102,7 @@ class ProcessPlotter(object):
                     try:
                         command = self.queue.get_nowait()
                     except Empty:
-                        break   
+                        break
 
                     cmd = command['cmd']
                     try:
@@ -116,11 +116,11 @@ class ProcessPlotter(object):
                         self.axes[idx]['x'] = []
                         self.axes[idx]['y'] = []
                         self.__updateAxis(self.axes[idx])
-                         
+
                     elif(cmd == "plot"):
                         vx = command['x']
                         vy = command['y']
-                        
+
                         if(isinstance(vx, collections.Iterable)):
                             self.axes[idx]['x'].extend(vx)
                         else:
@@ -151,7 +151,7 @@ class ProcessPlotter(object):
             except Exception as e:
                 pass
             return True
-        return call_back  
+        return call_back
 
     def __call__(self, queue, title):
         self.title = title
@@ -207,9 +207,9 @@ class Plotter(object):
     def createAxis(self, title = '', label = '', xlabel = '', ylabel = '', grid=True, line_style='-', line_marker='o', line_color='red', parent=None):
         """
         Creates a subplot in the plotter, also it's possible to create an axis to a parent subplot through the **parent** parameter
-        
+
         Parameters
-        ----------        
+        ----------
         title : `string`
             Title of the plot
         label : `string`
@@ -217,19 +217,19 @@ class Plotter(object):
         xlabel : `string`
             Label for the X axis
         ylabel : `string`
-            Label for the Y axis            
+            Label for the Y axis
         grid : `bool`
             If `True`, will render grid to the graph area.
         lineStyle : `string`
-            The line style according to `Matplotlib Line2D style list <http://matplotlib.org/api/lines_api.html#matplotlib.lines.Line2D.set_linestyle>`_            
+            The line style according to `Matplotlib Line2D style list <http://matplotlib.org/api/lines_api.html#matplotlib.lines.Line2D.set_linestyle>`_
         lineMarker : `string`
             The line marker according to `Matplotlib Markers list <http://matplotlib.org/api/markers_api.html#module-matplotlib.markers>`_
         lineColor : `string`
             The line color, accepts any matplotlib color
         parent : `int`
             Index of the parent subplot
-            
-        """        
+
+        """
         params = {}
         params['cmd'] = "create"
         params['title'] = title
@@ -241,9 +241,9 @@ class Plotter(object):
         params['line_marker'] = line_marker
         params['line_color'] = line_color
         params['parent'] = parent
-        if(parent != None) and (parent > self.plotsCount):
+        if(parent is not None) and (parent > self.plotsCount):
             print("Warning. Parent Axis not found. Axis not created!")
-        self.plot_queue.put(params)        
+        self.plot_queue.put(params)
         self.plotsCount += 1
 
     def getPlotsCount(self):
@@ -252,7 +252,7 @@ class Plotter(object):
     def plot(self, x, y, axis=1):
         """
         Plot data to graph.
-        
+
         Parameters
         ----------
         x : `double`
@@ -261,19 +261,19 @@ class Plotter(object):
             Y data
         axis : `int`
             The axis index where data should be plot.
-                        
+
         """
         params = {}
         params['cmd'] = "plot"
         params['idx'] = axis
         params['x'] = x
-        params['y'] = y        
-        self.plot_queue.put(params)       
+        params['y'] = y
+        self.plot_queue.put(params)
 
     def updateLabel(self, axis=1, label=""):
         """
         Update the label in a given axis.
-        
+
         Parameters
         ----------
         axis : `int`
@@ -290,7 +290,7 @@ class Plotter(object):
     def updateTitle(self, axis=1, title=""):
         """
         Update the label in a given axis.
-        
+
         Parameters
         ----------
         axis : `int`
@@ -303,43 +303,43 @@ class Plotter(object):
         params['idx'] = axis
         params['title'] = title
         self.plot_queue.put(params)
-    
+
     def shrinkAxisSpacing(self, factor_shrink_axis=1):
         params = {}
         params['cmd'] = "shrinkAxisSpacing"
         params['factor_shrink_axis'] = factor_shrink_axis
         self.plot_queue.put(params)
-         
+
     def clear(self, axis=1):
         """
         Clear the graph.
-        
+
         Parameters
         ----------
         axis : `int`
-            The axis index to be cleaned.        
+            The axis index to be cleaned.
         """
         params = {}
         params['cmd'] = "clear"
         params['idx'] = axis
-        self.plot_queue.put(params)        
+        self.plot_queue.put(params)
 
 def main2():
     import datetime
     import time
     import random
-    
+
     n = 100
 
     pl = Plotter('Plot Sample e I0', daemon=True)
-    
+
     pl1 = Plotter('Plot Norm', daemon=True)
-        
+
     pl.createAxis(title="Energy Scan", xlabel="Energy", ylabel="I0", grid=True, line_style="--", line_marker="x", line_color="blue", label="I0")
     pl.createAxis(title="", xlabel="Energy", ylabel="Sample", grid=True, line_style=":", line_marker="o", line_color="black", label="Sample")
-    pl1.createAxis(title="", xlabel="Foo", ylabel="Bar", grid=True, label="No Label")  
-    pl1.createAxis(title="", xlabel="Energy", ylabel="Norm", grid=True, label="1")       
-        
+    pl1.createAxis(title="", xlabel="Foo", ylabel="Bar", grid=True, label="No Label")
+    pl1.createAxis(title="", xlabel="Energy", ylabel="Norm", grid=True, label="1")
+
     prnt = 2
     idx = 2
     for i in range(0, 10):
@@ -351,12 +351,12 @@ def main2():
 
         pl.clear(1)
         pl.clear(2)
-        
+
         if(i == 9):
             pl1.createAxis(title="", parent=1, label="Foo Bar 9")
             pl1.plot(random.random()*1000, random.random()*1000, axis=12)
-        
-        s = datetime.datetime.now()        
+
+        s = datetime.datetime.now()
         for ii in range(n):
             i0 = random.random()*100
             sample = random.random()*127
@@ -365,10 +365,10 @@ def main2():
             pl.plot(ii, sample, axis=2)
             pl1.plot(ii, norm, axis=idx)
             time.sleep(0.01)
-        e = datetime.datetime.now()              
+        e = datetime.datetime.now()
         print("Total Time: ",e-s)
         print("Time per Point: ", (e-s)/n)
-    
+
     print("Press any key to continue...")
     input()
 
@@ -376,17 +376,17 @@ def main():
     import datetime
     import time
     import random
-    
+
     n = 100
 
     pl = Plotter('Plot Sample e I0', daemon=True)
-    
+
     pl.createAxis(title="Title 1", label="Label 1", xlabel="X", ylabel="Y")
     pl.createAxis(title="Title 2", label="Label 2", xlabel="X", ylabel="Y", parent = 1)
     pl.createAxis(title="Title 3", label="Label 3", xlabel="X", ylabel="Y")
-        
+
     print("Press any key to continue...")
-    input()    
-    
+    input()
+
 if __name__ == '__main__':
-    main() 
+    main()

@@ -54,7 +54,7 @@ class Motor(IScannable, StandardDevice):
 
         self.pvType = PV(pvName+".RTYP", connection_timeout=3)
 
-        if(self.pvType.status == None):
+        if(self.pvType.status is None):
             raise Exception("Epics PV "+ pvName+" seems to be offline or not reachable")
 
         if(self.pvType.get()!= "motor"):
@@ -697,14 +697,13 @@ class Motor(IScannable, StandardDevice):
 
         if self.getSETMode():
             return True
-        
+
         if self.getHighLimitValue() == 0.0 and self.getLowLimitValue() == 0.0:
-                return True
-        
+            return True
+
         backlashCalc = self.calculateBacklash(target)
 
         if(self.getDirection()==0):
-        
             if(backlashCalc > 0):
                 vFinal = target - backlashCalc
             else:
@@ -721,7 +720,7 @@ class Motor(IScannable, StandardDevice):
 
             if vFinal <= self.getHighLimitValue():
                 return True
-            
+
         # Moving to low limit
         else:
             if(self.isAtLowLimitSwitch()):
@@ -729,7 +728,7 @@ class Motor(IScannable, StandardDevice):
 
             if vFinal >= self.getLowLimitValue():
                 return True
-            
+
         return False
 
     def calculateBacklash(self, target):
@@ -744,12 +743,18 @@ class Motor(IScannable, StandardDevice):
 
         # Positive Movement
         if(self.getDirection() == 0):
-            if(self.getBacklashDistanceValue() > 0 and target < self.getRealPosition()) or (self.getBacklashDistanceValue() < 0 and target > self.getRealPosition()):
+            if(self.getBacklashDistanceValue() > 0 and target <
+               self.getRealPosition()) or (self.getBacklashDistanceValue() < 0
+                                           and target >
+                                           self.getRealPosition()):
                 return self.getBacklashDistanceValue()
         else:
-            if(self.getBacklashDistanceValue() > 0 and target > self.getRealPosition()) or (self.getBacklashDistanceValue() < 0 and target < self.getRealPosition()):
+            if(self.getBacklashDistanceValue() > 0 and target >
+               self.getRealPosition()) or (self.getBacklashDistanceValue() < 0
+                                           and target <
+                                           self.getRealPosition()):
                 return self.getBacklashDistanceValue()
-        return 0    
+        return 0
 
     def stop(self):
         """
@@ -763,7 +768,7 @@ class Motor(IScannable, StandardDevice):
         """
         while(self._moving):
             ca.poll(evt=0.01)
-            
+
     def getValue(self):
         """
         Get the current position of the motor.
@@ -776,7 +781,7 @@ class Motor(IScannable, StandardDevice):
         """
 
         return self.getRealPosition()
-        
+
     def setValue(self, v):
         """
         Set the desired motor position.
@@ -785,7 +790,7 @@ class Motor(IScannable, StandardDevice):
         Parameters
         ----------
         v : `double`
-            The desired value (Absolute Position) to set 
+            The desired value (Absolute Position) to set
         """
         self.setAbsolutePosition(v)
 
