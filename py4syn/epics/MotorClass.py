@@ -571,22 +571,8 @@ class Motor(IScannable, StandardDevice):
                 If **True**, the function will wait until the movement finish
                 to return, otherwise don't.
         """
-        if(pos == 0):
-            return
-
-        ret, msg = self.canPerformMovement(self.getRealPosition()+pos)
-        if(not ret):
-            raise Exception("Can't move motor "+self.motorDesc+" ("+
-                            self.pvName+") to desired position: "+
-                            str(self.getRealPosition()+pos)+ ", " + msg)
-
-        self.motor.put('RLV',pos)
-
-        ca.poll(evt=0.05)
-
-        self._moving = True
-        if(waitComplete):
-            self.wait()
+        target = self.getRealPosition()+pos
+        self.setAbsolutePosition(target, waitComplete=waitComplete)
 
     def getVelocity(self):
         """
@@ -678,21 +664,22 @@ class Motor(IScannable, StandardDevice):
             - **False** -- Motor **CANNOT** perform the desired movement.
         """
         if self.getSETMode():
-            return True
+            return True, ""
 
         # Moving to high limit
         if(target > self.getRealPosition()):
             if(self.isAtHighLimitSwitch()):
                 return False, "Motor at hardware high limit switch"
+            elif target > self.getHighLimitValue():
+                return False, "Target beyond value for software high limit."
         # Moving to low limit
         else:
             if(self.isAtLowLimitSwitch()):
                 return False, "Motor at hardware low limit switch"
+            elif target < self.getLowLimitValue():
+                return False, "Target beyond value for software low limit."
 
-        if(self.getLVIO()==0):
-            return True, ""
-        
-        return False, "Movement beyond soft limits"
+        return True, ""
 
     def canPerformMovementCalc(self, target):
         """
