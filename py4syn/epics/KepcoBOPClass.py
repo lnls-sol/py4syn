@@ -509,14 +509,14 @@ class KepcoBOP(IScannable, StandardDevice):
         device.put('WAVEFORM:SET:ANGLE', 0, wait=True)
         self.checkError()
 
-    def addWaveform(self, type, param1, param2, param3=None):
+    def addWaveform(self, tp, param1, param2, param3=None):
         """
         Helper method that implements adding waveform segments.
         """
-        if type not in self.WAVEFORM_PARAM1_LIMITS:
-            raise ValueError('Invalid waveform type: %s' % type)
+        if tp not in self.WAVEFORM_PARAM1_LIMITS:
+            raise ValueError('Invalid waveform type: %s' % tp)
 
-        x, y = self.WAVEFORM_PARAM1_LIMITS[type]
+        x, y = self.WAVEFORM_PARAM1_LIMITS[tp]
         if param1 < x or param1 > y:
             raise ValueError('Frequency or period parameter out of range: %g '
                              '(interval: [%g, %g])' % (param1, x, y))
@@ -536,7 +536,7 @@ class KepcoBOP(IScannable, StandardDevice):
             raise ValueError('Offset out of range: %g (range: [%g, %g])' %
                              (param3, -maxValue, maxValue))
 
-        self.program.put('WAVEFORM:TYPE', type, wait=True)
+        self.program.put('WAVEFORM:TYPE', tp, wait=True)
         self.program.put('WAVEFORM:PERIODORFREQUENCY', param1, wait=True)
         self.program.put('WAVEFORM:AMPLITUDE', param2, wait=True)
 
@@ -724,12 +724,12 @@ class KepcoBOP(IScannable, StandardDevice):
             configured device limits.
         """
         if height >= 0:
-            type = 'RAMP+'
+            tp = 'RAMP+'
         else:
-            type = 'RAMP-'
+            tp = 'RAMP-'
             height = -height
 
-        self.addWaveform(type, 1.0/length, height, offset)
+        self.addWaveform(tp, 1.0/length, height, offset)
 
     def setRampWaveform(self, length, height, offset):
         """
