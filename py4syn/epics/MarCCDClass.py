@@ -243,7 +243,7 @@ class MarCCD(StandardDevice, ICountable):
             ...     marccd.stopCount()
             ...
         """
-        if self.counting == True:
+        if self.counting:
             raise RuntimeError('Already counting')
 
         # Wait for idle state

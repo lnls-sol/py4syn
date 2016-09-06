@@ -25,7 +25,7 @@ class Pilatus(StandardDevice, ICountable):
     >>> from shutil import move
     >>> from py4syn.epics.PilatusClass import Pilatus
     >>> from py4syn.epics.ShutterClass import SimpleShutter
-    >>> 
+    >>>
     >>> def getImage(pv, fileName='image.tif', shutter=''):
     ...     shutter = SimpleShutter(shutter, shutter)
     ...     camera = Pilatus('pilatus', pv)
@@ -70,7 +70,7 @@ class Pilatus(StandardDevice, ICountable):
         """
         Sets the output image file name. The image will be saved with this name
         after the acquisition.
-        
+
         Parameters
         ----------
         name : `string`
@@ -145,7 +145,7 @@ class Pilatus(StandardDevice, ICountable):
     def stopCount(self):
         """
         Stops acquiring the image. This method simply calls :meth:`close`.
-        
+
         See: :meth:`close`
         """
         self.close()
@@ -177,7 +177,7 @@ class Pilatus(StandardDevice, ICountable):
         """
         Blocks until the acquisition completes.
         """
-        if self.acquiring == False:
+        if not self.acquiring:
             return
 
         self.acquireChanged.clear()

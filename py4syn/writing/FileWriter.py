@@ -13,9 +13,9 @@ Python Class for File Writer functions and informations.
 class FileWriter:
     """
     Class to be inherited by all data output classes in order to be transparently used in scan functions.
-    
+
     By default some informations such as username, start and end timestamp, command and others are already filled by the scan routines using the getters and setters bellow.
-    """        
+    """
     def __init__(self, fileName):
         """
         **Constructor**
@@ -24,9 +24,9 @@ class FileWriter:
         ----------
         fileName : `string`
             The output filename
-        """                
+        """
         self.__fileName = fileName
-        
+
         self.__username = ""
         self.__command = ""
         self.__comments = []
@@ -36,17 +36,17 @@ class FileWriter:
         self.__dataSize = 0
         self.__devices = []
         self.__signals = []
-        self.__devicesData = {} 
+        self.__devicesData = {}
         self.__signalsData = {}
-    
+
     @abstractmethod
     def writeHeader(self):
         """
         Abstract method to start the header write process.
 
-        """             
+        """
         raise NotImplementedError
-    
+
     @abstractmethod
     def writeData(self, partial=False, idx=-1):
         """
@@ -58,16 +58,16 @@ class FileWriter:
             If `partial` is **True** it means that only data at position `idx` must be written. Otherwise this function must write all data. 
         idx : `int`
             The data index to be saved
-            
-        """        
+
+        """
         raise NotImplementedError
 
     @abstractmethod
     def close(self):
         """
         Abstract method called at the end of the process.
-            
-        """                
+
+        """
         raise NotImplementedError
 
     def getFileName(self):
@@ -76,7 +76,7 @@ class FileWriter:
 
         Returns
         -------
-        `string`        
+        `string`
         """
         return self.__fileName
 
@@ -86,7 +86,7 @@ class FileWriter:
 
         Returns
         -------
-        `string`        
+        `string`
         """
         return self.__username
 
@@ -96,8 +96,8 @@ class FileWriter:
 
         Returns
         -------
-        `string`        
-        """        
+        `string`
+        """
         return self.__command
 
     def getComments(self):
@@ -106,7 +106,7 @@ class FileWriter:
 
         Returns
         -------
-        `list`        
+        `list`
         """
         return self.__comments
 
@@ -116,8 +116,8 @@ class FileWriter:
 
         Returns
         -------
-        `string`        
-        """        
+        `string`
+        """
         return self.__startDate
 
     def getEndDate(self):
@@ -126,8 +126,8 @@ class FileWriter:
 
         Returns
         -------
-        `string`        
-        """                
+        `string`
+        """
         return self.__endDate
 
     def getDataSize(self):
@@ -136,8 +136,8 @@ class FileWriter:
 
         Returns
         -------
-        `int`        
-        """                
+        `int`
+        """
         return self.__dataSize
 
     def getDevices(self):
@@ -146,8 +146,8 @@ class FileWriter:
 
         Returns
         -------
-        `list`        
-        """                
+        `list`
+        """
         return self.__devices
 
     def getSignals(self):
@@ -156,8 +156,8 @@ class FileWriter:
 
         Returns
         -------
-        `list`        
-        """          
+        `list`
+        """
         return self.__signals
 
     def getDevicesData(self):
@@ -166,8 +166,8 @@ class FileWriter:
 
         Returns
         -------
-        `map`        
-        """  
+        `map`
+        """
         return self.__devicesData
 
     def getSignalsData(self):
@@ -176,8 +176,8 @@ class FileWriter:
 
         Returns
         -------
-        `map`        
-        """          
+        `map`
+        """
         return self.__signalsData
 
     def setUsername(self, value):
@@ -188,7 +188,7 @@ class FileWriter:
         ----------
         value : `string`
             Username information
-        """         
+        """
         self.__username = value
 
     def setCommand(self, value):
@@ -199,7 +199,7 @@ class FileWriter:
         ----------
         value : `string`
             Command information
-        """                 
+        """
         self.__command = value
 
     def setComments(self, value):
@@ -210,7 +210,7 @@ class FileWriter:
         ----------
         value : `list`
             Comments list
-        """                         
+        """
         self.__comments = value
 
     def insertComment(self, value):
@@ -221,7 +221,7 @@ class FileWriter:
         ----------
         value : `string`
             Comment information
-        """                         
+        """
         self.__comments.append(value)
 
     def setStartDate(self, value):
@@ -232,7 +232,7 @@ class FileWriter:
         ----------
         value : `string`
             Date when the process started
-        """                         
+        """
         self.__startDate = value
 
     def setEndDate(self, value):
@@ -243,7 +243,7 @@ class FileWriter:
         ----------
         value : `string`
             Date when the process finished
-        """                                 
+        """
         self.__endDate = value
 
     def setDataSize(self, value):
@@ -254,7 +254,7 @@ class FileWriter:
         ----------
         value : `int`
             Data size
-        """                         
+        """
         self.__dataSize = value
 
     def setDevices(self, value):
@@ -265,7 +265,7 @@ class FileWriter:
         ----------
         value : `list`
             Devices Mnemonic list
-        """            
+        """
         self.__devices = value
 
     def insertDevice(self, value):
@@ -276,7 +276,7 @@ class FileWriter:
         ----------
         value : `string`
             Device mnemonic
-        """           
+        """
         self.__devices.append(value)
 
     def setSignals(self, value):
@@ -287,7 +287,7 @@ class FileWriter:
         ----------
         value : `list`
             Signals Mnemonic list
-        """                    
+        """
         self.__signals = value
 
     def insertSignal(self, value):
@@ -298,9 +298,9 @@ class FileWriter:
         ----------
         value : `string`
             Signal mnemonic
-        """        
+        """
         self.__signals.append(value)
-        
+
     def setDevicesData(self, value):
         """
         Set the devices data map
@@ -309,7 +309,7 @@ class FileWriter:
         ----------
         value : `map`
             Devices data map
-        """                    
+        """
         self.__devicesData.append(value)
 
     def insertDeviceData(self, device, value):
@@ -322,8 +322,8 @@ class FileWriter:
             Device mnemonic
         value : `float, int, str, etc`
             Collected value
-                        
-        """                
+
+        """
         if(device not in self.__devicesData.keys()):
             self.__devicesData[device] = [value]
         else:
@@ -337,7 +337,7 @@ class FileWriter:
         ----------
         value : `map`
             Signals data map
-        """                 
+        """
         self.__signalsData = value
 
     def insertSignalData(self, signal, value):
@@ -350,8 +350,8 @@ class FileWriter:
             Signal mnemonic
         value : `float, int, str, etc`
             Collected value
-                        
-        """        
+
+        """
         if(signal not in self.__signalsData.keys()):
             self.__signalsData[signal] = [value]
         else:

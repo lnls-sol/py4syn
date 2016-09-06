@@ -5,7 +5,7 @@ import collections
 
 def findMonitor():
     for k, v in py4syn.counterDB.items():
-        if(v['monitor'] == True) and (v['enable'] == True):
+        if v['monitor'] and v['enable']:
             return k, v
 
     return None, None
@@ -13,7 +13,7 @@ def findMonitor():
 def createCounter(mnemonic, device, channel=None, monitor=False, factor=1): 
     """
     Add a countable to the counterDB dictionary
-    
+
     Parameters
     ----------
     mnemonic : `string`
@@ -49,14 +49,14 @@ def createCounter(mnemonic, device, channel=None, monitor=False, factor=1):
 
         if(mnemonic in py4syn.counterDB):
             raise Exception("Mnemonic already in use at counterDB. Please check!")
-        
-        mne, pars = findMonitor()                
-        if(monitor == True and mne != None):
+
+        mne, pars = findMonitor()
+        if(monitor and mne is not None):
             raise Exception("There is already one monitor at counterDB. Monitor mnemonic is: "+str(mne)+". Please check.")
-        
-        if(monitor == True and not device.canMonitor()):
+
+        if(monitor and not device.canMonitor()):
             raise Exception("The device cannot be used as a monitor. Please check.")
-        
+
         counterData = {}
         counterData['device'] = device
         counterData['channel'] = channel
@@ -64,7 +64,7 @@ def createCounter(mnemonic, device, channel=None, monitor=False, factor=1):
         counterData['factor'] = factor
         counterData['enable'] = True
         py4syn.counterDB[mnemonic] = counterData
-        
+
     except Exception as e:
         print("\tError: ",e)
 
@@ -76,7 +76,7 @@ def waitAll(monitor=False):
     else:
         for k, v in py4syn.counterDB.items():
             v = py4syn.counterDB[k]
-            if(v['enable'] == True):
+            if v['enable']:
                 dev = v['device']
                 dev.wait()
 
@@ -88,7 +88,7 @@ def stopAll():
 def startCounters(use_monitor=False):
     for k, v in py4syn.counterDB.items():
         dev = v['device']
-        if(not dev.isCounting()) and (v['enable'] == True):
+        if not dev.isCounting() and v['enable']:
             if(use_monitor and not dev.canStopCount()):
                 continue
             dev.startCount()
@@ -99,7 +99,7 @@ def printCountersValue(data):
     print("-"*32)
     for m, v in data.items():
         if(isinstance(v, collections.Iterable)):
-            print("{0:>10} {1:>20}".format(m, v.sum()))        
+            print("{0:>10} {1:>20}".format(m, v.sum()))
         else:
             print("{0:>10} {1:>20}".format(m, int(v)))
     print("-"*32)
@@ -107,29 +107,29 @@ def printCountersValue(data):
 def ctr(t=1, use_monitor=False, wait=True):
     from epics import ca
     k, v = findMonitor()
-    if(k != None and use_monitor):
+    if(k is not None and use_monitor):
         # We have a monitor, so we start the monitor, wait until it finishes, stop all other counters and grab count values
         v['device'].setPresetValue(v['channel'], t)
-        
+
         for kT, vT in py4syn.counterDB.items():
             dev = vT['device']
             if(dev == v['device']):
                 continue
-            if(not dev.isCounting() and dev.canStopCount() and (v['enable'] == True)):
+            if not dev.isCounting() and dev.canStopCount() and v['enable']:
                 dev.setCountTime(ICountable.INFINITY_TIME)
 
         startCounters(use_monitor=True)
         ca.poll()
-        if(wait):  
+        if(wait):
             waitAll(monitor=True)
             stopAll()
             return getCountersData()
     else:
         for k, v in py4syn.counterDB.items():
             dev = v['device']
-            if(not dev.isCounting()) and (v['enable'] == True):
+            if not dev.isCounting() and v['enable']:
                 dev.setCountTime(t)
-        
+
         startCounters()
 
         ca.poll()
@@ -142,22 +142,21 @@ def getCountersData():
     for k, v in py4syn.counterDB.items():
         if (v['enable'] == True):
             dev = v['device']
-            cnt = 0 
-            if(v['channel'] != None):
+            cnt = 0
+            if(v['channel'] is not None):
                 cnt = dev.getValue(channel=v['channel'])
             else:
                 cnt = dev.getValue()
-            
-            data[k] = cnt/(v['factor']*1.0)
-        
-    return data    
 
+            data[k] = cnt/(v['factor']*1.0)
+
+    return data
 
 
 def ct(t=1, use_monitor=False):
     """
     Count all counters available using the given time
-    
+
     Parameters
     ----------
     t : `double`
@@ -166,81 +165,81 @@ def ct(t=1, use_monitor=False):
         If monitor is set to True the process will be by counts and not by time
 
     """
-    data = ctr(t, use_monitor)        
+    data = ctr(t, use_monitor)
     printCountersValue(data)
-   
+
 
 def getActiveCountersNumber():
     """
     Count all counters available using the given time
-    
+
     Returns
     ----------
     `int`
         The number of enabled counters in counterDB
 
     """
-    
+
     cnt = 0
     for k, v in py4syn.counterDB.items():
         v = py4syn.counterDB[k]
-        if(v['enable'] == True):
+        if v['enable']:
             cnt += 1
     return cnt
- 
+
 def disableCounter(mne):
     """
     Disable an specific counter
-    
+
     Parameters
     ----------
     mne : `string`
         The counter mnemonic
 
     """
-    
+
     if(mne not in py4syn.counterDB):
         raise Exception("Counter "+mne+" not found in counterDB. Please check!")
     c = py4syn.counterDB[mne]
     c['enable'] = False
-    
+
 def enableCounter(mne):
     """
     Enable an specific counter
-    
+
     Parameters
     ----------
     mne : `string`
         The counter mnemonic
 
     """
-    
+
     if(mne not in py4syn.counterDB):
         raise Exception("Counter "+mne+" not found in counterDB. Please check!")
     c = py4syn.counterDB[mne]
     c['enable'] = True
-    
+
 if __name__ == "__main__":
     scalerSIM = Scaler("IMX:SCALER", 13, "scalerSIM")
     createCounter("seconds", scalerSIM, 1)
     createCounter("cyberstar", scalerSIM, 13, monitor=True)
-    
+
     ct(1)
     disableCounter("seconds")
     disableCounter("mon")
     ct(10000, use_monitor=True)
-    
+
     #timescan(0.1, delay=0.1)
     '''
-    
+
     import datetime
-    
+
     countTime = 1
-    
+
     s = datetime.datetime.now()
     ct(countTime)
     e = datetime.datetime.now()
-    
+
     print("Elapsed Time: ", e-s)
 
     #scaler.setCountTime(1)
