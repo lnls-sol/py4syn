@@ -26,7 +26,7 @@ class IScannable:
 
         Parameters
         ----------
-        None            
+        None
 
         Returns
         -------
@@ -84,7 +84,7 @@ class IScannable:
         """
 
         raise NotImplementedError
-    
+
     @abstractmethod
     def getHighLimitValue(self):
         """
@@ -99,4 +99,4 @@ class IScannable:
         `double`
         """
 
-        raise NotImplementedError        
+        raise NotImplementedError

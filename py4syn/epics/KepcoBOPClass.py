@@ -13,7 +13,6 @@ from epics.ca import poll
 from numpy import array
 from py4syn.epics.IScannable import IScannable
 from py4syn.epics.StandardDevice import StandardDevice
-from time import monotonic
 
 class KepcoBOP(IScannable, StandardDevice):
     """
@@ -22,7 +21,7 @@ class KepcoBOP(IScannable, StandardDevice):
     Examples
     --------
     >>> from py4syn.epics.KepcoBOPClass import KepcoBOP
-    >>>    
+    >>>
     >>> def configurePower(pv="", name="", voltage=5.0, currentLimit=1.0):
     ...    bop = KepcoBOP(pv, name)
     ...    bop.reset()
@@ -396,7 +395,7 @@ class KepcoBOP(IScannable, StandardDevice):
         waveform may take at least 4 seconds just to upload the program). This method
         adds more points to the current waveform program. It does not overwrite the
         existing program.
-        
+
         Adding points does not execute the program. The method :meth:`waveformStart` must
         be called.
 
