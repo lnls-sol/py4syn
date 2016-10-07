@@ -25,7 +25,7 @@ class Pilatus(StandardDevice, ICountable):
     >>> from shutil import move
     >>> from py4syn.epics.PilatusClass import Pilatus
     >>> from py4syn.epics.ShutterClass import SimpleShutter
-    >>>
+    >>> 
     >>> def getImage(pv, fileName='image.tif', shutter=''):
     ...     shutter = SimpleShutter(shutter, shutter)
     ...     camera = Pilatus('pilatus', pv)
@@ -62,21 +62,79 @@ class Pilatus(StandardDevice, ICountable):
 
         caput(pv + ':FileTemplate', '%s%s\0')
         caput(pv + ':FilePath', '\0')
+        
         self.pvAcquireTime = PV(pv + ':AcquireTime')
-        self.pvFilePath = PV(pv + ':FileName')
+        self.pvAcquirePeriod = PV(pv + ':AcquirePeriod')
+        self.pvFilePath = PV(pv + ':FilePath')
+        self.pvFileName = PV(pv + ':FileName')
+        self.pvFileTemplate = PV(pv + ':FileTemplate')
+        self.pvThreshold = PV(pv + ':ThresholdEnergy')
+        self.pvBeamX = PV(pv + ':BeamX')
+        self.pvBeamY = PV(pv + ':BeamY')
+        self.pvWavelength = PV(pv + ':Wavelength')
+        self.pvStartAngle = PV(pv + ':StartAngle')
+        self.pvAngleIncr = PV(pv + ':AngleIncr')
+        self.pvDetDist = PV(pv + ':DetDist')
+        self.pvNumImages = PV(pv + ':NumImages')
+        self.pvDelayTime = PV(pv + ':DelayTime')
+        self.pvTriggerMode = PV(pv + ':TriggerMode')
+        self.pvDet2Theta = PV(pv + ':Det2Theta')
+
         self.timer = Timer(self.RESPONSE_TIMEOUT)
 
     def setImageName(self, name):
         """
         Sets the output image file name. The image will be saved with this name
         after the acquisition.
-
+        
         Parameters
         ----------
         name : `string`
             The full pathname of the image.
         """
-        self.pvFilePath.put(name + "\0", wait=True)
+        self.pvFileName.put(name + "\0", wait=True)
+
+    def setFilePath(self, path):
+        """
+        Sets the output image file path. The image will be saved in this location
+        after the acquisition.
+        
+        Parameters
+        ----------
+        name : `string`
+            The path of location to save the image.
+        """
+        self.pvFilePath.put(path + "\0", wait=True)
+
+    def getFilePath(self):
+        """
+        Returns the path where image file should be saved.
+        """
+        return self.pvFilePath.get(as_string=True)
+
+    def setFileName(self, name):
+        """
+        Sets the output image file name. The image will be saved with this name
+        after the acquisition.
+        
+        Parameters
+        ----------
+        name : `string`
+            The name of image to save.
+        """
+        self.pvFileName.put(name + "\0", wait=True)
+
+    def getFileName(self):
+        """
+        Returns the name of the image to be saved.
+        """
+        return self.pvFileName.get(as_string=True)
+
+    def setFileTemplate(self, template="%s%s"):
+        self.pvFileTemplate.put(template + "\0", wait=True)
+
+    def getFileTemplate(self):
+        return self.pvFileTemplate.get(as_string=True)
 
     def statusChange(self, value, **kw):
         """
@@ -110,6 +168,23 @@ class Pilatus(StandardDevice, ICountable):
         """
         self.pvAcquireTime.put(t, wait=True)
         self.timer = Timer(t + self.RESPONSE_TIMEOUT)
+
+    def getAcquireTime(self):
+        return self.pvAcquireTime.get()
+
+    def setAcquirePeriod(self, period):
+        """
+        Sets the acquire period.
+
+        Parameters
+        ----------
+        t : `float`
+            Acquisition period
+        """
+        self.pvAcquirePeriod.put(period, wait=True)
+
+    def getAcquirePeriod(self):
+        return self.pvAcquirePeriod.get()
 
     def setPresetValue(self, channel, val):
         """
@@ -145,7 +220,7 @@ class Pilatus(StandardDevice, ICountable):
     def stopCount(self):
         """
         Stops acquiring the image. This method simply calls :meth:`close`.
-
+        
         See: :meth:`close`
         """
         self.close()
@@ -177,7 +252,7 @@ class Pilatus(StandardDevice, ICountable):
         """
         Blocks until the acquisition completes.
         """
-        if not self.acquiring:
+        if self.acquiring == False:
             return
 
         self.acquireChanged.clear()
@@ -187,3 +262,76 @@ class Pilatus(StandardDevice, ICountable):
 
         if self.timer.expired():
             raise RuntimeError('Camera is not answering')
+
+    def setThreshold(self, threshold):
+        self.pvThreshold.put(threshold, wait=True)
+
+    def getThreshold(self):
+        return self.pvThreshold.get()
+
+    def setBeamPosition(self, position=[0,0]):
+        self.pvBeamX.put(position[0], wait=True)
+        self.pvBeamY.put(position[1], wait=True)
+
+    def getBeamPosition(self):
+        return [self.pvBeamX.get(), self.pvBeamY.get()]
+
+    def setWavelength(self, wavelength):
+        self.pvWavelength.put(wavelength, wait=True)
+
+    def getWavelength(self):
+        return self.pvWavelength.get()
+
+    def setStartAngle(self, start):
+        self.pvStartAngle.put(start, wait=True)
+
+    def getStartAngle(self):
+        return self.pvStartAngle.get()
+
+    def setAngleIncr(self, incr):
+        self.pvAngleIncr.put(incr, wait=True)
+
+    def getAngleIncr(self):
+        return self.pvAngleIncr.get()
+
+    def setDetDist(self, distance):
+        self.pvDetDist.put(distance, wait=True)
+
+    def getDetDist(self):
+        return self.pvDetDist.get()
+
+    def setNumImages(self, num):
+        self.pvNumImages.put(num, wait=True)
+
+    def getNumImages(self):
+        return self.pvNumImages.get()
+
+    def setDelayTime(self, delay):
+        self.pvDelayTime.put(delay, wait=True)
+
+    def getDelayTime(self):
+        return self.pvDelayTime.get()
+
+    def setTriggerMode(self, mode):
+        """
+        Trigger mode
+        Parameters
+        ----------
+        mode  : `int`
+            0 : Internal
+            1 : Ext. Enable
+            2 : Ext. Trigger
+            3 : Mult. Trigger
+            4 : Alignment
+        """
+        self.pvTriggerMode.put(mode, wait=True)
+
+    def getTriggerMode(self):
+        return self.pvTriggerMode.get()
+
+    def setDet2Theta(self, det2theta):
+        self.pvDet2Theta.put(det2theta, wait=True)
+
+    def getDet2Theta(self):
+        return self.pvDet2Theta.get()
+
