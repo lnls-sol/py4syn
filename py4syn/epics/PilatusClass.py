@@ -252,7 +252,7 @@ class Pilatus(StandardDevice, ICountable):
         """
         Blocks until the acquisition completes.
         """
-        if self.acquiring == False:
+        if not self.acquiring:
             return
 
         self.acquireChanged.clear()
