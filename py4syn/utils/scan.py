@@ -291,8 +291,10 @@ def plot():
     global XFIELD
     global YFIELD
     global FIT_SCAN
-    p = Plotter("Plot", xlabel=XFIELD, ylabel=YFIELD, line_style="-",
-                line_marker=".", line_color="blue", daemon=True)
+    p = Plotter(title="Plot", daemon=True)
+    p.createAxis("", label=YFIELD, xlabel=XFIELD, ylabel=YFIELD,
+                 grid=True, line_style="-", line_marker=".",
+                 line_color="blue")
     x = SCAN_DATA[XFIELD]
     y = SCAN_DATA[YFIELD]
     p.plot(x, y)

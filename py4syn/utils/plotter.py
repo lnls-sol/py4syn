@@ -175,7 +175,7 @@ class Plotter(object):
     This Plotter spawn another process responsible for the data plot and graph update.
     Priority should be between 0 (default) and 19 (maximum allowed).
     """
-    def __init__(self, title, daemon=True, priority=0):#, **kwargs):
+    def __init__(self, title, daemon=True, priority=0):
         """
         **Constructor**
 
@@ -186,8 +186,6 @@ class Plotter(object):
         daemon : `bool`
             This parameters indicates if the spawned process should be daemon or not
             In general if daemon is set to **True** as the script ends it will close the graph, otherwise the script will end only when the graph is closed
-        kwargs : dict
-            Added to avoid compatibility issues.
         """
         self.plotsCount = 0
         ctx = multiprocessing.get_context('spawn')  # @UndefinedVariable
