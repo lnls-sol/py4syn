@@ -17,6 +17,9 @@ from enum import Enum
 from epics import PV
 from py4syn.epics.PylonCCDClass import PylonCCD
 
+TIMEOUT_SECONDS = 10
+WAIT_ACQUIRING  = 0.001
+
 class PylonCCDTriggered(PylonCCD):
     """
     Python class to help configuration and control of Charge-Coupled Devices
@@ -49,6 +52,8 @@ class PylonCCDTriggered(PylonCCD):
         # Operation Mode of readout control
         self.readoutMode = readoutMode
         PylonCCD.__init__(self, pvName, mnemonic)
+        # Configurable timeout to control triggers
+        self.triggerTimeout = None
 
     def isDone(self):
         # If 'Output Signal' of Trigger in LF is 'Waiting For Trigger',
@@ -90,9 +95,10 @@ class PylonCCDTriggered(PylonCCD):
         self.pvAcquire.put(1)
 
     def waitFinishAcquiring(self):
-        while(not self._done):
-            #print('wait...')
-            sleep(0.001)
+        accumulation_wait = 0
+        while(not self._done and accumulation_wait < self.getTriggerTimeout()):
+            accumulation_wait += WAIT_ACQUIRING
+            sleep(WAIT_ACQUIRING)
 
     def wait(self):
         """
@@ -110,7 +116,7 @@ class PylonCCDTriggered(PylonCCD):
 
         """
         self.acquire(True)
-    
+
     def isCounting(self):
         """
         Abstract method to check if the device is counting or not.
@@ -120,3 +126,13 @@ class PylonCCDTriggered(PylonCCD):
         out : `bool`
         """
         return (not self.isDone())
+
+    def setTriggerTimeout(self, timeout):
+        self.triggerTimeout = timeout
+
+    def getTriggerTimeout(self):
+        if (self.triggerTimeout is None):
+            return TIMEOUT_SECONDS
+        else:
+            return self.triggerTimeout
+
