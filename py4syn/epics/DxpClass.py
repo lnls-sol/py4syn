@@ -12,47 +12,51 @@ from epics import PV, ca
 from py4syn.epics.StandardDevice import StandardDevice
 from py4syn.epics.ICountable import ICountable
 
+
 class Dxp(StandardDevice, ICountable):
 
     def onValChange(self, value, **kw):
         self._counting = value
 
-    #CONSTRUCTOR OF DXP CLASS
-    def __init__(self, pvDxpName="", dxpType="mca", detectors = 4, mnemonic=""):
+    # CONSTRUCTOR OF DXP CLASS
+    def __init__(self, pvDxpName="", dxpType="mca", detectors=4, mnemonic=""):
         StandardDevice.__init__(self, mnemonic)
         self._counting = False
 
         # determines the exposition time (live time)
         self.pvDxpTime = PV(pvDxpName+":PresetLive.VAL")
         # determines the start of counting
-        self.pvDxpEraseStart = PV(pvScalerDxpName+":EraseStart.VAL")
+        self.pvDxpEraseStart = PV(pvDxpName+":EraseStart.VAL")
         # determines mode of counting (Live Time, Real Time, ...)
-        self.pvDxpPresetMode = PV(pvScalerDxpName+":PresetMode.VAL")
+        self.pvDxpPresetMode = PV(pvDxpName+":PresetMode.VAL")
         # TODO:maybe this is not necessary
-        self.pvDxpStop = PV(pvScalerDxpName+":StopAll.VAL")
+        self.pvDxpStop = PV(pvDxpName+":StopAll.VAL")
         # store all detectors
         self.pvDxpDetectors = []
-        for d in range(1,detectors+1):
-            self.pvDxpDetectors.append(PV(pvScalerDxpName+":"+dxpType+d))
+        for d in range(1, detectors+1):
+            self.pvDxpDetectors.append(PV(pvDxpName+":"+dxpType+d))
 
-        #TODO: verify if onValchange is working correctly
-        self.pvDxpAcquiring = PV(pvScalerDxpName+":Aqcquiring",onValChange)
+        # TODO: verify if onValchange is working correctly
+        self.pvDxpAcquiring = PV(pvDxpName+":Acquiring", self.onValChange)
         self.detectors = 4
         self.dxpType = dxpType
 
-#        self.pvScalerTP = PV(pvScalerName+".TP") # envia para o IOC do cintilador o tempo de exposicao
-
-#        self.pvScalerCNT = PV(pvScalerName+".CNT") # envia para o IOC o disparo da medida
-#        self.pvScalerFREQ = PV(pvScalerName+".FREQ")                
-#        self.pvScalerVAL = PV(pvScalerName+".VAL", self.onValChange) 
+        # envia para o IOC do cintilador o tempo de exposicao
+#        self.pvScalerTP = PV(pvScalerName+".TP")
+        # envia para o IOC o disparo da medida
+#        self.pvScalerCNT = PV(pvScalerName+".CNT")
+#        self.pvScalerFREQ = PV(pvScalerName+".FREQ")
+#        self.pvScalerVAL = PV(pvScalerName+".VAL", self.onValChange)
 
 #        if(self.pvScalerCNT.get() == 0 and self.pvScalerVAL.get() == 0):
 #            self._counting = False
 
 #        for i in range(1,2+numberOfChannels):
-#            self.pvScalerCounters.append(PV(pvScalerName+".S"+str(i), auto_monitor=False)) # valor do contador i
- #           self.pvScalerGates.append(PV(pvScalerName+".G"+str(i)))
- #           self.pvScalerPresets.append(PV(pvScalerName+".PR"+str(i)))
+# valor do contador i
+#            self.pvScalerCounters.append(PV(pvScalerName+".S"+str(i),
+#                                         auto_monitor=False))
+#           self.pvScalerGates.append(PV(pvScalerName+".G"+str(i)))
+#           self.pvScalerPresets.append(PV(pvScalerName+".PR"+str(i)))
 
 #    def setPresetValue(self, channel, v):
 #        for g in self.pvScalerGates:
@@ -61,7 +65,6 @@ class Dxp(StandardDevice, ICountable):
 #            pr.put(0)
 
 #        self.pvScalerPresets[channel-1].put(v)
-         
 
     def setCountTime(self, time):
         """
@@ -82,7 +85,7 @@ class Dxp(StandardDevice, ICountable):
 #            g.put(0)
 #        for pr in self.pvScalerPresets:
 #            pr.put(0)
-            
+
 #        self.pvScalerGates[0].put(1)
 #        self.pvScalerTP.put(time)
 
@@ -123,10 +126,10 @@ class Dxp(StandardDevice, ICountable):
         while(self._counting):
             ca.poll()
 
-    def getIntensityCheck(self):
-        self.setCountStart()
-        self.wait()
-        return self.getIntensity()
+#    def getIntensityCheck(self):
+#        self.setCountStart()
+#        self.wait()
+#        return self.getIntensity()
 
     def canMonitor(self):
         return True
