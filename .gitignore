@@ -64,3 +64,4 @@ target/
 
 #Vi(m) temporary files
 *.swp
+*.swo
