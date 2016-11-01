@@ -1,16 +1,17 @@
-"""Spectro Class
+"""Dxp Class
 
-Python Class for EPICS Spectro Control.
+Python Class for EPICS Dxp Control.
 
 :platform: Unix
 :synopsis: Python Class for EPICS Spectro control.
 
-.. moduleauthor:: Gabriel Fedel <gabirel.fedel@lnls.br>
+.. moduleauthor:: Gabriel Fedel <gabriel.fedel@lnls.br>
     .. note:: /06/2016 [gabrielfedel]  first version released
 """
 from epics import PV, ca
 from py4syn.epics.StandardDevice import StandardDevice
 from py4syn.epics.ICountable import ICountable
+import numpy as np
 
 
 class Dxp(StandardDevice, ICountable):
@@ -103,8 +104,8 @@ class Dxp(StandardDevice, ICountable):
 #        self.pvScalerCNT.put(0)
 #        self.pvScalerVAL.put(1)
 
-    def getIntensity(self, channel=1):
-        return self.pvDxpDetectors[channel].get()
+    def getIntensity(self, channel = 1, asnumpy = True):
+        return self.pvDxpDetectors[channel].get(as_numpy = asnumpy)
 #        return self.pvScalerCounters[channel-1].get()
 
     def getIntensityInTime(self, time, channel=2):
