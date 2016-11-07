@@ -36,12 +36,13 @@ class Dxp(StandardDevice, ICountable):
         self.pvDxpChannels = []
         # store ROIs
         self.pvDxpRois = []
+
         for c in range(1, channels+1):
-            self.pvDxpChannels.append(PV(pvDxpName+":"+dxpType+c))
+            self.pvDxpChannels.append(PV(pvDxpName+":"+dxpType+str(c)))
             self.pvDxpRois.append([])
             # storeing each ROI in your channel
             for r in range(0,numberOfRois):
-                self.pvDxpRois[c-1].append(PV(pvDxpName+":"+dxpType+c+'.R'+r))
+                self.pvDxpRois[c-1].append(PV(pvDxpName+":"+dxpType+str(c)+'.R'+str(r)))
 
         # TODO: verify if onValchange is working correctly
         self.pvDxpAcquiring = PV(pvDxpName+":Acquiring", self.onValChange)
@@ -76,12 +77,16 @@ class Dxp(StandardDevice, ICountable):
     def setCountStop(self):
         self.pvDxpStop.put(1)
 
-    def getIntensity(self, channel = 1, asnumpy = True):
-        '''Return intensity
+    def getValueChannel(self, channel, asnumpy = True, **kwargs):
+        """Return intensity
         channel is on format mcaC.Rr, where C is  the channel and
-        r is the ROI'''
-        return self.pvDxpChannels[channel].get(as_numpy = asnumpy)
-#        return self.pvScalerCounters[channel-1].get()
+        r is the ROI"""
+        c = int(channel[3]) - 1 
+        if(len(channel) > 4):
+           r = int(channel[5])
+           return self.pvDxpRois[c][r]
+        else:
+            return self.pvDxpChannels[c].get(as_numpy = asnumpy)
 
     def getIntensityInTime(self, time, channel=2):
         self.setCountTime(time)
@@ -103,12 +108,12 @@ class Dxp(StandardDevice, ICountable):
         return True
 
     def getValue(self, **kwargs):
-         """
+        """
         This is a dummy method that always returns zero, which is part of the
         :class:`py4syn.epics.ICountable` interface. Dxo does not return
         a value while scanning. Instead, it stores a mca file with reult .
         """
-       return 0
+        return 0
 
     def isCounting(self):
         return self._counting
@@ -121,3 +126,7 @@ class Dxp(StandardDevice, ICountable):
 
     def setPresetValue(self, channel, val):
         pass
+
+    def close(self):
+        """Stops an ongoing acquisition, if any, and puts the EPICS IOC in idle state."""
+        self.pvDxpStop.put(1, wait=True)
