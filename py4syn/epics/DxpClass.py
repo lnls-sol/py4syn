@@ -20,7 +20,7 @@ class Dxp(StandardDevice, ICountable):
         self._counting = value
 
     # CONSTRUCTOR OF DXP CLASS
-    def __init__(self, pvDxpName="", dxpType="mca", detectors=4, mnemonic=""):
+    def __init__(self, pvDxpName="", dxpType="mca", channels=4, mnemonic="",numberOfRois=32 ):
         StandardDevice.__init__(self, mnemonic)
         self._counting = False
 
@@ -32,40 +32,22 @@ class Dxp(StandardDevice, ICountable):
         self.pvDxpPresetMode = PV(pvDxpName+":PresetMode.VAL")
         # TODO:maybe this is not necessary
         self.pvDxpStop = PV(pvDxpName+":StopAll.VAL")
-        # store all detectors
-        self.pvDxpDetectors = []
-        for d in range(1, detectors+1):
-            self.pvDxpDetectors.append(PV(pvDxpName+":"+dxpType+d))
+        # store all channels
+        self.pvDxpChannels = []
+        # store ROIs
+        self.pvDxpRois = []
+        for c in range(1, channels+1):
+            self.pvDxpChannels.append(PV(pvDxpName+":"+dxpType+c))
+            self.pvDxpRois.append([])
+            # storeing each ROI in your channel
+            for r in range(0,numberOfRois):
+                self.pvDxpRois[c-1].append(PV(pvDxpName+":"+dxpType+c+'.R'+r))
 
         # TODO: verify if onValchange is working correctly
         self.pvDxpAcquiring = PV(pvDxpName+":Acquiring", self.onValChange)
-        self.detectors = 4
+        self.channels = channels
         self.dxpType = dxpType
 
-        # envia para o IOC do cintilador o tempo de exposicao
-#        self.pvScalerTP = PV(pvScalerName+".TP")
-        # envia para o IOC o disparo da medida
-#        self.pvScalerCNT = PV(pvScalerName+".CNT")
-#        self.pvScalerFREQ = PV(pvScalerName+".FREQ")
-#        self.pvScalerVAL = PV(pvScalerName+".VAL", self.onValChange)
-
-#        if(self.pvScalerCNT.get() == 0 and self.pvScalerVAL.get() == 0):
-#            self._counting = False
-
-#        for i in range(1,2+numberOfChannels):
-# valor do contador i
-#            self.pvScalerCounters.append(PV(pvScalerName+".S"+str(i),
-#                                         auto_monitor=False))
-#           self.pvScalerGates.append(PV(pvScalerName+".G"+str(i)))
-#           self.pvScalerPresets.append(PV(pvScalerName+".PR"+str(i)))
-
-#    def setPresetValue(self, channel, v):
-#        for g in self.pvScalerGates:
-#            g.put(0)
-#        for pr in self.pvScalerPresets:
-#            pr.put(0)
-
-#        self.pvScalerPresets[channel-1].put(v)
 
     def setCountTime(self, time):
         """
@@ -82,30 +64,23 @@ class Dxp(StandardDevice, ICountable):
         """
         self.pvDxpTime.put(time)
 
-#        for g in self.pvScalerGates:
-#            g.put(0)
-#        for pr in self.pvScalerPresets:
-#            pr.put(0)
-
-#        self.pvScalerGates[0].put(1)
-#        self.pvScalerTP.put(time)
 
     def getCountTime(self):
         return self.pvDxpTime.get()
 
     def setCountStart(self):
         self._counting = True
+        # TODO: testar para verificar qual melhor maneira, utilizando EraseStart ou caget
         self.pvDxpEraseStart.put(1)
-#        self.pvScalerVAL.put(0)
-#        self.pvScalerCNT.put(1)
 
     def setCountStop(self):
         self.pvDxpStop.put(1)
-#        self.pvScalerCNT.put(0)
-#        self.pvScalerVAL.put(1)
 
     def getIntensity(self, channel = 1, asnumpy = True):
-        return self.pvDxpDetectors[channel].get(as_numpy = asnumpy)
+        '''Return intensity
+        channel is on format mcaC.Rr, where C is  the channel and
+        r is the ROI'''
+        return self.pvDxpChannels[channel].get(as_numpy = asnumpy)
 #        return self.pvScalerCounters[channel-1].get()
 
     def getIntensityInTime(self, time, channel=2):
@@ -114,23 +89,12 @@ class Dxp(StandardDevice, ICountable):
         self.wait()
         return self.getIntensity(channel)
 
-#        self.setCountTime(tempoMedida)
-#        self.setCountStart()
-#        self.wait()
-#        self.setCountStop()
-#        return self.getIntensity(channel)
-
     def isCountRunning(self):
         return (self.pvDxpAcquiring.get())
 
     def wait(self):
         while(self._counting):
             ca.poll()
-
-#    def getIntensityCheck(self):
-#        self.setCountStart()
-#        self.wait()
-#        return self.getIntensity()
 
     def canMonitor(self):
         return True
@@ -139,9 +103,12 @@ class Dxp(StandardDevice, ICountable):
         return True
 
     def getValue(self, **kwargs):
-        if(kwargs):
-            return self.getIntensity(kwargs['channel'])
-        return self.getIntensity()
+         """
+        This is a dummy method that always returns zero, which is part of the
+        :class:`py4syn.epics.ICountable` interface. Dxo does not return
+        a value while scanning. Instead, it stores a mca file with reult .
+        """
+       return 0
 
     def isCounting(self):
         return self._counting
@@ -151,3 +118,6 @@ class Dxp(StandardDevice, ICountable):
 
     def stopCount(self):
         self.setCountStop()
+
+    def setPresetValue(self, channel, val):
+        pass
