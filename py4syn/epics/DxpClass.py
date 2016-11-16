@@ -109,7 +109,27 @@ class Dxp(StandardDevice, ICountable):
             # TODO on this way returns the points. Find a better way
             # That work for many points, probably remove asnumpy
             #return self.pvDxpChannels[c].get(as_numpy = asnumpy)
+            self.saveSpectrum(self, channel, kwargs)
             return 1.0
+
+
+    # save the spectrum intensity in a mca file
+    def saveSpectrum(self, channel, **kwargs):
+        fileName = getOutput()
+        idx = 0
+        if(fileName):
+            spectrum = self.pvDxpChannels[channel].get(as_numpy=True)
+            if fileName[-4] == '.':
+                while os.path.exists(fileName.split('.')[0] + \
+                        '_%s%d_%04d.mca'%(self.dxpType,ch,idx)):
+                    idx += 1
+                fileName = fileName.split('.')[0] + '_%s%d_%04d.mca'%(self.dxpType, ch, idx)
+            else:
+                while os.path.exists(fileName + 'dxp_%s%d_%04d.mca'%(self.dxpType, ch,idx)):
+                    idx += 1
+                fileName = fileName + 'dxp_%s%d_%04d.mca'%(ch,idx)
+        savetxt(fileName, spectrum, fmt='%d')
+
 
 # TODO: remove after confirm that is not necessary
 #    def getIntensityInTime(self, time, channel=2):
