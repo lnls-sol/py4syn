@@ -13,7 +13,7 @@ from epics import PV, ca
 from py4syn.epics.StandardDevice import StandardDevice
 from py4syn.epics.ICountable import ICountable
 import numpy as np
-from threading import Eventa
+from threading import Event
 from py4syn.utils.timer import Timer
 
 
@@ -21,7 +21,7 @@ class Dxp(StandardDevice, ICountable):
 
 
     # CONSTRUCTOR OF DXP CLASS
-    def __init__(self, mnemonic, numberOfChannels=4, numberOfRois=32, pv, dxpType="mca", responseTimeout = 15 ):
+    def __init__(self, mnemonic, numberOfChannels=4, numberOfRois=32, pv=None, dxpType="mca", responseTimeout = 15 ):
         """ Constructor
         responseTimeout : how much time to wait dxp answer
         """
@@ -57,7 +57,7 @@ class Dxp(StandardDevice, ICountable):
             for r in range(0,numberOfRois):
                 self.pvDxpRois[c].append(PV(pv+":"+dxpType+str(c+1)+'.R'+str(r)))
 
-        self.pvDxpAcquiring = PV(pv+":Acquiring", self.onValChange)
+        self.pvDxpAcquire = PV(pv+":Acquiring")
         self.pvDxpAcquire.add_callback(self.statusChange)
         self.channels = numberOfChannels
         self.dxpType = dxpType
@@ -87,9 +87,9 @@ class Dxp(StandardDevice, ICountable):
         -------
         out : None
         """
-        for i in range(0,self.numberOfChannels):
-            self.pvAcquireTime[i].put(time, wait=True)
-        self.timer = Timer(time + self.responseTime)
+        for i in range(0,self.channels):
+            self.pvDxpAcquireTime[i].put(time, wait=True)
+        self.timer = Timer(time + self.responseTimeout)
 
     def getCountTime(self):
         return self.pvDxpTime.get()
@@ -97,7 +97,7 @@ class Dxp(StandardDevice, ICountable):
     def setCountStop(self):
         self.pvDxpStop.put(1, wait = True)
 
-    def getValueChannel(self, channel, asnumpy = True, **kwargs):
+    def getValueChannel(self, channel, **kwargs):
         """Return intensity
         channel is on format mcaC.Rr, where C is  the channel and
         r is the ROI"""
@@ -108,7 +108,8 @@ class Dxp(StandardDevice, ICountable):
         else:
             # TODO on this way returns the points. Find a better way
             # That work for many points, probably remove asnumpy
-            return self.pvDxpChannels[c].get(as_numpy = asnumpy)
+            #return self.pvDxpChannels[c].get(as_numpy = asnumpy)
+            return 1.0
 
 # TODO: remove after confirm that is not necessary
 #    def getIntensityInTime(self, time, channel=2):
@@ -118,7 +119,7 @@ class Dxp(StandardDevice, ICountable):
 #        return self.getIntensity(channel)
 
     def isCountRunning(self):
-        return (self.pvDxpAcquiring.get())
+        return (self.pvDxpAcquire.get())
 
     def wait(self):
         """
@@ -143,7 +144,7 @@ class Dxp(StandardDevice, ICountable):
         return False
 
     def canStopCount(self):
-         """
+        """
         Returns true indicating that Dxp has a stop command.
         """
         return True
@@ -155,7 +156,7 @@ class Dxp(StandardDevice, ICountable):
         a value while scanning. Instead, it stores a mca file with result .
         """
         if(kwargs):
-            return self.getValueChannel(kwargs['channel'], kwargs['asnumpy'])
+            return self.getValueChannel(kwargs['channel'])
         return self.getValueChannel()
 
     def isCounting(self):
@@ -169,7 +170,7 @@ class Dxp(StandardDevice, ICountable):
             raise RuntimeError('Already counting')
 
         self.acquiring = True
-        self.pvEraseStart.put(1)
+        self.pvDxpEraseStart.put(1)
         # resets initial time value
         self.timer.mark()
 
