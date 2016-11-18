@@ -15,19 +15,22 @@ from py4syn.epics.ICountable import ICountable
 import numpy as np
 from threading import Event
 from py4syn.utils.timer import Timer
+import os
 
 
 class Dxp(StandardDevice, ICountable):
 
 
     # CONSTRUCTOR OF DXP CLASS
-    def __init__(self, mnemonic, numberOfChannels=4, numberOfRois=32, pv=None, dxpType="mca", responseTimeout = 15 ):
+    def __init__(self, mnemonic, output, numberOfChannels=4, numberOfRois=32, pv=None,
+                 dxpType="mca", responseTimeout = 15):
         """ Constructor
         responseTimeout : how much time to wait dxp answer
         """
         super().__init__(mnemonic)
         self.acquireChanged = Event()
         self.acquiring = False
+        self.fileName = output 
 
         # TODO: removes after teste
         # determines the exposition time (live time)
@@ -97,10 +100,11 @@ class Dxp(StandardDevice, ICountable):
     def setCountStop(self):
         self.pvDxpStop.put(1, wait = True)
 
-    def getValueChannel(self, channel, **kwargs):
+    def getValueChannel(self, **kwargs):
         """Return intensity
         channel is on format mcaC.Rr, where C is  the channel and
         r is the ROI"""
+        channel = kwargs['channel']
         c = int(channel[3]) - 1 
         if(len(channel) > 4):
            r = int(channel[5])
@@ -109,16 +113,17 @@ class Dxp(StandardDevice, ICountable):
             # TODO on this way returns the points. Find a better way
             # That work for many points, probably remove asnumpy
             #return self.pvDxpChannels[c].get(as_numpy = asnumpy)
-            self.saveSpectrum(self, channel, kwargs)
+            self.saveSpectrum(c, **kwargs)
             return 1.0
 
 
     # save the spectrum intensity in a mca file
-    def saveSpectrum(self, channel, **kwargs):
-        fileName = getOutput()
+    def saveSpectrum(self, ch, **kwargs):
+        #fileName = getOutput()
+        fileName = self.fileName
         idx = 0
         if(fileName):
-            spectrum = self.pvDxpChannels[channel].get(as_numpy=True)
+            spectrum = self.pvDxpChannels[ch].get(as_numpy=True)
             if fileName[-4] == '.':
                 while os.path.exists(fileName.split('.')[0] + \
                         '_%s%d_%04d.mca'%(self.dxpType,ch,idx)):
@@ -127,8 +132,9 @@ class Dxp(StandardDevice, ICountable):
             else:
                 while os.path.exists(fileName + 'dxp_%s%d_%04d.mca'%(self.dxpType, ch,idx)):
                     idx += 1
-                fileName = fileName + 'dxp_%s%d_%04d.mca'%(ch,idx)
-        savetxt(fileName, spectrum, fmt='%d')
+                fileName = fileName + 'dxp_%s%d_%04d.mca'%(self.dxpType,ch,idx)
+        np.savetxt(fileName, spectrum, fmt='%f')
+
 
 
 # TODO: remove after confirm that is not necessary
@@ -176,7 +182,7 @@ class Dxp(StandardDevice, ICountable):
         a value while scanning. Instead, it stores a mca file with result .
         """
         if(kwargs):
-            return self.getValueChannel(kwargs['channel'])
+            return self.getValueChannel(**kwargs)
         return self.getValueChannel()
 
     def isCounting(self):
