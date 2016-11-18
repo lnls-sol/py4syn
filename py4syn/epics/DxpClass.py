@@ -6,10 +6,11 @@ Python Class for EPICS Dxp Control.
 :synopsis: Python Class for EPICS Spectro control.
 
 .. moduleauthor:: Gabriel Fedel <gabriel.fedel@lnls.br>
-.. based on dxpclass from Juliano Murari and Pilatus Class from Henrique Almeida
-    .. note:: /10/2016 [gabrielfedel]  first version released
+.. based on dxpclass from Juliano Murari and Pilatus Class from i
+.. Henrique Almeida
+    .. note:: 10/18/2016 [gabrielfedel]  first version released
 """
-from epics import PV, ca
+from epics import PV
 from py4syn.epics.StandardDevice import StandardDevice
 from py4syn.epics.ICountable import ICountable
 import numpy as np
@@ -19,22 +20,17 @@ import os
 
 
 class Dxp(StandardDevice, ICountable):
-
-
     # CONSTRUCTOR OF DXP CLASS
-    def __init__(self, mnemonic, output, numberOfChannels=4, numberOfRois=32, pv=None,
-                 dxpType="mca", responseTimeout = 15):
+    def __init__(self, mnemonic, output, numberOfChannels=4, numberOfRois=32,
+                 pv=None, dxpType="mca", responseTimeout=15):
         """ Constructor
         responseTimeout : how much time to wait dxp answer
         """
         super().__init__(mnemonic)
         self.acquireChanged = Event()
         self.acquiring = False
-        self.fileName = output 
+        self.fileName = output
 
-        # TODO: removes after teste
-        # determines the exposition time (live time)
-        #self.pvDxpTime = PV(pv+":PresetLive.VAL")
         # determines the start of counting
         self.pvDxpEraseStart = PV(pv+":EraseStart.VAL")
         # determines mode of counting (Live Time, Real Time, ...)
@@ -49,16 +45,17 @@ class Dxp(StandardDevice, ICountable):
         # store Acquire Time for each channel
         self.pvDxpAcquireTime = []
 
-
         for c in range(0, numberOfChannels):
             # store each channel
             self.pvDxpChannels.append(PV(pv+":"+dxpType+str(c+1)))
             # for each channel store the PV for AcquireTime
-            self.pvDxpAcquireTime.append(PV(pv+":" + dxpType + "%d.PLTM" % (c+1)))
+            self.pvDxpAcquireTime.append(PV(pv+":" + dxpType + "%d.PLTM"
+                                         % (c+1)))
             self.pvDxpRois.append([])
             # storeing each ROI in your channel
-            for r in range(0,numberOfRois):
-                self.pvDxpRois[c].append(PV(pv+":"+dxpType+str(c+1)+'.R'+str(r)))
+            for r in range(0, numberOfRois):
+                self.pvDxpRois[c].append(PV(pv+":"+dxpType+str(c+1)+'.R'
+                                         + str(r)))
 
         self.pvDxpAcquire = PV(pv+":Acquiring")
         self.pvDxpAcquire.add_callback(self.statusChange)
@@ -90,7 +87,7 @@ class Dxp(StandardDevice, ICountable):
         -------
         out : None
         """
-        for i in range(0,self.channels):
+        for i in range(0, self.channels):
             self.pvDxpAcquireTime[i].put(time, wait=True)
         self.timer = Timer(time + self.responseTimeout)
 
@@ -98,51 +95,41 @@ class Dxp(StandardDevice, ICountable):
         return self.pvDxpTime.get()
 
     def setCountStop(self):
-        self.pvDxpStop.put(1, wait = True)
+        self.pvDxpStop.put(1, wait=True)
 
     def getValueChannel(self, **kwargs):
         """Return intensity
         channel is on format mcaC.Rr, where C is  the channel and
         r is the ROI"""
         channel = kwargs['channel']
-        c = int(channel[3]) - 1 
+        c = int(channel[3]) - 1
         if(len(channel) > 4):
-           r = int(channel[5])
-           return self.pvDxpRois[c][r]
+            r = int(channel[5])
+            return self.pvDxpRois[c][r]
         else:
-            # TODO on this way returns the points. Find a better way
-            # That work for many points, probably remove asnumpy
-            #return self.pvDxpChannels[c].get(as_numpy = asnumpy)
             self.saveSpectrum(c, **kwargs)
             return 1.0
 
-
     # save the spectrum intensity in a mca file
     def saveSpectrum(self, ch, **kwargs):
-        #fileName = getOutput()
         fileName = self.fileName
         idx = 0
         if(fileName):
             spectrum = self.pvDxpChannels[ch].get(as_numpy=True)
             if fileName[-4] == '.':
-                while os.path.exists(fileName.split('.')[0] + \
-                        '_%s%d_%04d.mca'%(self.dxpType,ch,idx)):
+                while os.path.exists(fileName.split('.')[0] +
+                                     '_%s%d_%04d.mca' %
+                                     (self.dxpType, ch, idx)):
                     idx += 1
-                fileName = fileName.split('.')[0] + '_%s%d_%04d.mca'%(self.dxpType, ch, idx)
+                fileName = fileName.split('.')[0] + '_%s%d_%04d.mca' % \
+                                                    (self.dxpType, ch, idx)
             else:
-                while os.path.exists(fileName + 'dxp_%s%d_%04d.mca'%(self.dxpType, ch,idx)):
+                while os.path.exists(fileName + 'dxp_%s%d_%04d.mca' %
+                                     (self.dxpType, ch, idx)):
                     idx += 1
-                fileName = fileName + 'dxp_%s%d_%04d.mca'%(self.dxpType,ch,idx)
+                fileName = fileName + 'dxp_%s%d_%04d.mca' % \
+                                      (self.dxpType, ch, idx)
         np.savetxt(fileName, spectrum, fmt='%f')
-
-
-
-# TODO: remove after confirm that is not necessary
-#    def getIntensityInTime(self, time, channel=2):
-#        self.setCountTime(time)
-#        self.setCountStart()
-#        self.wait()
-#        return self.getIntensity(channel)
 
     def isCountRunning(self):
         return (self.pvDxpAcquire.get())
@@ -151,7 +138,7 @@ class Dxp(StandardDevice, ICountable):
         """
         Blocks until the acquisition completes.
         """
-        if self.acquiring == False:
+        if self.acquiring is False:
             return
 
         self.acquireChanged.clear()
@@ -163,7 +150,6 @@ class Dxp(StandardDevice, ICountable):
 
         if self.timer.expired():
             raise RuntimeError('DXP is not answering')
-
 
     def canMonitor(self):
         """ Returns false indcating Dxp cannot be use as a counter monitor"""
@@ -208,5 +194,6 @@ class Dxp(StandardDevice, ICountable):
         pass
 
     def close(self):
-        """Stops an ongoing acquisition, if any, and puts the EPICS IOC in idle state."""
+        """Stops an ongoing acquisition, if any, and puts the EPICS IOC in
+        idle state."""
         self.pvDxpStop.put(1, wait=True)
