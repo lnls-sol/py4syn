@@ -116,19 +116,12 @@ class Dxp(StandardDevice, ICountable):
         idx = 0
         if(fileName):
             spectrum = self.pvDxpChannels[ch].get(as_numpy=True)
-            if fileName[-4] == '.':
-                while os.path.exists(fileName.split('.')[0] +
-                                     '_%s%d_%04d.mca' %
-                                     (self.dxpType, ch, idx)):
-                    idx += 1
-                fileName = fileName.split('.')[0] + '_%s%d_%04d.mca' % \
-                                                    (self.dxpType, ch, idx)
-            else:
-                while os.path.exists(fileName + 'dxp_%s%d_%04d.mca' %
-                                     (self.dxpType, ch, idx)):
-                    idx += 1
-                fileName = fileName + 'dxp_%s%d_%04d.mca' % \
-                                      (self.dxpType, ch, idx)
+            prefix = fileName.split('.')[0]
+            while os.path.exists('%s_%s%d_%04d.mca' % (prefix, self.dxpType,
+                                                       ch, idx)):
+                idx += 1
+            fileName = '%s_%s%d_%04d.mca' % \
+                       (prefix, self.dxpType, ch, idx)
         np.savetxt(fileName, spectrum, fmt='%f')
 
     def isCountRunning(self):
