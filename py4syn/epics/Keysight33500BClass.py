@@ -98,6 +98,11 @@ class Keysight33500B(StandardDevice, IScannable):
 
         # For tests
         self._done = True
+        self.waitTime = 0.5
+
+
+    def getRealPosition(self):
+        return self.getValue()
 
 
     def getValue(self):
@@ -112,7 +117,11 @@ class Keysight33500B(StandardDevice, IScannable):
             - **1**  -- Active keysight 33500B;
             - **0**  -- Inactive keysight 33500B.
         """
-        return self.pvVoltage_RBV.get()
+        return self.pvVoltageOffset_RBV.get()
+
+
+    def setAbsolutePosition(self, p, wait=True):
+        self.setValue(p, wait)
 
 
     def setValue(self, v, wait=True):
@@ -127,7 +136,15 @@ class Keysight33500B(StandardDevice, IScannable):
             - **1**  -- Active keysight 33500B;
             - **0**  -- Inactive keysight 33500B.
         """
-        self.pvVoltage.put(v, wait=wait)
+        if (v < self.getLowLimitValue()):
+            v = self.getLowLimitValue()
+        elif (v > self.getHighLimitValue()):
+            v = self.getHighLimitValue()
+
+        self.pvVoltageOffset.put(v, wait=wait)
+
+        if (wait):
+            sleep(self.getWaitTime())
 
 
     def isActive(self):
@@ -154,6 +171,10 @@ class Keysight33500B(StandardDevice, IScannable):
             ca.poll(0.001)
 
 
+    def isMoving(self):
+        return False
+
+
     def getLowLimitValue(self):
         """
         Obtain low limit value of keysight 33500B.
@@ -166,7 +187,7 @@ class Keysight33500B(StandardDevice, IScannable):
         -------
         `double`
         """
-        return -2
+        return (-2/2)
 
 
     def getHighLimitValue(self):
@@ -181,7 +202,7 @@ class Keysight33500B(StandardDevice, IScannable):
         -------
         `double`
         """
-        return 12
+        return (12/2)
 
 
     def setFunction(self, function=0, wait=True):
@@ -198,3 +219,12 @@ class Keysight33500B(StandardDevice, IScannable):
 
     def getOutput(self):
         return self.pvOutput_RBV.get()
+
+    def stop(self):
+        pass
+
+    def setWaitTime(self, time):
+        self.waitTime = time
+
+    def getWaitTime(self):
+        return self.waitTime
