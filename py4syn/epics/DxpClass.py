@@ -21,8 +21,8 @@ import os
 
 class Dxp(StandardDevice, ICountable):
     # CONSTRUCTOR OF DXP CLASS
-    def __init__(self, mnemonic, output, numberOfChannels=4, numberOfRois=32,
-                 pv=None, dxpType="mca", responseTimeout=15):
+    def __init__(self, mnemonic, numberOfChannels=4, numberOfRois=32,
+                 pv=None, dxpType="mca", responseTimeout=15, output="out"):
         """ Constructor
         responseTimeout : how much time to wait dxp answer
         """
