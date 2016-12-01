@@ -17,14 +17,17 @@ import numpy as np
 from threading import Event
 from py4syn.utils.timer import Timer
 import os
+import h5py
 
 
 class Dxp(StandardDevice, ICountable):
     # CONSTRUCTOR OF DXP CLASS
     def __init__(self, mnemonic, numberOfChannels=4, numberOfRois=32,
-                 pv=None, dxpType="mca", responseTimeout=15, output="out"):
+                 pv=None, dxpType="mca", responseTimeout=15, output="./out",
+                 imageDeep=2048):
         """ Constructor
         responseTimeout : how much time to wait dxp answer
+        imageDeep : how many points are collected each time
         """
         super().__init__(mnemonic)
         self.acquireChanged = Event()
@@ -62,6 +65,12 @@ class Dxp(StandardDevice, ICountable):
         self.channels = numberOfChannels
         self.dxpType = dxpType
         self.rois = numberOfRois
+
+        self.imageDeep = imageDeep
+
+        # data to save hdf
+        self.image = None
+        self.lastPos = -1
 
         self.responseTimeout = responseTimeout
         self.timer = Timer(self.responseTimeout)
@@ -111,18 +120,33 @@ class Dxp(StandardDevice, ICountable):
             return 1.0
 
     # save the spectrum intensity in a mca file
+    # or an hdf file
     def saveSpectrum(self, ch, **kwargs):
-        fileName = self.fileName
-        idx = 0
-        if(fileName):
-            spectrum = self.pvDxpChannels[ch].get(as_numpy=True)
-            prefix = fileName.split('.')[0]
-            while os.path.exists('%s_%s%d_%04d.mca' % (prefix, self.dxpType,
-                                                       ch, idx)):
-                idx += 1
-            fileName = '%s_%s%d_%04d.mca' % \
-                       (prefix, self.dxpType, ch, idx)
-        np.savetxt(fileName, spectrum, fmt='%f')
+        spectrum = self.pvDxpChannels[ch].get(as_numpy=True)
+
+        # save a unique point
+        if self.image is None:
+            fileName = self.fileName
+            idx = 0
+            if(fileName):
+                prefix = fileName.split('.')[0]
+                while os.path.exists('%s_%s%d_%04d.mca' % (prefix, self.dxpType,
+                                                           ch, idx)):
+                    idx += 1
+                fileName = '%s_%s%d_%04d.mca' % \
+                           (prefix, self.dxpType, ch, idx)
+                np.savetxt(fileName, spectrum, fmt='%f')
+        else:
+            # add a point on hdf file
+            row = int(self.lastPos/self.cols)
+            col = self.lastPos - row*self.cols
+            # if is an odd line
+            if (row % 2 != 0):
+                col = -1*(col+1)
+
+            self.image[row,col,:] = spectrum
+
+            self.lastPos += 1
 
     def isCountRunning(self):
         return (self.pvDxpAcquire.get())
@@ -179,6 +203,7 @@ class Dxp(StandardDevice, ICountable):
         # resets initial time value
         self.timer.mark()
 
+
     def stopCount(self):
         self.setCountStop()
 
@@ -190,3 +215,43 @@ class Dxp(StandardDevice, ICountable):
         """Stops an ongoing acquisition, if any, and puts the EPICS IOC in
         idle state."""
         self.pvDxpStop.put(1, wait=True)
+
+    def startCollectImage(self, rows=0, cols=0):
+         """Start to collect an image
+        When collect an image, the points will be  saved on a hdf file"""
+        self.rows = rows
+        self.cols = cols
+        # create HDF file
+        fileName = self.fileName
+        prefix = fileName.split('.')[0]
+
+        # TODO: include channel on fileName
+        fileName = '%s_%s.hdf' % \
+                   (prefix, self.dxpType)
+
+        if os.path.exists(fileName) :
+            raise IOError('File %s exists' % fileName)
+
+        self.fileResult = h5py.File(fileName)
+
+        # TODO: review this
+        lineShape = (1, self.cols, self.imageDeep)
+        # TODO: verify if it's better create it with complete or
+        # resize on each point
+        # TODO: verify if dtype is always int32
+        # create "image"
+        self.image = self.fileResult.create_dataset(
+                     'data',
+                     shape=(self.rows, self.cols , self.imageDeep),
+                     dtype='int32',
+                     chunks=lineShape)
+
+        # last collected point
+        self.lastPos = 0
+       
+    def endCollectImage(self):
+        """Stop collect image"""
+        self.fileResult.close()
+        self.lastPos = -1
+
+
