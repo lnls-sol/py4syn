@@ -94,7 +94,6 @@ class DxpFake(StandardDevice, ICountable):
             # if is an odd line
             if (row % 2 != 0):
                 col = -1*(col+1)
-
             self.image[row,col,:] = spectrum
 
             self.lastPos += 1
@@ -160,7 +159,7 @@ class DxpFake(StandardDevice, ICountable):
         if os.path.exists(fileName) :
             raise IOError('File %s exists' % fileName)
 
-        self.fileResult = h5py.File(fileName)
+        self.fileResult = h5py.File(fileName,'w')
 
         # TODO: review this
         lineShape = (1, self.cols, self.imageDeep)
