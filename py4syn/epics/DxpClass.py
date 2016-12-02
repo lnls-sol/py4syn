@@ -217,7 +217,7 @@ class Dxp(StandardDevice, ICountable):
         self.pvDxpStop.put(1, wait=True)
 
     def startCollectImage(self, rows=0, cols=0):
-         """Start to collect an image
+        """Start to collect an image
         When collect an image, the points will be  saved on a hdf file"""
         self.rows = rows
         self.cols = cols
@@ -248,10 +248,8 @@ class Dxp(StandardDevice, ICountable):
 
         # last collected point
         self.lastPos = 0
-       
+
     def endCollectImage(self):
         """Stop collect image"""
         self.fileResult.close()
         self.lastPos = -1
-
-
