@@ -153,11 +153,13 @@ class DxpFake(StandardDevice, ICountable):
         prefix = fileName.split('.')[0]
 
         # TODO: include channel on fileName
-        fileName = '%s_%s.hdf' % \
-                   (prefix, self.dxpType)
 
-        if os.path.exists(fileName) :
-            raise IOError('File %s exists' % fileName)
+        fileName = self.fileName
+        idx = 0
+
+        while os.path.exists('%s_%s_%04d.hdf' % (prefix, self.dxpType, idx)):
+            idx += 1
+        fileName = '%s_%s_%04d.hdf' % (prefix, self.dxpType, idx)
 
         self.fileResult = h5py.File(fileName,'w')
 
