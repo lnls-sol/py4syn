@@ -249,7 +249,7 @@ class Dxp(StandardDevice, ICountable):
         # last collected point
         self.lastPos = 0
 
-    def endCollectImage(self):
+    def stopCollectImage(self):
         """Stop collect image"""
         self.fileResult.close()
         self.lastPos = -1
