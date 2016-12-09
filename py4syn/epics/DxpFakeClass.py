@@ -14,6 +14,7 @@ import numpy as np
 import os
 import h5py
 
+
 class DxpFake(StandardDevice, ICountable):
     # CONSTRUCTOR OF DXP CLASS
     def __init__(self, mnemonic, numberOfChannels=4, numberOfRois=32,
@@ -74,6 +75,7 @@ class DxpFake(StandardDevice, ICountable):
     # save the spectrum intensity in a mca file
     def saveSpectrum(self, ch, **kwargs):
         self.spectrum = np.random.randint(100, size=(2048))
+        self.ch = ch
 
         # save a unique point
         if self.image is None:
@@ -81,11 +83,12 @@ class DxpFake(StandardDevice, ICountable):
             idx = 0
             if(fileName):
                 prefix = fileName.split('.')[0]
-                while os.path.exists('%s_%s%d_%04d.mca' % (prefix, self.dxpType,
-                                                           ch, idx)):
+                while os.path.exists('%s_%s%d_%04d.mca' % (prefix,
+                                                           self.dxpType,
+                                                           self.ch, idx)):
                     idx += 1
                 fileName = '%s_%s%d_%04d.mca' % \
-                           (prefix, self.dxpType, ch, idx)
+                           (prefix, self.dxpType, self.ch, idx)
                 np.savetxt(fileName, self.spectrum, fmt='%f')
         else:
             # add a point on hdf file
@@ -94,7 +97,7 @@ class DxpFake(StandardDevice, ICountable):
             # if is an odd line
             if (self.row % 2 != 0):
                 self.col = -1*(self.col+1)
-            self.image[self.row,self.col,:] = self.spectrum
+            self.image[self.row, self.col, :] = self.spectrum
 
             self.lastPos += 1
 
@@ -161,7 +164,7 @@ class DxpFake(StandardDevice, ICountable):
             idx += 1
         fileName = '%s_%s_%04d.hdf' % (prefix, self.dxpType, idx)
 
-        self.fileResult = h5py.File(fileName,'w')
+        self.fileResult = h5py.File(fileName, 'w')
 
         # TODO: review this
         lineShape = (1, self.cols, self.imageDeep)
@@ -171,14 +174,14 @@ class DxpFake(StandardDevice, ICountable):
         # create "image"
         self.image = self.fileResult.create_dataset(
                      'data',
-                     shape=(self.rows, self.cols , self.imageDeep),
+                     shape=(self.rows, self.cols, self.imageDeep),
                      dtype='int32',
                      chunks=lineShape)
 
         # create "image" normalized
         self.imageNorm = self.fileResult.create_dataset(
                      'data_norm',
-                     shape=(self.rows, self.cols , self.imageDeep),
+                     shape=(self.rows, self.cols, self.imageDeep),
                      dtype='float32',
                      chunks=lineShape)
 
@@ -199,13 +202,13 @@ class DxpFake(StandardDevice, ICountable):
             idx = 0
             if(fileName):
                 prefix = fileName.split('.')[0]
-                while os.path.exists('%s_%s%d_%04d_norm.mca' % (prefix, self.dxpType,
-                                                           ch, idx)):
+                while os.path.exists('%s_%s%d_%04d_norm.mca' % (prefix,
+                                                                self.dxpType,
+                                                                self.ch, idx)):
                     idx += 1
                 fileName = '%s_%s%d_%04d_norm.mca' % \
-                           (prefix, self.dxpType, ch, idx)
+                           (prefix, self.dxpType, self.ch, idx)
                 np.savetxt(fileName, result, fmt='%f')
 
         else:
-            self.imageNorm[self.row,self.col,:] = result
-
+            self.imageNorm[self.row, self.col, :] = result
