@@ -122,7 +122,8 @@ class Dxp(StandardDevice, ICountable):
     # save the spectrum intensity in a mca file
     # or an hdf file
     def saveSpectrum(self, ch, **kwargs):
-        spectrum = self.pvDxpChannels[ch].get(as_numpy=True)
+        self.ch = ch
+        self.spectrum = self.pvDxpChannels[self.ch].get(as_numpy=True)
 
         # save a unique point
         if self.image is None:
@@ -130,21 +131,22 @@ class Dxp(StandardDevice, ICountable):
             idx = 0
             if(fileName):
                 prefix = fileName.split('.')[0]
-                while os.path.exists('%s_%s%d_%04d.mca' % (prefix, self.dxpType,
-                                                           ch, idx)):
+                while os.path.exists('%s_%s%d_%04d.mca' % (prefix,
+                                                           self.dxpType,
+                                                           self.ch, idx)):
                     idx += 1
                 fileName = '%s_%s%d_%04d.mca' % \
-                           (prefix, self.dxpType, ch, idx)
-                np.savetxt(fileName, spectrum, fmt='%f')
+                           (prefix, self.dxpType, self.ch, idx)
+                np.savetxt(fileName, self.spectrum, fmt='%f')
         else:
             # add a point on hdf file
-            row = int(self.lastPos/self.cols)
-            col = self.lastPos - row*self.cols
+            self.row = int(self.lastPos/self.cols)
+            self.col = self.lastPos - self.row*self.cols
             # if is an odd line
-            if (row % 2 != 0):
-                col = -1*(col+1)
+            if (self.row % 2 != 0):
+                self.col = -1*(self.col+1)
 
-            self.image[row,col,:] = spectrum
+            self.image[self.row, self.col, :] = self.spectrum
 
             self.lastPos += 1
 
@@ -203,7 +205,6 @@ class Dxp(StandardDevice, ICountable):
         # resets initial time value
         self.timer.mark()
 
-
     def stopCount(self):
         self.setCountStop()
 
@@ -234,7 +235,6 @@ class Dxp(StandardDevice, ICountable):
             idx += 1
         fileName = '%s_%s_%04d.hdf' % (prefix, self.dxpType, idx)
 
-
         self.fileResult = h5py.File(fileName)
 
         # TODO: review this
@@ -245,8 +245,15 @@ class Dxp(StandardDevice, ICountable):
         # create "image"
         self.image = self.fileResult.create_dataset(
                      'data',
-                     shape=(self.rows, self.cols , self.imageDeep),
+                     shape=(self.rows, self.cols, self.imageDeep),
                      dtype='int32',
+                     chunks=lineShape)
+
+        # create "image" normalized
+        self.imageNorm = self.fileResult.create_dataset(
+                     'data_norm',
+                     shape=(self.rows, self.cols, self.imageDeep),
+                     dtype='float32',
                      chunks=lineShape)
 
         # last collected point
@@ -256,3 +263,23 @@ class Dxp(StandardDevice, ICountable):
         """Stop collect image"""
         self.fileResult.close()
         self.lastPos = -1
+
+    def setNormValue(self, value):
+        """Applies normalization"""
+        result = np.divide(self.spectrum, float(value))
+        if self.image is None:
+            # normalization for a point
+            fileName = self.fileName
+            idx = 0
+            if(fileName):
+                prefix = fileName.split('.')[0]
+                while os.path.exists('%s_%s%d_%04d_norm.mca' % (prefix,
+                                                                self.dxpType,
+                                                                self.ch, idx)):
+                    idx += 1
+                fileName = '%s_%s%d_%04d_norm.mca' % \
+                           (prefix, self.dxpType, self.ch, idx)
+                np.savetxt(fileName, result, fmt='%f')
+
+        else:
+            self.imageNorm[self.row, self.col, :] = result
