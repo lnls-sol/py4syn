@@ -73,7 +73,7 @@ class DxpFake(StandardDevice, ICountable):
 
     # save the spectrum intensity in a mca file
     def saveSpectrum(self, ch, **kwargs):
-        spectrum = np.random.randint(100, size=(2048))
+        self.spectrum = np.random.randint(100, size=(2048))
 
         # save a unique point
         if self.image is None:
@@ -86,15 +86,15 @@ class DxpFake(StandardDevice, ICountable):
                     idx += 1
                 fileName = '%s_%s%d_%04d.mca' % \
                            (prefix, self.dxpType, ch, idx)
-                np.savetxt(fileName, spectrum, fmt='%f')
+                np.savetxt(fileName, self.spectrum, fmt='%f')
         else:
             # add a point on hdf file
-            row = int(self.lastPos/self.cols)
-            col = self.lastPos - row*self.cols
+            self.row = int(self.lastPos/self.cols)
+            self.col = self.lastPos - self.row*self.cols
             # if is an odd line
-            if (row % 2 != 0):
-                col = -1*(col+1)
-            self.image[row,col,:] = spectrum
+            if (self.row % 2 != 0):
+                self.col = -1*(self.col+1)
+            self.image[self.row,self.col,:] = self.spectrum
 
             self.lastPos += 1
 
@@ -175,6 +175,13 @@ class DxpFake(StandardDevice, ICountable):
                      dtype='int32',
                      chunks=lineShape)
 
+        # create "image" normalized
+        self.imageNorm = self.fileResult.create_dataset(
+                     'data_norm',
+                     shape=(self.rows, self.cols , self.imageDeep),
+                     dtype='float32',
+                     chunks=lineShape)
+
         # last collected point
         self.lastPos = 0
 
@@ -182,4 +189,23 @@ class DxpFake(StandardDevice, ICountable):
         """Stop collect image"""
         self.fileResult.close()
         self.lastPos = -1
+
+    def setNormValue(self, value):
+        """Applies normalization"""
+        result = np.divide(self.spectrum, float(value))
+        if self.image is None:
+            # normalization for a point
+            fileName = self.fileName
+            idx = 0
+            if(fileName):
+                prefix = fileName.split('.')[0]
+                while os.path.exists('%s_%s%d_%04d_norm.mca' % (prefix, self.dxpType,
+                                                           ch, idx)):
+                    idx += 1
+                fileName = '%s_%s%d_%04d_norm.mca' % \
+                           (prefix, self.dxpType, ch, idx)
+                np.savetxt(fileName, result, fmt='%f')
+
+        else:
+            self.imageNorm[self.row,self.col,:] = result
 
