@@ -104,12 +104,12 @@ class QE65000(StandardDevice, ICountable):
         # save a unique point
         if self.image is None:
             fileName = self.fileName
-            idx = 0
+            idx = 1
             if(fileName):
                 prefix = fileName.split('.')[0]
-                while os.path.exists('%s_%04d.mca' % (prefix, idx)):
+                while os.path.exists('%s_ocean_%04d.mca' % (prefix, idx)):
                     idx += 1
-                fileName = '%s_%04d.mca' % (prefix, idx)
+                fileName = '%s_ocean_%04d.mca' % (prefix, idx)
                 np.savetxt(fileName, self.spectrum, fmt='%f')
         else:
             # add a point on hdf file
@@ -199,11 +199,11 @@ class QE65000(StandardDevice, ICountable):
         # TODO: include channel on fileName
 
         fileName = self.fileName
-        idx = 0
+        idx = 1
 
-        while os.path.exists('%s_%04d.hdf' % (prefix, idx)):
+        while os.path.exists('%s_ocean_%04d.hdf' % (prefix, idx)):
             idx += 1
-        fileName = '%s_%04d.hdf' % (prefix, idx)
+        fileName = '%s_ocean_%04d.hdf' % (prefix, idx)
 
         self.fileResult = h5py.File(fileName)
 
@@ -240,12 +240,12 @@ class QE65000(StandardDevice, ICountable):
         if self.image is None:
             # normalization for a point
             fileName = self.fileName
-            idx = 0
+            idx = 1
             if(fileName):
                 prefix = fileName.split('.')[0]
-                while os.path.exists('%s_%04d_norm.mca' % (prefix, idx)):
+                while os.path.exists('%s_ocean_%04d_norm.mca' % (prefix, idx)):
                     idx += 1
-                fileName = '%s_%04d_norm.mca' % (prefix, idx)
+                fileName = '%s_ocean_%04d_norm.mca' % (prefix, idx)
                 np.savetxt(fileName, result, fmt='%f')
 
         else:

@@ -79,7 +79,7 @@ class Dxp(StandardDevice, ICountable):
         """
         Helper callback used to wait for the end of the acquisition.
         """
-        self.acquiring = value
+        self.acquiring = False
         # threads waiting are awakened
         self.acquireChanged.set()
 
@@ -128,7 +128,7 @@ class Dxp(StandardDevice, ICountable):
         # save a unique point
         if self.image is None:
             fileName = self.fileName
-            idx = 0
+            idx = 1
             if(fileName):
                 prefix = fileName.split('.')[0]
                 while os.path.exists('%s_%s%d_%04d.mca' % (prefix,
@@ -196,7 +196,7 @@ class Dxp(StandardDevice, ICountable):
     def startCount(self):
         """ Starts acquiring an spectrum
         It's necessary to call setCounTime before"""
-
+        print("start")
         if self.acquiring:
             raise RuntimeError('Already counting')
 
@@ -229,7 +229,7 @@ class Dxp(StandardDevice, ICountable):
         # TODO: include channel on fileName
 
         fileName = self.fileName
-        idx = 0
+        idx = 1
 
         while os.path.exists('%s_%s_%04d.hdf' % (prefix, self.dxpType, idx)):
             idx += 1
@@ -270,7 +270,7 @@ class Dxp(StandardDevice, ICountable):
         if self.image is None:
             # normalization for a point
             fileName = self.fileName
-            idx = 0
+            idx = 1
             if(fileName):
                 prefix = fileName.split('.')[0]
                 while os.path.exists('%s_%s%d_%04d_norm.mca' % (prefix,

@@ -80,7 +80,7 @@ class DxpFake(StandardDevice, ICountable):
         # save a unique point
         if self.image is None:
             fileName = self.fileName
-            idx = 0
+            idx = 1
             if(fileName):
                 prefix = fileName.split('.')[0]
                 while os.path.exists('%s_%s%d_%04d.mca' % (prefix,
@@ -158,7 +158,7 @@ class DxpFake(StandardDevice, ICountable):
         # TODO: include channel on fileName
 
         fileName = self.fileName
-        idx = 0
+        idx = 1
 
         while os.path.exists('%s_%s_%04d.hdf' % (prefix, self.dxpType, idx)):
             idx += 1
@@ -199,7 +199,7 @@ class DxpFake(StandardDevice, ICountable):
         if self.image is None:
             # normalization for a point
             fileName = self.fileName
-            idx = 0
+            idx = 1
             if(fileName):
                 prefix = fileName.split('.')[0]
                 while os.path.exists('%s_%s%d_%04d_norm.mca' % (prefix,
