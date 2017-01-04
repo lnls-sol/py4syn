@@ -113,8 +113,8 @@ class Dxp(StandardDevice, ICountable):
         channel = kwargs['channel']
         c = int(channel[3]) - 1
         if(len(channel) > 4):
-            r = int(channel[5])
-            return self.pvDxpRois[c][r]
+            r = int(channel[6])
+            return self.pvDxpRois[c][r].get()
         else:
             self.saveSpectrum(c, **kwargs)
             return 1.0
