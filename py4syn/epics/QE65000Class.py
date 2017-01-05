@@ -55,6 +55,11 @@ class QE65000(StandardDevice, ICountable):
         self.pvAcquire = PV(pv+":Spectra:Processed")
         self.pvAcquire.add_callback(self.statusChange)
 
+        # acquisition mode
+        self.pvAcMode = PV(pv+":AcquisitionMode")
+        # set to single mode
+        self.pvAcMode.put("Single")
+
         self.imageDeep = imageDeep
 
         # data to save hdf
