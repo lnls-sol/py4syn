@@ -79,7 +79,7 @@ class Dxp(StandardDevice, ICountable):
         """
         Helper callback used to wait for the end of the acquisition.
         """
-        self.acquiring = False
+        self.acquiring = value
         # threads waiting are awakened
         self.acquireChanged.set()
 
@@ -196,7 +196,6 @@ class Dxp(StandardDevice, ICountable):
     def startCount(self):
         """ Starts acquiring an spectrum
         It's necessary to call setCounTime before"""
-        print("start")
         if self.acquiring:
             raise RuntimeError('Already counting')
 
