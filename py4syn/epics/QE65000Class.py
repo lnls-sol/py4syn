@@ -23,11 +23,10 @@ import h5py
 class QE65000(StandardDevice, ICountable):
     # CONSTRUCTOR OF QE65000 CLASS
     def __init__(self, mnemonic, pv=None, responseTimeout=15, output="./out",
-                 imageDeep=1044, darkCorrected = True):
+                 imageDeep=1044):
         """Constructor
         responseTimeout : how much time to wait qe65000 answer
         imageDeep : how many points are collected each time
-        darkCorrected : if will use corrected dark data
         """
         super().__init__(mnemonic)
         self.acquireChanged = Event()
@@ -39,8 +38,10 @@ class QE65000(StandardDevice, ICountable):
         # determines mode of Acquisition (Single,Continous, Dark Spectrum)
         self.pvAcquireMode = PV(pv+":AcquisitionMode")
 
+        self.pvDarkCorrection = PV(pv+":ElectricalDark")
+
         # Spectra
-        if darkCorrected:
+        if self.pvDarkCorrection.get() == "ON":
             self.pvSpectrum = PV(pv+":DarkCorrectedSpectra")
         else:
             self.pvSpectrum = PV(pv+":Spectra")
