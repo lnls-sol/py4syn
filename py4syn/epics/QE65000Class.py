@@ -38,9 +38,10 @@ class QE65000(StandardDevice, ICountable):
         # determines mode of Acquisition (Single,Continous, Dark Spectrum)
         self.pvAcquireMode = PV(pv+":AcquisitionMode")
 
-        self.pvDarkCorrection = PV(pv+":ElectricalDark")
+        # use darkcorrection
+        self.pvDarkCorrection = PV(pv+":ElectricalDark") 
 
-        # Spectra
+        # the spectra come from different pv if use darkcorrection
         if self.pvDarkCorrection.get() == "ON":
             self.pvSpectrum = PV(pv+":DarkCorrectedSpectra")
         else:
@@ -53,7 +54,7 @@ class QE65000(StandardDevice, ICountable):
         self.pvTime = PV(pv+":IntegrationTime:Value")
 
         # control the end of acquire process
-        self.pvAcquire = PV(pv+":Spectra:Processed")
+        self.pvAcquire = PV(pv+":Acquiring")
         self.pvAcquire.add_callback(self.statusChange)
 
         # acquisition mode
@@ -70,11 +71,14 @@ class QE65000(StandardDevice, ICountable):
         self.responseTimeout = responseTimeout
         self.timer = Timer(self.responseTimeout)
 
-    def statusChange(self, **kw):
+    def statusChange(self, value, **kw):
         """
         Helper callback used to wait for the end of the acquisition.
         """
-        self.acquiring = False
+        if value == 0:
+            self.acquiring = False
+        else:
+            self.acquiring = True
         # threads waiting are awakened
         self.acquireChanged.set()
 
