@@ -1,12 +1,12 @@
 """Dxp Class
 
-Python Class for EPICS Dxp Control.
+Python Class for EPICS QE65000 Control.
 
 :platform: Unix
 :synopsis: Python Class for EPICS Spectro control.
 
 .. moduleauthor:: Gabriel Fedel <gabriel.fedel@lnls.br>
-.. based on dxpclass from Juliano Murari and Pilatus Class from i
+.. based on dxpclass from Juliano Murari and Pilatus Class from
 .. Henrique Almeida
     .. note:: 10/18/2016 [gabrielfedel]  first version released
 """
@@ -20,13 +20,12 @@ import os
 import h5py
 
 
-class Dxp(StandardDevice, ICountable):
-    # CONSTRUCTOR OF DXP CLASS
-    def __init__(self, mnemonic, numberOfChannels=4, numberOfRois=32,
-                 pv=None, dxpType="mca", responseTimeout=15, output="./out",
-                 imageDeep=2048):
-        """ Constructor
-        responseTimeout : how much time to wait dxp answer
+class QE65000(StandardDevice, ICountable):
+    # CONSTRUCTOR OF QE65000 CLASS
+    def __init__(self, mnemonic, pv=None, responseTimeout=15, output="./out",
+                 imageDeep=1044):
+        """Constructor
+        responseTimeout : how much time to wait qe65000 answer
         imageDeep : how many points are collected each time
         """
         super().__init__(mnemonic)
@@ -35,36 +34,33 @@ class Dxp(StandardDevice, ICountable):
         self.fileName = output
 
         # determines the start of counting
-        self.pvDxpEraseStart = PV(pv+":EraseStart.VAL")
-        # determines mode of counting (Live Time, Real Time, ...)
-        self.pvDxpPresetMode = PV(pv+":PresetMode.VAL")
+        self.pvStart = PV(pv+":Acquire")
+        # determines mode of Acquisition (Single,Continous, Dark Spectrum)
+        self.pvAcquireMode = PV(pv+":AcquisitionMode")
 
-        self.pvDxpStop = PV(pv+":StopAll.VAL")
-        # store all channels
-        self.pvDxpChannels = []
-        # store ROIs
-        self.pvDxpRois = []
+        # use darkcorrection
+        self.pvDarkCorrection = PV(pv+":ElectricalDark")
 
-        # store Acquire Time for each channel
-        self.pvDxpAcquireTime = []
+        # the spectra come from different pv if use darkcorrection
+        if self.pvDarkCorrection.get() == "ON":
+            self.pvSpectrum = PV(pv+":DarkCorrectedSpectra")
+        else:
+            self.pvSpectrum = PV(pv+":Spectra")
 
-        for c in range(0, numberOfChannels):
-            # store each channel
-            self.pvDxpChannels.append(PV(pv+":"+dxpType+str(c+1)))
-            # for each channel store the PV for AcquireTime
-            self.pvDxpAcquireTime.append(PV(pv+":" + dxpType + "%d.PLTM"
-                                         % (c+1)))
-            self.pvDxpRois.append([])
-            # storeing each ROI in your channel
-            for r in range(0, numberOfRois):
-                self.pvDxpRois[c].append(PV(pv+":"+dxpType+str(c+1)+'.R'
-                                         + str(r)))
+        # set Acquire Time
+        self.pvAcquireTime = PV(pv+":SetIntegration")
 
-        self.pvDxpAcquire = PV(pv+":Acquiring")
-        self.pvDxpAcquire.add_callback(self.statusChange)
-        self.channels = numberOfChannels
-        self.dxpType = dxpType
-        self.rois = numberOfRois
+        # integration Time
+        self.pvTime = PV(pv+":IntegrationTime:Value")
+
+        # control the end of acquire process
+        self.pvAcquire = PV(pv+":Acquiring")
+        self.pvAcquire.add_callback(self.statusChange)
+
+        # acquisition mode
+        self.pvAcMode = PV(pv+":AcquisitionMode")
+        # set to single mode
+        self.pvAcMode.put("Single")
 
         self.imageDeep = imageDeep
 
@@ -79,7 +75,10 @@ class Dxp(StandardDevice, ICountable):
         """
         Helper callback used to wait for the end of the acquisition.
         """
-        self.acquiring = value
+        if value == 0:
+            self.acquiring = False
+        else:
+            self.acquiring = True
         # threads waiting are awakened
         self.acquireChanged.set()
 
@@ -96,34 +95,21 @@ class Dxp(StandardDevice, ICountable):
         -------
         out : None
         """
-        for i in range(0, self.channels):
-            self.pvDxpAcquireTime[i].put(time, wait=True)
+        self.pvTime.put(time, wait=True)
         self.timer = Timer(time + self.responseTimeout)
 
     def getCountTime(self):
-        return self.pvDxpTime.get()
+        return self.pvTime.get()
 
     def setCountStop(self):
-        self.pvDxpStop.put(1, wait=True)
-
-    def getValueChannel(self, **kwargs):
-        """Return intensity
-        channel is on format mcaC.Rr, where C is  the channel and
-        r is the ROI"""
-        channel = kwargs['channel']
-        c = int(channel[3]) - 1
-        if(len(channel) > 4):
-            r = int(channel[6])
-            return self.pvDxpRois[c][r].get()
-        else:
-            self.saveSpectrum(c, **kwargs)
-            return 1.0
+        # TODO: test
+        # Work only when in continuos mode
+        pass
 
     # save the spectrum intensity in a mca file
     # or an hdf file
-    def saveSpectrum(self, ch, **kwargs):
-        self.ch = ch
-        self.spectrum = self.pvDxpChannels[self.ch].get(as_numpy=True)
+    def saveSpectrum(self, **kwargs):
+        self.spectrum = self.pvSpectrum.get(as_numpy=True)
 
         # save a unique point
         if self.image is None:
@@ -131,27 +117,24 @@ class Dxp(StandardDevice, ICountable):
             idx = 1
             if(fileName):
                 prefix = fileName.split('.')[0]
-                while os.path.exists('%s_%s%d_%04d.mca' % (prefix,
-                                                           self.dxpType,
-                                                           self.ch, idx)):
+                while os.path.exists('%s_ocean_%04d.mca' % (prefix, idx)):
                     idx += 1
-                fileName = '%s_%s%d_%04d.mca' % \
-                           (prefix, self.dxpType, self.ch, idx)
+                fileName = '%s_ocean_%04d.mca' % (prefix, idx)
                 np.savetxt(fileName, self.spectrum, fmt='%f')
         else:
             # add a point on hdf file
-            self.spectrum[0] = self.lastPos
             self.col = int(self.lastPos/self.rows)
             self.row = self.lastPos - self.rows*self.col
             # if is an odd line
             if (self.col % 2 != 0):
                 self.row = -1*(self.row+1)
-            self.image[self.col, self.row, :] = self.spectrum
+
+            self.image[self.col, self.row, :] = self.spectrum[:self.imageDeep]
 
             self.lastPos += 1
 
     def isCountRunning(self):
-        return (self.pvDxpAcquire.get())
+        return (self.acquiring)
 
     def wait(self):
         """
@@ -168,27 +151,23 @@ class Dxp(StandardDevice, ICountable):
             self.acquireChanged.clear()
 
         if self.timer.expired():
-            raise RuntimeError('DXP is not answering')
+            raise RuntimeError('QE65000 is not answering')
 
     def canMonitor(self):
-        """ Returns false indcating Dxp cannot be use as a counter monitor"""
+        """ Returns false indicating cannot be use as a counter monitor"""
         return False
 
     def canStopCount(self):
         """
         Returns true indicating that Dxp has a stop command.
         """
-        return True
+        return False
 
     def getValue(self, **kwargs):
-        """
-        This is a dummy method that always returns zero, which is part of the
-        :class:`py4syn.epics.ICountable` interface. Dxp does not return
-        a value while scanning. Instead, it stores a mca file with result .
-        """
-        if(kwargs):
-            return self.getValueChannel(**kwargs)
-        return self.getValueChannel()
+        """Return intensity
+        It's a dummy method, always return 1.0. """
+        self.saveSpectrum()
+        return 1.0
 
     def isCounting(self):
         return self.acquiring
@@ -196,11 +175,12 @@ class Dxp(StandardDevice, ICountable):
     def startCount(self):
         """ Starts acquiring an spectrum
         It's necessary to call setCounTime before"""
+
         if self.acquiring:
             raise RuntimeError('Already counting')
 
         self.acquiring = True
-        self.pvDxpEraseStart.put(1)
+        self.pvStart.put("Stop")
         # resets initial time value
         self.timer.mark()
 
@@ -211,10 +191,11 @@ class Dxp(StandardDevice, ICountable):
         """Dummy method"""
         pass
 
+    # TODO: verificar
     def close(self):
         """Stops an ongoing acquisition, if any, and puts the EPICS IOC in
         idle state."""
-        self.pvDxpStop.put(1, wait=True)
+        pass
 
     def startCollectImage(self, rows=0, cols=0):
         """Start to collect an image
@@ -230,9 +211,9 @@ class Dxp(StandardDevice, ICountable):
         fileName = self.fileName
         idx = 1
 
-        while os.path.exists('%s_%s_%04d.hdf' % (prefix, self.dxpType, idx)):
+        while os.path.exists('%s_ocean_%04d.hdf' % (prefix, idx)):
             idx += 1
-        fileName = '%s_%s_%04d.hdf' % (prefix, self.dxpType, idx)
+        fileName = '%s_ocean_%04d.hdf' % (prefix, idx)
 
         self.fileResult = h5py.File(fileName)
 
@@ -245,7 +226,7 @@ class Dxp(StandardDevice, ICountable):
         self.image = self.fileResult.create_dataset(
                      'data',
                      shape=(self.cols, self.rows, self.imageDeep),
-                     dtype='int32',
+                     dtype='float32',
                      chunks=lineShape)
 
         # create "image" normalized
@@ -272,12 +253,9 @@ class Dxp(StandardDevice, ICountable):
             idx = 1
             if(fileName):
                 prefix = fileName.split('.')[0]
-                while os.path.exists('%s_%s%d_%04d_norm.mca' % (prefix,
-                                                                self.dxpType,
-                                                                self.ch, idx)):
+                while os.path.exists('%s_ocean_%04d_norm.mca' % (prefix, idx)):
                     idx += 1
-                fileName = '%s_%s%d_%04d_norm.mca' % \
-                           (prefix, self.dxpType, self.ch, idx)
+                fileName = '%s_ocean_%04d_norm.mca' % (prefix, idx)
                 np.savetxt(fileName, result, fmt='%f')
 
         else:
