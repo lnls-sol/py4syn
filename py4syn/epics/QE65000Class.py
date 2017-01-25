@@ -6,7 +6,7 @@ Python Class for EPICS QE65000 Control.
 :synopsis: Python Class for EPICS Spectro control.
 
 .. moduleauthor:: Gabriel Fedel <gabriel.fedel@lnls.br>
-.. based on dxpclass from Juliano Murari and Pilatus Class from 
+.. based on dxpclass from Juliano Murari and Pilatus Class from
 .. Henrique Almeida
     .. note:: 10/18/2016 [gabrielfedel]  first version released
 """
@@ -39,7 +39,7 @@ class QE65000(StandardDevice, ICountable):
         self.pvAcquireMode = PV(pv+":AcquisitionMode")
 
         # use darkcorrection
-        self.pvDarkCorrection = PV(pv+":ElectricalDark") 
+        self.pvDarkCorrection = PV(pv+":ElectricalDark")
 
         # the spectra come from different pv if use darkcorrection
         if self.pvDarkCorrection.get() == "ON":
@@ -123,13 +123,13 @@ class QE65000(StandardDevice, ICountable):
                 np.savetxt(fileName, self.spectrum, fmt='%f')
         else:
             # add a point on hdf file
-            self.row = int(self.lastPos/self.cols)
-            self.col = self.lastPos - self.row*self.cols
+            self.col = int(self.lastPos/self.rows)
+            self.row = self.lastPos - self.rows*self.col
             # if is an odd line
-            if (self.row % 2 != 0):
-                self.col = -1*(self.col+1)
+            if (self.col % 2 != 0):
+                self.row = -1*(self.row+1)
 
-            self.image[self.row, self.col, :] = self.spectrum[:self.imageDeep]
+            self.image[self.col, self.row, :] = self.spectrum[:self.imageDeep]
 
             self.lastPos += 1
 
@@ -218,21 +218,21 @@ class QE65000(StandardDevice, ICountable):
         self.fileResult = h5py.File(fileName)
 
         # TODO: review this
-        lineShape = (1, self.cols, self.imageDeep)
+        lineShape = (1, self.rows, self.imageDeep)
         # TODO: verify if it's better create it with complete or
         # resize on each point
         # TODO: verify if dtype is always int32
         # create "image"
         self.image = self.fileResult.create_dataset(
                      'data',
-                     shape=(self.rows, self.cols, self.imageDeep),
+                     shape=(self.cols, self.rows, self.imageDeep),
                      dtype='float32',
                      chunks=lineShape)
 
         # create "image" normalized
         self.imageNorm = self.fileResult.create_dataset(
                      'data_norm',
-                     shape=(self.rows, self.cols, self.imageDeep),
+                     shape=(self.cols, self.rows, self.imageDeep),
                      dtype='float32',
                      chunks=lineShape)
 
@@ -259,4 +259,4 @@ class QE65000(StandardDevice, ICountable):
                 np.savetxt(fileName, result, fmt='%f')
 
         else:
-            self.imageNorm[self.row, self.col, :] = result
+            self.imageNorm[self.col, self.row, :] = result
