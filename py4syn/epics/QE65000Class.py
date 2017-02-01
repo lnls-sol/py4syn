@@ -256,7 +256,7 @@ class QE65000(StandardDevice, ICountable):
 
     def setNormValue(self, value):
         """Applies normalization"""
-        result = np.divide(self.spectrum, float(value))
+        result = np.divide(self.spectrum[:self.imageDeep], float(value))
         if self.image is None:
             # normalization for a point
             fileName = self.fileName
