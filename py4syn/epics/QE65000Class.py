@@ -42,7 +42,7 @@ class QE65000(StandardDevice, ICountable):
         self.pvDarkCorrection = PV(pv+":ElectricalDark")
 
         # the spectra come from different pv if use darkcorrection
-        if self.pvDarkCorrection.get() == "ON":
+        if self.pvDarkCorrection.get() == 1:
             self.pvSpectrum = PV(pv+":DarkCorrectedSpectra")
         else:
             self.pvSpectrum = PV(pv+":Spectra")
@@ -61,6 +61,9 @@ class QE65000(StandardDevice, ICountable):
         self.pvAcMode = PV(pv+":AcquisitionMode")
         # set to single mode
         self.pvAcMode.put("Single")
+
+        # spectra axis
+        self.pvAxis = PV(pv+":SpectraAxis")
 
         self.imageDeep = imageDeep
 
@@ -235,6 +238,13 @@ class QE65000(StandardDevice, ICountable):
                      shape=(self.cols, self.rows, self.imageDeep),
                      dtype='float32',
                      chunks=lineShape)
+
+        # create and save X axis
+        self.axis = self.fileResult.create_dataset(
+                     'axis',
+                     shape=(self.imageDeep),
+                     dtype='float32')
+        self.axis = self.pvAxis.get(asNumpy=True)
 
         # last collected point
         self.lastPos = 0
