@@ -79,6 +79,7 @@ class Pilatus(StandardDevice, ICountable):
         self.pvDelayTime = PV(pv + ':DelayTime')
         self.pvTriggerMode = PV(pv + ':TriggerMode')
         self.pvDet2Theta = PV(pv + ':Det2Theta')
+        self.pvCamserverConnectStatus = PV(pv +':CamserverAsyn.CNCT')
 
         self.timer = Timer(self.RESPONSE_TIMEOUT)
 
@@ -335,3 +336,5 @@ class Pilatus(StandardDevice, ICountable):
     def getDet2Theta(self):
         return self.pvDet2Theta.get()
 
+    def isCamserverConnected(self):
+        return (self.pvCamserverConnectStatus.get() == 1)
