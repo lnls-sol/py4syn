@@ -62,9 +62,6 @@ class QE65000(StandardDevice, ICountable):
         # set to single mode
         self.pvAcMode.put("Single")
 
-        # spectra axis
-        self.pvAxis = PV(pv+":SpectraAxis")
-
         self.imageDeep = imageDeep
 
         # data to save hdf
@@ -123,7 +120,7 @@ class QE65000(StandardDevice, ICountable):
                 while os.path.exists('%s_ocean_%04d.mca' % (prefix, idx)):
                     idx += 1
                 fileName = '%s_ocean_%04d.mca' % (prefix, idx)
-                np.savetxt(fileName, self.spectrum, fmt='%f')
+                np.savetxt(fileName, self.spectrum[:self.imageDeep], fmt='%f')
         else:
             # add a point on hdf file
             self.col = int(self.lastPos/self.rows)
@@ -238,13 +235,6 @@ class QE65000(StandardDevice, ICountable):
                      shape=(self.cols, self.rows, self.imageDeep),
                      dtype='float32',
                      chunks=lineShape)
-
-        # create and save X axis
-        self.axis = self.fileResult.create_dataset(
-                     'axis',
-                     shape=(self.imageDeep),
-                     dtype='float32')
-        self.axis = self.pvAxis.get(asNumpy=True)
 
         # last collected point
         self.lastPos = 0
