@@ -98,6 +98,11 @@ class Dxp(StandardDevice, ICountable):
         """
         for i in range(0, self.channels):
             self.pvDxpAcquireTime[i].put(time, wait=True)
+
+        # This make long exposure time works
+        if (self.responseTimeout < time*0.4):
+            self.responseTimeout = time*0.4
+
         self.timer = Timer(time + self.responseTimeout)
 
     def getCountTime(self):
