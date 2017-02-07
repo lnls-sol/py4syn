@@ -15,10 +15,9 @@ import h5py
 
 class ImageHDF():
     # CONSTRUCTOR OF ImageHDF CLASS
-    def __init__(self,  numPoints, output, prefix, sufix):
+    def __init__(self,  numPoints, output, prefix):
         """ Constructor
         prefix: prefix for filenames
-        sufix: sufix for filenames
         """
         self.numPoints = numPoints
         self.image = None
@@ -51,7 +50,7 @@ class ImageHDF():
         self.spectrum = spectrum
         # save a unique point
         if self.image is None:
-            fileName = self.nameFile(self.output, self.prefix, self.sufix)
+            fileName = self.nameFile(self.output, self.prefix, "mca")
             np.savetxt(fileActual, self.spectrum, fmt='%f')
         else:
             # add a point on hdf file
@@ -71,7 +70,7 @@ class ImageHDF():
         self.rows = rows
         self.cols = cols
         # create HDF file
-        fileName = self.nameFile(self.output, self.prefix, self.sufix)
+        fileName = self.nameFile(self.output, self.prefix, "hdf")
 
         self.fileResult = h5py.File(fileName)
 
@@ -103,7 +102,7 @@ class ImageHDF():
         result = np.divide(self.spectrum, float(value))
         if self.image is None:
             # normalization for a point
-            fileName = self.nameFile(self.output, self.prefix + '_norm', self.sufix)
+            fileName = self.nameFile(self.output, self.prefix + '_norm', "mca")
             np.savetxt(fileName, result, fmt='%f')
 
         else:
