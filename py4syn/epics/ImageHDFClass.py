@@ -28,8 +28,6 @@ class ImageHDF(StandardDevice):
         self.lastPos = -1
         self.output = output
         self.prefix = prefix
-        self.sufix = sufix
-
 
     def nameFile(self, output, prefix, sufix):
         '''Generate correct name to file
@@ -37,13 +35,13 @@ class ImageHDF(StandardDevice):
         prefix: added after id
         sufix: extension'''
 
-        start = fileName.split('.')[0]
+        start = output.split('.')[0]
 
         idx = 0
-        while os.path.exists('%s%s_%04d.%s' % (start, prefix, idx, sufix)):
+        while os.path.exists('%s_%s_%04d.%s' % (start, prefix, idx, sufix)):
             idx += 1
 
-        resultName= '%s%s_%04d.%s' % (start, prefix, idx, sufix)
+        resultName= '%s_%s_%04d.%s' % (start, prefix, idx, sufix)
 
         return resultName
 
@@ -55,7 +53,8 @@ class ImageHDF(StandardDevice):
         # save a unique point
         if self.image is None:
             fileName = self.nameFile(self.output, self.prefix, "mca")
-            np.savetxt(fileActual, self.spectrum, fmt='%f')
+            # TODO: change way to define fmt
+            np.savetxt(fileName, self.spectrum, fmt='%f')
         else:
             # add a point on hdf file
             self.col = int(self.lastPos/self.rows)
@@ -75,7 +74,6 @@ class ImageHDF(StandardDevice):
         self.cols = cols
         # create HDF file
         fileName = self.nameFile(self.output, self.prefix, "hdf")
-
         self.fileResult = h5py.File(fileName)
 
         # TODO: review this
