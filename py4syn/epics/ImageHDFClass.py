@@ -8,17 +8,21 @@ Python Class for Save HDF images .
 .. moduleauthor:: Gabriel Fedel <gabriel.fedel@lnls.br>
 .. note:: 06/02/2017 [gabrielfedel]  first version released
 """
-import numpy as np
 import os
+
+import numpy as np
 import h5py
+from py4syn.epics.StandardDevice import StandardDevice
 
 
-class ImageHDF():
+class ImageHDF(StandardDevice):
     # CONSTRUCTOR OF ImageHDF CLASS
-    def __init__(self,  numPoints, output, prefix):
+    def __init__(self, mnemonic, numPoints, output, prefix):
         """ Constructor
         prefix: prefix for filenames
         """
+        super().__init__(mnemonic)
+
         self.numPoints = numPoints
         self.image = None
         self.lastPos = -1
