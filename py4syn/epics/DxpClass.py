@@ -65,10 +65,6 @@ class Dxp(ImageHDF):
         self.channels = numberOfChannels
         self.rois = numberOfRois
 
-        # data to save hdf
-        self.image = None
-        self.lastPos = -1
-
         self.responseTimeout = responseTimeout
         self.timer = Timer(self.responseTimeout)
 
@@ -131,7 +127,7 @@ class Dxp(ImageHDF):
             # if is a point, prefix is different
             self.prefix = self.dxpType + str(self.ch)
 
-        super.saveSpectrum(self.spectrum)
+        super().saveSpectrum()
 
     def isCountRunning(self):
         return (self.pvDxpAcquire.get())

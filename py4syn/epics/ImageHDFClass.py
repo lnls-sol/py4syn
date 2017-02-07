@@ -28,6 +28,7 @@ class ImageHDF(StandardDevice, ICountable):
         self.lastPos = -1
         self.output = output
         self.prefix = prefix
+        self.spectrum = None
 
     def nameFile(self, output, prefix, sufix):
         '''Generate correct name to file
@@ -45,11 +46,10 @@ class ImageHDF(StandardDevice, ICountable):
 
         return resultName
 
-    def saveSpectrum(self, spectrum, snake = True):
+    def saveSpectrum(self, snake = True):
         ''' save the spectrum intensity in a mca file if is a point
             or an hdf file if is an image
             snake: if data is collected on snake mode'''
-        self.spectrum = spectrum
         # save a unique point
         if self.image is None:
             fileName = self.nameFile(self.output, self.prefix, "mca")

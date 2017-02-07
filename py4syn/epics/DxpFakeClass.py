@@ -26,7 +26,6 @@ class DxpFake(ImageHDF):
         super().__init__(mnemonic, NUMPOINTS, output, dxpType)
         self.acquiring = False
         self.rois = numberOfRois
-        self.image = None
 
     def statusChange(self, value, **kw):
         """
@@ -71,7 +70,7 @@ class DxpFake(ImageHDF):
         self.spectrum = np.random.randint(100, size=(2048))
         self.ch = ch
 
-        super().saveSpectrum(self.spectrum)
+        super().saveSpectrum()
 
     def isCountRunning(self):
         pass
