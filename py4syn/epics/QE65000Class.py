@@ -10,28 +10,26 @@ Python Class for EPICS QE65000 Control.
 .. Henrique Almeida
     .. note:: 10/18/2016 [gabrielfedel]  first version released
 """
+import os
+
 from epics import PV
-from py4syn.epics.StandardDevice import StandardDevice
-from py4syn.epics.ICountable import ICountable
 import numpy as np
 from threading import Event
-from py4syn.utils.timer import Timer
-import os
 import h5py
+from py4syn.utils.timer import Timer
+from py4syn.epics.ImageHDFClass import ImageHDF
 
-
-class QE65000(StandardDevice, ICountable):
+class QE65000(ImageHDF):
     # CONSTRUCTOR OF QE65000 CLASS
     def __init__(self, mnemonic, pv=None, responseTimeout=15, output="./out",
-                 imageDeep=1044):
+                 numPoints=1044):
         """Constructor
         responseTimeout : how much time to wait qe65000 answer
-        imageDeep : how many points are collected each time
+        numPoints : how many points are collected each time
         """
-        super().__init__(mnemonic)
+        super().__init__(mnemonic, numPoints, output, 'ocean')
         self.acquireChanged = Event()
         self.acquiring = False
-        self.fileName = output
 
         # determines the start of counting
         self.pvStart = PV(pv+":Acquire")
@@ -61,12 +59,6 @@ class QE65000(StandardDevice, ICountable):
         self.pvAcMode = PV(pv+":AcquisitionMode")
         # set to single mode
         self.pvAcMode.put("Single")
-
-        self.imageDeep = imageDeep
-
-        # data to save hdf
-        self.image = None
-        self.lastPos = -1
 
         self.responseTimeout = responseTimeout
         self.timer = Timer(self.responseTimeout)
@@ -111,27 +103,7 @@ class QE65000(StandardDevice, ICountable):
     def saveSpectrum(self, **kwargs):
         self.spectrum = self.pvSpectrum.get(as_numpy=True)
 
-        # save a unique point
-        if self.image is None:
-            fileName = self.fileName
-            idx = 1
-            if(fileName):
-                prefix = fileName.split('.')[0]
-                while os.path.exists('%s_ocean_%04d.mca' % (prefix, idx)):
-                    idx += 1
-                fileName = '%s_ocean_%04d.mca' % (prefix, idx)
-                np.savetxt(fileName, self.spectrum[:self.imageDeep], fmt='%f')
-        else:
-            # add a point on hdf file
-            self.col = int(self.lastPos/self.rows)
-            self.row = self.lastPos - self.rows*self.col
-            # if is an odd line
-            if (self.col % 2 != 0):
-                self.row = -1*(self.row+1)
-
-            self.image[self.col, self.row, :] = self.spectrum[:self.imageDeep]
-
-            self.lastPos += 1
+        super().saveSpectrum()
 
     def isCountRunning(self):
         return (self.acquiring)
@@ -198,65 +170,4 @@ class QE65000(StandardDevice, ICountable):
         pass
 
     def startCollectImage(self, rows=0, cols=0):
-        """Start to collect an image
-        When collect an image, the points will be  saved on a hdf file"""
-        self.rows = rows
-        self.cols = cols
-        # create HDF file
-        fileName = self.fileName
-        prefix = fileName.split('.')[0]
-
-        # TODO: include channel on fileName
-
-        fileName = self.fileName
-        idx = 1
-
-        while os.path.exists('%s_ocean_%04d.hdf' % (prefix, idx)):
-            idx += 1
-        fileName = '%s_ocean_%04d.hdf' % (prefix, idx)
-
-        self.fileResult = h5py.File(fileName)
-
-        # TODO: review this
-        lineShape = (1, self.rows, self.imageDeep)
-        # TODO: verify if it's better create it with complete or
-        # resize on each point
-        # TODO: verify if dtype is always int32
-        # create "image"
-        self.image = self.fileResult.create_dataset(
-                     'data',
-                     shape=(self.cols, self.rows, self.imageDeep),
-                     dtype='float32',
-                     chunks=lineShape)
-
-        # create "image" normalized
-        self.imageNorm = self.fileResult.create_dataset(
-                     'data_norm',
-                     shape=(self.cols, self.rows, self.imageDeep),
-                     dtype='float32',
-                     chunks=lineShape)
-
-        # last collected point
-        self.lastPos = 0
-
-    def stopCollectImage(self):
-        """Stop collect image"""
-        self.fileResult.close()
-        self.lastPos = -1
-
-    def setNormValue(self, value):
-        """Applies normalization"""
-        result = np.divide(self.spectrum[:self.imageDeep], float(value))
-        if self.image is None:
-            # normalization for a point
-            fileName = self.fileName
-            idx = 1
-            if(fileName):
-                prefix = fileName.split('.')[0]
-                while os.path.exists('%s_ocean_%04d_norm.mca' % (prefix, idx)):
-                    idx += 1
-                fileName = '%s_ocean_%04d_norm.mca' % (prefix, idx)
-                np.savetxt(fileName, result, fmt='%f')
-
-        else:
-            self.imageNorm[self.col, self.row, :] = result
+        super().startCollectImage('float32', rows, cols)
