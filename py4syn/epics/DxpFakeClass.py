@@ -25,13 +25,7 @@ class DxpFake(ImageHDF):
         """
         super().__init__(mnemonic, NUMPOINTS, output, dxpType)
         self.acquiring = False
-        self.fileName = output
-
-        self.dxpType = dxpType
         self.rois = numberOfRois
-
-        self.imageDeep = 2048
-
         self.image = None
 
     def statusChange(self, value, **kw):

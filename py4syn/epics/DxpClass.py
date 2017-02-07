@@ -33,7 +33,6 @@ class Dxp(ImageHDF):
 
         self.acquireChanged = Event()
         self.acquiring = False
-        self.fileName = output
 
         # determines the start of counting
         self.pvDxpEraseStart = PV(pv+":EraseStart.VAL")
@@ -64,7 +63,6 @@ class Dxp(ImageHDF):
         self.pvDxpAcquire = PV(pv+":Acquiring")
         self.pvDxpAcquire.add_callback(self.statusChange)
         self.channels = numberOfChannels
-        self.dxpType = dxpType
         self.rois = numberOfRois
 
         # data to save hdf
