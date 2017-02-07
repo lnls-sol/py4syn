@@ -13,9 +13,9 @@ import os
 import numpy as np
 import h5py
 from py4syn.epics.StandardDevice import StandardDevice
+from py4syn.epics.ICountable import ICountable
 
-
-class ImageHDF(StandardDevice):
+class ImageHDF(StandardDevice, ICountable):
     # CONSTRUCTOR OF ImageHDF CLASS
     def __init__(self, mnemonic, numPoints, output, prefix):
         """ Constructor
