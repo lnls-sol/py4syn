@@ -64,7 +64,7 @@ class ImageHDF():
 
             self.lastPos += 1
 
-    def startCollectImage(self, rows=0, cols=0, dtype):
+    def startCollectImage(self, dtype, rows=0, cols=0):
         """Start to collect an image
         When collect an image, the points will be  saved on a hdf file"""
         self.rows = rows
