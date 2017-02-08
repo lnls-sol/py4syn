@@ -98,9 +98,8 @@ class QE65000(ImageHDF):
         # Work only when in continuos mode
         pass
 
-    # save the spectrum intensity in a mca file
-    # or an hdf file
     def saveSpectrum(self, **kwargs):
+        ''' save the spectrum intensity in a mca file or an hdf file '''
         self.spectrum = self.pvSpectrum.get(as_numpy=True)
 
         super().saveSpectrum()
