@@ -163,11 +163,5 @@ class QE65000(ImageHDF):
         """Dummy method"""
         pass
 
-    # TODO: verificar
-    def close(self):
-        """Stops an ongoing acquisition, if any, and puts the EPICS IOC in
-        idle state."""
-        pass
-
     def startCollectImage(self, rows=0, cols=0):
         super().startCollectImage('float32', rows, cols)
