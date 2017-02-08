@@ -19,6 +19,10 @@ import h5py
 from py4syn.utils.timer import Timer
 from py4syn.epics.ImageHDFClass import ImageHDF
 
+# constants used to parse PV name
+CHANNELPOSITION=3
+ROIPOSITION=6
+
 class Dxp(ImageHDF):
 
     # CONSTRUCTOR OF DXP CLASS
@@ -109,17 +113,17 @@ class Dxp(ImageHDF):
         channel is on format mcaC.Rr, where C is  the channel and
         r is the ROI"""
         channel = kwargs['channel']
-        c = int(channel[3]) - 1
-        if(len(channel) > 4):
-            r = int(channel[6])
+        c = int(channel[CHANNELPOSITION]) - 1
+        if(len(channel) > ROIPOSITION + 1):
+            r = int(channel[ROIPOSITION])
             return self.pvDxpRois[c][r].get()
         else:
             self.saveSpectrum(c, **kwargs)
             return 1.0
 
-    # save the spectrum intensity in a mca file
-    # or an hdf file
     def saveSpectrum(self, ch, **kwargs):
+        '''save the spectrum intensity in a mca file or an hdf file
+        This method load spectrum from a PV and then save it to HDF file'''
         self.ch = ch
         self.spectrum = self.pvDxpChannels[self.ch].get(as_numpy=True)
 
