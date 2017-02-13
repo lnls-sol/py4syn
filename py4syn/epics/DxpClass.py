@@ -10,26 +10,33 @@ Python Class for EPICS Dxp Control.
 .. Henrique Almeida
     .. note:: 10/18/2016 [gabrielfedel]  first version released
 """
-from epics import PV
-from py4syn.epics.StandardDevice import StandardDevice
-from py4syn.epics.ICountable import ICountable
-import numpy as np
-from threading import Event
-from py4syn.utils.timer import Timer
 import os
 
+from epics import PV
+import numpy as np
+from threading import Event
+import h5py
+from py4syn.utils.timer import Timer
+from py4syn.epics.ImageHDFClass import ImageHDF
 
-class Dxp(StandardDevice, ICountable):
+# constants used to parse PV name
+CHANNELPOSITION=3
+ROIPOSITION=6
+
+class Dxp(ImageHDF):
+
     # CONSTRUCTOR OF DXP CLASS
-    def __init__(self, mnemonic, output, numberOfChannels=4, numberOfRois=32,
-                 pv=None, dxpType="mca", responseTimeout=15):
+    def __init__(self, mnemonic, numberOfChannels=4, numberOfRois=32,
+                 pv=None, dxpType="mca", responseTimeout=15, output="./out",
+                 numPoints=2048):
         """ Constructor
         responseTimeout : how much time to wait dxp answer
+        imageDeep : how many points are collected each time
         """
-        super().__init__(mnemonic)
+        super().__init__(mnemonic, numPoints, output, dxpType)
+
         self.acquireChanged = Event()
         self.acquiring = False
-        self.fileName = output
 
         # determines the start of counting
         self.pvDxpEraseStart = PV(pv+":EraseStart.VAL")
@@ -60,7 +67,6 @@ class Dxp(StandardDevice, ICountable):
         self.pvDxpAcquire = PV(pv+":Acquiring")
         self.pvDxpAcquire.add_callback(self.statusChange)
         self.channels = numberOfChannels
-        self.dxpType = dxpType
         self.rois = numberOfRois
 
         self.responseTimeout = responseTimeout
@@ -89,6 +95,11 @@ class Dxp(StandardDevice, ICountable):
         """
         for i in range(0, self.channels):
             self.pvDxpAcquireTime[i].put(time, wait=True)
+
+        # This make long exposure time works
+        if (self.responseTimeout < time*0.4):
+            self.responseTimeout = time*0.4
+
         self.timer = Timer(time + self.responseTimeout)
 
     def getCountTime(self):
@@ -102,27 +113,25 @@ class Dxp(StandardDevice, ICountable):
         channel is on format mcaC.Rr, where C is  the channel and
         r is the ROI"""
         channel = kwargs['channel']
-        c = int(channel[3]) - 1
-        if(len(channel) > 4):
-            r = int(channel[5])
-            return self.pvDxpRois[c][r]
+        c = int(channel[CHANNELPOSITION]) - 1
+        if(len(channel) > ROIPOSITION + 1):
+            r = int(channel[ROIPOSITION])
+            return self.pvDxpRois[c][r].get()
         else:
             self.saveSpectrum(c, **kwargs)
             return 1.0
 
-    # save the spectrum intensity in a mca file
     def saveSpectrum(self, ch, **kwargs):
-        fileName = self.fileName
-        idx = 0
-        if(fileName):
-            spectrum = self.pvDxpChannels[ch].get(as_numpy=True)
-            prefix = fileName.split('.')[0]
-            while os.path.exists('%s_%s%d_%04d.mca' % (prefix, self.dxpType,
-                                                       ch, idx)):
-                idx += 1
-            fileName = '%s_%s%d_%04d.mca' % \
-                       (prefix, self.dxpType, ch, idx)
-        np.savetxt(fileName, spectrum, fmt='%f')
+        '''save the spectrum intensity in a mca file or an hdf file
+        This method load spectrum from a PV and then save it to HDF file'''
+        self.ch = ch
+        self.spectrum = self.pvDxpChannels[self.ch].get(as_numpy=True)
+
+        if self.image is None:
+            # if is a point, prefix is different
+            self.prefix = self.dxpType + str(self.ch)
+
+        super().saveSpectrum()
 
     def isCountRunning(self):
         return (self.pvDxpAcquire.get())
@@ -170,7 +179,6 @@ class Dxp(StandardDevice, ICountable):
     def startCount(self):
         """ Starts acquiring an spectrum
         It's necessary to call setCounTime before"""
-
         if self.acquiring:
             raise RuntimeError('Already counting')
 
@@ -190,3 +198,16 @@ class Dxp(StandardDevice, ICountable):
         """Stops an ongoing acquisition, if any, and puts the EPICS IOC in
         idle state."""
         self.pvDxpStop.put(1, wait=True)
+
+    def startCollectImage(self, rows=0, cols=0):
+        """Start to collect an image
+        When collect an image, the points will be  saved on a hdf file"""
+        super().startCollectImage("int32", rows, cols)
+
+    def setNormValue(self, value):
+        """Applies normalization"""
+        if self.image is None:
+            self.prefix = self.dxpType + str(self.ch)
+
+        super.setNormValue(value)
+
