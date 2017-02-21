@@ -219,7 +219,7 @@ def enableCounter(mne):
     c = py4syn.counterDB[mne]
     c['enable'] = True
 
-def delCounters():
+def clearCounterDB():
     py4syn.counterDB = collections.OrderedDict()
 
 if __name__ == "__main__":
