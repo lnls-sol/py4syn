@@ -219,6 +219,9 @@ def enableCounter(mne):
     c = py4syn.counterDB[mne]
     c['enable'] = True
 
+def clearCounterDB():
+    py4syn.counterDB = collections.OrderedDict()
+
 if __name__ == "__main__":
     scalerSIM = Scaler("IMX:SCALER", 13, "scalerSIM")
     createCounter("seconds", scalerSIM, 1)
