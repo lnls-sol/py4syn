@@ -133,10 +133,25 @@ POST_POINT_CALLBACK = None
 global POST_SCAN_CALLBACK
 POST_SCAN_CALLBACK = defaultPostScanCallback
 
+
 class ScanType(Enum):
     SCAN = 0
     MESH = 1
     TIME = 2
+
+
+class ScanStateEnum(str, Enum):
+    idle = "idle"
+    running = "running"
+    error = "error"
+    paused = "paused"
+    interrupted = "interrupted"
+
+
+class ScanInterruptedException(Exception):
+    '''Scan was interrupted'''
+    pass
+
 
 #
 #UTILITARY FUNCTIONS
@@ -651,6 +666,12 @@ class Scan(object):
 
         self.setScanType(type)
 
+        # state, pause and interrupt support
+        self.__interrupt=False
+        self.__pause=False
+        self.__state = ScanStateEnum.idle
+        self.__pause_polling_rate = 0.1
+
         self.__scanParams = []
         self.__minNumberOfPoints = 0
         self.__countTime = 1
@@ -793,6 +814,25 @@ class Scan(object):
     def getElapsedTimePerPoint(self):
         return self.getElapsedTime() / self.getNumberOfPoints()
 
+    def setPausePoolingRate(rate):
+        self.__pause_pooling_rate = float(rate)
+
+    def interrupt(self):
+        self.__interrupt=True
+        self.__pause=False
+
+    def pause(self):
+        self.__pause=True
+
+    def resume(self):
+        if self.__state == ScanStateEnum.paused:
+            self.__pause = False
+        else:
+            raise ValueError('Cannot resume, scan is not paused. Current state is: {}'.format(self.__state))
+
+    def getState(self):
+        return self.__state
+
     def start(self):
         import datetime
         global XFIELD
@@ -862,6 +902,9 @@ class Scan(object):
             if(PARTIAL_WRITE and FILE_WRITER is not None):
                 FILE_WRITER.writeHeader()
 
+            # Define the scan as Running
+            self.__state = ScanStateEnum.running
+
             if(self.__scanType == ScanType.SCAN):
                 self.doScan()
             elif(self.__scanType == ScanType.MESH):
@@ -874,6 +917,7 @@ class Scan(object):
                 raise Exception("Invalid Scan Type. Please Check.")
 
             self.__endTimestamp = datetime.datetime.now()
+            self.__state = ScanStateEnum.idle
 
             if not PARTIAL_WRITE and FILE_WRITER is not None:
                 print("\tSaving data to file")
@@ -883,7 +927,7 @@ class Scan(object):
 
         except KeyboardInterrupt:
             self.__endTimestamp = datetime.datetime.now()
-
+            self.__state = ScanStateEnum.interrupted
             print("\tUser Interrupted")
             if(FILENAME is not None and FILENAME != "" and not PARTIAL_WRITE
                and FILE_WRITER is not None):
@@ -1044,6 +1088,21 @@ class Scan(object):
                 print("COM = ", COM)
 
 
+    def __check_pause_interrupt(self, pointIdx):
+        if self.__pause:
+            self.__state = ScanStateEnum.paused
+            print('Pausing scan before point {}:'.format(pointIdx))
+            while self.__pause:
+                time.sleep(self.__pause_polling_rate)
+            if not self.__interrupt:
+                print('Resuming scan at point {}:'.format(pointIdx))
+
+        if self.__interrupt:
+            self.__state = ScanStateEnum.interrupted
+            print('Aborting the Scan... Please wait for cleanup!')
+            raise ScanInterruptedException()
+
+
     def doMesh(self):
         """
         IDX = MOD(QUOTIENT(I,MULT(Steps(N->1))),Steps(N))
@@ -1079,6 +1138,11 @@ class Scan(object):
 
         # Scan main loop
         for pointIdx in range(0, self.getNumberOfPoints()):
+            try:
+                self.__check_pause_interrupt(pointIdx)
+            except ScanInterruptedException:
+                break
+
             # Saves point index at SCAN_DATA
             SCAN_DATA['points'].append(pointIdx)
 
@@ -1166,6 +1230,10 @@ class Scan(object):
         self.__initialize()
 
         for pointIdx in range(0, self.getNumberOfPoints()):
+            try:
+                self.__check_pause_interrupt(pointIdx)
+            except ScanInterruptedException:
+                break
 
             # Saves point index at SCAN_DATA
             SCAN_DATA['points'].append(pointIdx)
@@ -1237,6 +1305,11 @@ class Scan(object):
 
         pointIdx = 0
         while(True):
+            try:
+                self.__check_pause_interrupt(pointIdx)
+            except ScanInterruptedException:
+                break
+
             # Pre Point Callback
             if(self.__prePointCallback):
                 self.__prePointCallback(scan=self, pos=positions, idx=indexes)
