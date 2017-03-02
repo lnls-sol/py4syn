@@ -1088,7 +1088,7 @@ class Scan(object):
                 print("COM = ", COM)
 
 
-    def __check_pause_interrupt(pointIdx):
+    def __check_pause_interrupt(self, pointIdx):
         if self.__pause:
             self.__state = ScanStateEnum.paused
             print('Pausing scan before point {}:'.format(pointIdx))
