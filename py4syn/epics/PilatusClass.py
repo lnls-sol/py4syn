@@ -78,7 +78,7 @@ class Pilatus(StandardDevice, ICountable):
         self.pvNumImages = PV(pv + ':NumImages')
         self.pvDelayTime = PV(pv + ':DelayTime')
         self.pvTriggerMode = PV(pv + ':TriggerMode')
-        self.pvDet2Theta = PV(pv + ':Det2Theta')
+        self.pvDet2Theta = PV(pv + ':Det2theta')
         self.pvCamserverConnectStatus = PV(pv +':CamserverAsyn.CNCT')
 
         self.timer = Timer(self.RESPONSE_TIMEOUT)
@@ -264,8 +264,8 @@ class Pilatus(StandardDevice, ICountable):
         if self.timer.expired():
             raise RuntimeError('Camera is not answering')
 
-    def setThreshold(self, threshold):
-        self.pvThreshold.put(threshold, wait=True)
+    def setThreshold(self, threshold, wait=True):
+        self.pvThreshold.put(threshold, wait=wait)
 
     def getThreshold(self):
         return self.pvThreshold.get()
