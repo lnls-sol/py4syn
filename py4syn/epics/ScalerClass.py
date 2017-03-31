@@ -14,6 +14,7 @@ Python Class for EPICS Scaler control.
 from epics import PV, ca
 from py4syn.epics.StandardDevice import StandardDevice
 from py4syn.epics.ICountable import ICountable
+from time import sleep
 
 class Scaler(StandardDevice, ICountable):
 
@@ -104,6 +105,7 @@ class Scaler(StandardDevice, ICountable):
 
     def wait(self):
         while(self._counting):
+            sleep(0.1)
             ca.poll()
 
     def getIntensityCheck(self):
