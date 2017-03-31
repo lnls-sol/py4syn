@@ -35,6 +35,7 @@ class Dxp(ImageHDF):
         """
         super().__init__(mnemonic, numPoints, output, dxpType)
 
+        self.dxpType = dxpType
         self.acquireChanged = Event()
         self.acquiring = False
 
@@ -114,7 +115,7 @@ class Dxp(ImageHDF):
         r is the ROI"""
         channel = kwargs['channel']
         c = int(channel[CHANNELPOSITION]) - 1
-        if(len(channel) > ROIPOSITION + 1):
+        if(len(channel) > ROIPOSITION):
             r = int(channel[ROIPOSITION])
             return self.pvDxpRois[c][r].get()
         else:
@@ -124,6 +125,7 @@ class Dxp(ImageHDF):
     def saveSpectrum(self, ch, **kwargs):
         '''save the spectrum intensity in a mca file or an hdf file
         This method load spectrum from a PV and then save it to HDF file'''
+        self.pvDxpPresetMode.put("Live time")
         self.ch = ch
         self.spectrum = self.pvDxpChannels[self.ch].get(as_numpy=True)
 
@@ -209,5 +211,5 @@ class Dxp(ImageHDF):
         if self.image is None:
             self.prefix = self.dxpType + str(self.ch)
 
-        super.setNormValue(value)
+        super().setNormValue(value)
 
