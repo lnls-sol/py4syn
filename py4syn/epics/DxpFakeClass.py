@@ -59,8 +59,8 @@ class DxpFake(ImageHDF):
         channel is on format mcaC.Rr, where C is  the channel and
         r is the ROI"""
         channel = kwargs['channel']
-        c = int(channel[3]) - 1
-        if(len(channel) > 4):
+        c = int(channel[CHANNELPOSITION]) - 1
+        if(len(channel) > ROIPOSITION):
             return np.random.rand()
         else:
             self.saveSpectrum(c, **kwargs)
