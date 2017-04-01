@@ -75,8 +75,10 @@ class AmptekMCA():
                     break
                 sleep(2)
 
-        threadToKeepAlive = Thread(target=keepAmptekAlive)
-        threadToKeepAlive.start()
+
+        self.threadToKeepAlive = Thread(target=keepAmptekAlive)
+        self.threadToKeepAlive.daemon = True
+        self.threadToKeepAlive.start()
 
     def getDeadTime(self):
         self.mca_pause_alive = True
