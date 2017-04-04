@@ -100,7 +100,7 @@ class QE65000(ImageHDF):
 
     def saveSpectrum(self, **kwargs):
         ''' save the spectrum intensity in a mca file or an hdf file '''
-        self.spectrum = self.pvSpectrum.get(as_numpy=True)
+        self.spectrum = self.pvSpectrum.get(as_numpy=True)[:self.numPoints]
 
         super().saveSpectrum()
 

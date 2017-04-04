@@ -64,6 +64,7 @@ class ImageHDF(StandardDevice, ICountable):
                 if (self.col % 2 != 0):
                     self.row = -1*(self.row+1)
             self.image[self.col, self.row, :] = self.spectrum
+            self.fileResult.flush()
 
             self.lastPos += 1
 
@@ -101,7 +102,7 @@ class ImageHDF(StandardDevice, ICountable):
 
     def setNormValue(self, value):
         """Applies normalization"""
-        result = np.divide(self.spectrum, float(value))
+        result = np.multiply(self.spectrum, float(value))
         if self.image is None:
             # normalization for a point
             fileName = self.nameFile(self.output, self.prefix + '_norm', "mca")
