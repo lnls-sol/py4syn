@@ -637,7 +637,8 @@ def timescan(t=1, delay=1, repeat=-1):
     delay : `double`
         Time to wait before new count
     repeat : `int`
-        Number of points to acquire (default is infinity)
+        Number of repeats to acquire (default is infinity), if repeat = 1
+        it will run 2 times an acquire
     """
     global SCAN_CMD
     SCAN_CMD = "timescan("+str(t)+", "+str(delay)+")"
