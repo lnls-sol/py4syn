@@ -15,6 +15,9 @@ import h5py
 from py4syn.epics.ImageHDFClass import ImageHDF
 
 NUMPOINTS = 2048
+# constants used to parse PV name
+CHANNELPOSITION=3
+ROIPOSITION=6
 
 class DxpFake(ImageHDF):
     # CONSTRUCTOR OF DXP CLASS
