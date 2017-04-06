@@ -1,6 +1,6 @@
 """Dxp Class
 
-Python Class for EPICS QE65000 Control.
+Python Class for EPICS Ocean Control.
 
 :platform: Unix
 :synopsis: Python Class for EPICS Spectro control.
@@ -19,8 +19,8 @@ import h5py
 from py4syn.utils.timer import Timer
 from py4syn.epics.ImageHDFClass import ImageHDF
 
-class QE65000(ImageHDF):
-    # CONSTRUCTOR OF QE65000 CLASS
+class Ocean(ImageHDF):
+    # CONSTRUCTOR OF Ocean CLASS
     def __init__(self, mnemonic, pv=None, responseTimeout=15, output="./out",
                  numPoints=1044):
         """Constructor
@@ -122,7 +122,7 @@ class QE65000(ImageHDF):
             self.acquireChanged.clear()
 
         if self.timer.expired():
-            raise RuntimeError('QE65000 is not answering')
+            raise RuntimeError('Ocean is not answering')
 
     def canMonitor(self):
         """ Returns false indicating cannot be use as a counter monitor"""
