@@ -38,9 +38,10 @@ class Ocean(ImageHDF):
 
         # use darkcorrection
         self.pvDarkCorrection = PV(pv+":ElectricalDark")
+        dark = self.pvDarkCorrection.get()
 
         # the spectra come from different pv if use darkcorrection
-        if self.pvDarkCorrection.get() == 1:
+        if dark == 1:
             self.pvSpectrum = PV(pv+":DarkCorrectedSpectra")
         else:
             self.pvSpectrum = PV(pv+":Spectra")
