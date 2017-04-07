@@ -11,8 +11,9 @@ Python Class for EPICS Ocean Control.
     .. note:: 10/18/2016 [gabrielfedel]  first version released
 """
 import os
+from bisect import bisect
 
-from epics import PV
+from epics import PV, caget
 import numpy as np
 from threading import Event
 import h5py
@@ -53,8 +54,13 @@ class Ocean(ImageHDF):
         self.pvAcMode = PV(pv+":AcquisitionMode")
         # set to single mode
         self.pvAcMode.put("Single")
+        #axis Spectra
+        self.axis = caget(pv + ":SpectraAxis", as_numpy=True)[:self.numPoints]
 
         self.pv = pv
+
+        # regions of interest
+        self.ROIS = []
 
         self.responseTimeout = responseTimeout
         self.timer = Timer(self.responseTimeout)
@@ -104,9 +110,21 @@ class Ocean(ImageHDF):
         else:
             self.pvSpectrum = PV(self.pv+":Spectra")
 
-        self.spectrum = self.pvSpectrum.get(as_numpy=True)[:self.numPoints]
-
+        allSpectrum = self.pvSpectrum.get(as_numpy=True)[:self.numPoints]
+        self.spectrum = allSpectrum
         super().saveSpectrum()
+
+        # there are ROIS to save
+        if len(self.ROIS) > 0:
+            i = 1
+            for mini, maxi in self.ROIS:
+                # get the spectrum positions
+                start = bisect(self.axis, mini)
+                end = bisect(self.axis, maxi)
+                roi = allSpectrum[start:end]
+                self.spectrum = roi
+                super().saveSpectrum(sufixName = "_ROI" + str(i))
+                i += 1
 
     def isCountRunning(self):
         return (self.acquiring)
@@ -168,3 +186,8 @@ class Ocean(ImageHDF):
 
     def startCollectImage(self, rows=0, cols=0):
         super().startCollectImage('float32', rows, cols)
+
+    def addRoi(self, roi):
+        """ Insert a new roi
+        roi: a tuple with begin and end: (begin,end)"""
+        self.ROIS.append(roi)
