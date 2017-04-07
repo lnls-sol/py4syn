@@ -38,13 +38,6 @@ class Ocean(ImageHDF):
 
         # use darkcorrection
         self.pvDarkCorrection = PV(pv+":ElectricalDark")
-        dark = self.pvDarkCorrection.get()
-
-        # the spectra come from different pv if use darkcorrection
-        if dark == 1:
-            self.pvSpectrum = PV(pv+":DarkCorrectedSpectra")
-        else:
-            self.pvSpectrum = PV(pv+":Spectra")
 
         # set Acquire Time
         self.pvAcquireTime = PV(pv+":SetIntegration")
@@ -60,6 +53,8 @@ class Ocean(ImageHDF):
         self.pvAcMode = PV(pv+":AcquisitionMode")
         # set to single mode
         self.pvAcMode.put("Single")
+
+        self.pv = pv
 
         self.responseTimeout = responseTimeout
         self.timer = Timer(self.responseTimeout)
@@ -101,6 +96,14 @@ class Ocean(ImageHDF):
 
     def saveSpectrum(self, **kwargs):
         ''' save the spectrum intensity in a mca file or an hdf file '''
+        dark = self.pvDarkCorrection.get()
+
+        # the spectra come from different pv if use darkcorrection
+        if dark == 1:
+            self.pvSpectrum = PV(self.pv+":DarkCorrectedSpectra")
+        else:
+            self.pvSpectrum = PV(self.pv+":Spectra")
+
         self.spectrum = self.pvSpectrum.get(as_numpy=True)[:self.numPoints]
 
         super().saveSpectrum()
