@@ -46,13 +46,13 @@ class ImageHDF(StandardDevice, ICountable):
 
         return resultName
 
-    def saveSpectrum(self, snake = True):
+    def saveSpectrum(self, snake = True, sufixName = ""):
         ''' save the spectrum intensity in a mca file if is a point
             or an hdf file if is an image
             snake: if data is collected on snake mode'''
         # save a unique point
         if self.image is None:
-            fileName = self.nameFile(self.output, self.prefix, "mca")
+            fileName = self.nameFile(self.output, self.prefix + sufixName, "mca")
             # TODO: change way to define fmt
             np.savetxt(fileName, self.spectrum, fmt='%f')
         else:
