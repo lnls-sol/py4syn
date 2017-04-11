@@ -1,6 +1,7 @@
 """Dxp Class
 
-Python Class for EPICS Ocean Control.
+Python Class for EPICS OceanOpticsSpectrometer Control.
+This class was tested on QE6500 and HR2000 models.
 
 :platform: Unix
 :synopsis: Python Class for EPICS Spectro control.
@@ -19,7 +20,7 @@ import h5py
 from py4syn.utils.timer import Timer
 from py4syn.epics.ImageHDFClass import ImageHDF
 
-class Ocean(ImageHDF):
+class OceanOpticsSpectrometer(ImageHDF):
     # CONSTRUCTOR OF Ocean CLASS
     def __init__(self, mnemonic, pv=None, responseTimeout=15, output="./out",
                  numPoints=1044):
@@ -38,6 +39,10 @@ class Ocean(ImageHDF):
 
         # use darkcorrection
         self.pvDarkCorrection = PV(pv+":ElectricalDark")
+
+        # spectrum
+        self.pvSpectrum = PV(self.pv+":Spectra")
+        self.pvSpectrumCorrected = PV(self.pv+":DarkCorrectedSpectra")
 
         # set Acquire Time
         self.pvAcquireTime = PV(pv+":SetIntegration")
@@ -100,11 +105,9 @@ class Ocean(ImageHDF):
 
         # the spectra come from different pv if use darkcorrection
         if dark == 1:
-            self.pvSpectrum = PV(self.pv+":DarkCorrectedSpectra")
+            self.spectrum = self.pvSpectrumCorrected.get(as_numpy=True)[:self.numPoints]
         else:
-            self.pvSpectrum = PV(self.pv+":Spectra")
-
-        self.spectrum = self.pvSpectrum.get(as_numpy=True)[:self.numPoints]
+            self.spectrum = self.pvSpectrum.get(as_numpy=True)[:self.numPoints]
 
         super().saveSpectrum()
 
