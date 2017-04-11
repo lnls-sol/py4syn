@@ -1,6 +1,7 @@
 """Dxp Class
 
-Python Class for EPICS QE65000 Control.
+Python Class for EPICS OceanOpticsSpectrometer Control.
+This class was tested on QE6500 and HR2000 models.
 
 :platform: Unix
 :synopsis: Python Class for EPICS Spectro control.
@@ -19,8 +20,8 @@ import h5py
 from py4syn.utils.timer import Timer
 from py4syn.epics.ImageHDFClass import ImageHDF
 
-class QE65000(ImageHDF):
-    # CONSTRUCTOR OF QE65000 CLASS
+class OceanOpticsSpectrometer(ImageHDF):
+    # CONSTRUCTOR OF Ocean CLASS
     def __init__(self, mnemonic, pv=None, responseTimeout=15, output="./out",
                  numPoints=1044):
         """Constructor
@@ -39,11 +40,9 @@ class QE65000(ImageHDF):
         # use darkcorrection
         self.pvDarkCorrection = PV(pv+":ElectricalDark")
 
-        # the spectra come from different pv if use darkcorrection
-        if self.pvDarkCorrection.get() == 1:
-            self.pvSpectrum = PV(pv+":DarkCorrectedSpectra")
-        else:
-            self.pvSpectrum = PV(pv+":Spectra")
+        # spectrum
+        self.pvSpectrum = PV(self.pv+":Spectra")
+        self.pvSpectrumCorrected = PV(self.pv+":DarkCorrectedSpectra")
 
         # set Acquire Time
         self.pvAcquireTime = PV(pv+":SetIntegration")
@@ -59,6 +58,8 @@ class QE65000(ImageHDF):
         self.pvAcMode = PV(pv+":AcquisitionMode")
         # set to single mode
         self.pvAcMode.put("Single")
+
+        self.pv = pv
 
         self.responseTimeout = responseTimeout
         self.timer = Timer(self.responseTimeout)
@@ -100,7 +101,13 @@ class QE65000(ImageHDF):
 
     def saveSpectrum(self, **kwargs):
         ''' save the spectrum intensity in a mca file or an hdf file '''
-        self.spectrum = self.pvSpectrum.get(as_numpy=True)[:self.numPoints]
+        dark = self.pvDarkCorrection.get()
+
+        # the spectra come from different pv if use darkcorrection
+        if dark == 1:
+            self.spectrum = self.pvSpectrumCorrected.get(as_numpy=True)[:self.numPoints]
+        else:
+            self.spectrum = self.pvSpectrum.get(as_numpy=True)[:self.numPoints]
 
         super().saveSpectrum()
 
@@ -122,7 +129,7 @@ class QE65000(ImageHDF):
             self.acquireChanged.clear()
 
         if self.timer.expired():
-            raise RuntimeError('QE65000 is not answering')
+            raise RuntimeError('Ocean is not answering')
 
     def canMonitor(self):
         """ Returns false indicating cannot be use as a counter monitor"""
