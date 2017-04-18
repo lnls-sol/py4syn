@@ -131,7 +131,7 @@ class OceanOpticsSpectrometer(ImageHDF):
                 end = bisect(self.axis, maxi)
                 roi = allSpectrum[start:end]
                 self.spectrum = roi
-                super().saveSpectrum(sufixName = "_ROI" + str(i))
+                super().saveSpectrum(suffixName = "_ROI" + str(i))
                 i += 1
 
     def isCountRunning(self):
