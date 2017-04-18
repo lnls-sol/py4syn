@@ -107,6 +107,11 @@ class OceanOpticsSpectrometer(ImageHDF):
         # Work only when in continuos mode
         pass
 
+    def saveUniquePoint(self, data, fmt, sufixName = ""):
+        fileName = super().nameFile(self.output, self.prefix + sufixName, "mca")
+        np.savetxt(fileName, data , fmt=fmt)
+
+
     def saveSpectrum(self, **kwargs):
         ''' save the spectrum intensity in a mca file or an hdf file '''
         dark = self.pvDarkCorrection.get()
@@ -119,7 +124,10 @@ class OceanOpticsSpectrometer(ImageHDF):
 
         allSpectrum = self.pvSpectrum.get(as_numpy=True)[:self.numPoints]
         self.spectrum = allSpectrum
-        super().saveSpectrum()
+        if not self.image:
+            self.saveUniquePoint(np.array([self.axis,self.spectrum]).T,"%f\t%f")
+        else:
+            super().saveSpectrum()
 
         # there are ROIS to save
         if len(self.ROIS) > 0:
@@ -130,7 +138,11 @@ class OceanOpticsSpectrometer(ImageHDF):
                 end = bisect(self.axis, maxi)
                 roi = allSpectrum[start:end]
                 self.spectrum = roi
-                super().saveSpectrum(sufixName = "_ROI" + str(i))
+                if not self.image:
+                    data = np.array([self.axis[start:end],self.spectrum]).T
+                    self.saveUniquePoint(data, "%f\t%f", sufixName = "_ROI" + str(i))
+                else:
+                    super().saveSpectrum()
                 i += 1
 
     def isCountRunning(self):
