@@ -22,6 +22,7 @@ from threading import Event
 from py4syn.utils.timer import Timer
 from py4syn.epics.ImageHDFClass import ImageHDF
 
+
 class OceanOpticsSpectrometer(ImageHDF):
     # CONSTRUCTOR OF Ocean CLASS
     def __init__(self, mnemonic, pv=None, responseTimeout=15, output="./out",
@@ -60,7 +61,7 @@ class OceanOpticsSpectrometer(ImageHDF):
         self.pvAcMode = PV(pv+":AcquisitionMode")
         # set to single mode
         self.pvAcMode.put("Single")
-        #axis Spectra
+        # axis Spectra
         pvAxis = PV(pv + ":SpectraAxis")
         self.axis = pvAxis.get(as_numpy=True)[:self.numPoints]
 
@@ -111,7 +112,8 @@ class OceanOpticsSpectrometer(ImageHDF):
 
         # the spectra come from different pv if use darkcorrection
         if dark == 1:
-            self.spectrum = self.pvSpectrumCorrected.get(as_numpy=True)[:self.numPoints]
+            self.spectrum =\
+                self.pvSpectrumCorrected.get(as_numpy=True)[:self.numPoints]
         else:
             self.spectrum = self.pvSpectrum.get(as_numpy=True)[:self.numPoints]
 
@@ -128,7 +130,7 @@ class OceanOpticsSpectrometer(ImageHDF):
                 end = bisect(self.axis, maxi)
                 roi = allSpectrum[start:end]
                 self.spectrum = roi
-                super().saveSpectrum(suffixName = "_ROI" + str(i))
+                super().saveSpectrum(suffixName="_ROI" + str(i))
                 i += 1
 
     def isCountRunning(self):
