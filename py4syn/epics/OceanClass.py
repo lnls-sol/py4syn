@@ -18,7 +18,7 @@ This class was tested on QE6500 and HR2000 models.
 import os
 from bisect import bisect
 
-from epics import PV, caget
+from epics import PV
 import numpy as np
 from threading import Event
 import h5py
@@ -64,7 +64,8 @@ class OceanOpticsSpectrometer(ImageHDF):
         # set to single mode
         self.pvAcMode.put("Single")
         #axis Spectra
-        self.axis = caget(pv + ":SpectraAxis", as_numpy=True)[:self.numPoints]
+        pvAxis = PV(pv + ":SpectraAxis")
+        self.axis = pvAxis.get(as_numpy=True)[:self.numPoints]
 
         # regions of interest
         self.ROIS = []
