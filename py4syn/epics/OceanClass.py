@@ -15,13 +15,10 @@ This class was tested on QE6500 and HR2000 models.
 .. Henrique Almeida
     .. note:: 10/18/2016 [gabrielfedel]  first version released
 """
-import os
 from bisect import bisect
 
 from epics import PV
-import numpy as np
 from threading import Event
-import h5py
 from py4syn.utils.timer import Timer
 from py4syn.epics.ImageHDFClass import ImageHDF
 
