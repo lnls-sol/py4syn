@@ -1,6 +1,11 @@
 """Dxp Class
 
+<<<<<<< HEAD:py4syn/epics/OceanClass.py
 Python Class for EPICS Ocean Control.
+=======
+Python Class for EPICS OceanOpticsSpectrometer Control.
+This class was tested on QE6500 and HR2000 models.
+>>>>>>> d0048a441122431f2ab10cf5c6f9773bb39874aa:py4syn/epics/OceanClass.py
 
 :platform: Unix
 :synopsis: Python Class for EPICS Spectro control.
@@ -20,7 +25,7 @@ import h5py
 from py4syn.utils.timer import Timer
 from py4syn.epics.ImageHDFClass import ImageHDF
 
-class Ocean(ImageHDF):
+class OceanOpticsSpectrometer(ImageHDF):
     # CONSTRUCTOR OF Ocean CLASS
     def __init__(self, mnemonic, pv=None, responseTimeout=15, output="./out",
                  numPoints=1044):
@@ -40,6 +45,10 @@ class Ocean(ImageHDF):
         # use darkcorrection
         self.pvDarkCorrection = PV(pv+":ElectricalDark")
 
+        # spectrum
+        self.pvSpectrum = PV(pv+":Spectra")
+        self.pvSpectrumCorrected = PV(pv+":DarkCorrectedSpectra")
+
         # set Acquire Time
         self.pvAcquireTime = PV(pv+":SetIntegration")
 
@@ -56,8 +65,6 @@ class Ocean(ImageHDF):
         self.pvAcMode.put("Single")
         #axis Spectra
         self.axis = caget(pv + ":SpectraAxis", as_numpy=True)[:self.numPoints]
-
-        self.pv = pv
 
         # regions of interest
         self.ROIS = []
@@ -106,9 +113,9 @@ class Ocean(ImageHDF):
 
         # the spectra come from different pv if use darkcorrection
         if dark == 1:
-            self.pvSpectrum = PV(self.pv+":DarkCorrectedSpectra")
+            self.spectrum = self.pvSpectrumCorrected.get(as_numpy=True)[:self.numPoints]
         else:
-            self.pvSpectrum = PV(self.pv+":Spectra")
+            self.spectrum = self.pvSpectrum.get(as_numpy=True)[:self.numPoints]
 
         allSpectrum = self.pvSpectrum.get(as_numpy=True)[:self.numPoints]
         self.spectrum = allSpectrum
