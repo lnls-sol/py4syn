@@ -593,8 +593,10 @@ class GASS():
                 updatedPressures = self.__getChambersPressures()
 
                 for chamberNumber in range(3):
-                    press = updatedPressures[chamberNumber]
-                    reachedTarget = (greaterThan ? (press >= targetPressure) : (press <= targetPressure))
+                    press       = updatedPressures[chamberNumber]
+                    targetPress = targetPressures[chamberNumber]
+                    # Check
+                    reachedTarget = (press >= targetPress) if greaterThan else (press <= targetPress)
 
                     # -------------------------------------------------------------------
                     # If this chamber has been reached the target, close its valve
