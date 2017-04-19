@@ -1,11 +1,7 @@
 """Dxp Class
 
-<<<<<<< HEAD:py4syn/epics/OceanClass.py
-Python Class for EPICS Ocean Control.
-=======
 Python Class for EPICS OceanOpticsSpectrometer Control.
 This class was tested on QE6500 and HR2000 models.
->>>>>>> d0048a441122431f2ab10cf5c6f9773bb39874aa:py4syn/epics/OceanClass.py
 
 :platform: Unix
 :synopsis: Python Class for EPICS Spectro control.
