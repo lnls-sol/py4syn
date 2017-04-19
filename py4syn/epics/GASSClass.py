@@ -233,8 +233,8 @@ class GASS():
         self.pressureI1_I2 = BlueRibbonBD306(pvPressureI1_I2Prefix, pvPressureI1_I2Mnemonic)
 
         # Attributes to store element and edge
-        self.element = element
-        self.edge = edge
+        self.element = element.title()
+        self.edge = edge.title()
 
         # Pressure parameters
         self.pressureVacuum = pressureVacuum
@@ -249,10 +249,10 @@ class GASS():
     # Get/Set attributes
     # -------------------------------------------------------------------------
     def set_element(self, element):
-        self.element = element
+        self.element = element.title()
 
     def get_element(self):
-        return self.element
+        return self.element.title()
 
     def set_edge(self, edge):
         self.edge = edge
