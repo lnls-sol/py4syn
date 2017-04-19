@@ -104,6 +104,9 @@ class OceanOpticsSpectrometer(ImageHDF):
         # Work only when in continuos mode
         pass
 
+    def close(self):
+        self.setCountStop()
+
     def saveUniquePoint(self, data, fmt, suffixName = ""):
         fileName = super().nameFile(self.output, self.prefix + suffixName, "mca")
         np.savetxt(fileName, data , fmt=fmt)
