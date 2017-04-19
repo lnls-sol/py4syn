@@ -1,11 +1,7 @@
 """Dxp Class
 
-<<<<<<< HEAD:py4syn/epics/OceanClass.py
-Python Class for EPICS Ocean Control.
-=======
 Python Class for EPICS OceanOpticsSpectrometer Control.
 This class was tested on QE6500 and HR2000 models.
->>>>>>> d0048a441122431f2ab10cf5c6f9773bb39874aa:py4syn/epics/OceanClass.py
 
 :platform: Unix
 :synopsis: Python Class for EPICS Spectro control.
@@ -17,6 +13,7 @@ This class was tested on QE6500 and HR2000 models.
 """
 from bisect import bisect
 
+import numpy as np
 from epics import PV
 from threading import Event
 from py4syn.utils.timer import Timer
@@ -61,6 +58,7 @@ class OceanOpticsSpectrometer(ImageHDF):
         self.pvAcMode = PV(pv+":AcquisitionMode")
         # set to single mode
         self.pvAcMode.put("Single")
+
         # axis Spectra
         pvAxis = PV(pv + ":SpectraAxis")
         self.axis = pvAxis.get(as_numpy=True)[:self.numPoints]
@@ -106,6 +104,14 @@ class OceanOpticsSpectrometer(ImageHDF):
         # Work only when in continuos mode
         pass
 
+    def close(self):
+        self.setCountStop()
+
+    def saveUniquePoint(self, data, fmt, suffixName = ""):
+        fileName = super().nameFile(self.output, self.prefix + suffixName, "mca")
+        np.savetxt(fileName, data , fmt=fmt)
+
+
     def saveSpectrum(self, **kwargs):
         ''' save the spectrum intensity in a mca file or an hdf file '''
         dark = self.pvDarkCorrection.get()
@@ -119,10 +125,14 @@ class OceanOpticsSpectrometer(ImageHDF):
 
         allSpectrum = self.pvSpectrum.get(as_numpy=True)[:self.numPoints]
         self.spectrum = allSpectrum
-        super().saveSpectrum()
 
-        # there are ROIS to save
-        if len(self.ROIS) > 0:
+        if not self.image:
+            self.saveUniquePoint(np.array([self.axis,self.spectrum]).T,"%f\t%f")
+        else:
+            super().saveSpectrum()
+
+        # there are ROIS to save / works only for points
+        if len(self.ROIS) > 0 and not self.image:
             i = 1
             for mini, maxi in self.ROIS:
                 # get the spectrum positions
@@ -130,8 +140,10 @@ class OceanOpticsSpectrometer(ImageHDF):
                 end = bisect(self.axis, maxi)
                 roi = allSpectrum[start:end]
                 self.spectrum = roi
-                super().saveSpectrum(suffixName="_ROI" + str(i))
+                data = np.array([self.axis[start:end],self.spectrum]).T
+                self.saveUniquePoint(data, "%f\t%f", suffixName = "_ROI" + str(i))
                 i += 1
+
 
     def isCountRunning(self):
         return (self.acquiring)
