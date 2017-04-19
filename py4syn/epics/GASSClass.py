@@ -198,16 +198,16 @@ class GASS():
     def __init__ (self,
                   element,
                   edge,
-                  pvValvesDigitalPrefix="XAFS2:DIO:bo",
-                  pvValvesDigitalPorts="9-16",
-                  pvPressureI0Prefix="XAFS2:BD306A",
-                  pvPressureI0Mnemonic="bd306a",
-                  pvPressureI1_I2Prefix="XAFS2:BD306B",
-                  pvPressureI1_I2Mnemonic="bd306b",
-                  pressureVacuum=-6.26,
-                  pressureWork=8.0,
-                  extraTimeManifold=2.0,
-                  extraTimeManifoldVacuum=5.0):
+                  pvValvesDigitalPrefix     =   "XAFS2:DIO:bo",
+                  pvValvesDigitalPorts      =   "9-15",
+                  pvPressureI0Prefix        =   "XAFS2:BD306A",
+                  pvPressureI0Mnemonic      =   "bd306a",
+                  pvPressureI1_I2Prefix     =   "XAFS2:BD306B",
+                  pvPressureI1_I2Mnemonic   =   "bd306b",
+                  pressureVacuum            =   -6.26,
+                  pressureWork              =   8.0,
+                  extraTimeManifold         =   2.0,
+                  extraTimeManifoldVacuum   =   5.0):
         """
         Constructor
 
@@ -245,14 +245,48 @@ class GASS():
         self.extraTimeManifoldVacuum = extraTimeManifoldVacuum
 
 
+    # -------------------------------------------------------------------------
+    # Get/Set attributes
+    # -------------------------------------------------------------------------
     def set_element(self, element):
         self.element = element
 
+    def get_element(self):
+        return self.element
 
     def set_edge(self, edge):
         self.edge = edge
 
+    def get_edge(self):
+        return self.edge
 
+    def set_pressure_vacuum(self, pressVacuum):
+        self.pressureVacuum = pressVacuum
+
+    def get_pressure_vacuum(self):
+        return self.pressureVacuum
+
+    def set_pressure_work(self, pressWork):
+        self.pressureWork = pressWork
+
+    def get_pressure_work(self):
+        return self.pressureWork
+
+    def set_extratime_manifold(self, extraTime):
+        self.extraTimeManifold = extraTime
+
+    def get_extratime_manifold(self):
+        return self.extraTimeManifold
+
+    def set_extratime_manifold_vacuum(self, extraTime):
+        self.extraTimeManifoldVacuum = extraTime
+
+    def get_extratime_manifold_vacuum(self):
+        return self.extraTimeManifoldVacuum
+
+    # -------------------------------------------------------------------------
+    # Valves control
+    # -------------------------------------------------------------------------
     def open_valve(self, io_port):
         try:
             self.valvesDigitalIO.putValue(io_port, 1)
@@ -315,6 +349,9 @@ class GASS():
             raise Exception("Error when trying to close chamber valve at I/O: %d" % str(io_port))
 
 
+    # -------------------------------------------------------------------------
+    # Procedures to apply vacuum on chambers and manifold
+    # -------------------------------------------------------------------------
     def do_vacuum_all_chambers(self):
         try:
             # Close all valves
@@ -334,6 +371,9 @@ class GASS():
             # Close all valves
             self.close_all_valves()
         except:
+            # Close all valves
+            self.close_all_valves()
+            # Return false
             return False
 
         return True
@@ -353,11 +393,17 @@ class GASS():
             # Close all valves
             self.close_all_valves()
         except:
+            # Close all valves
+            self.close_all_valves()
+            # Return false
             return False
 
         return True
 
 
+    # -------------------------------------------------------------------------
+    # Procedures to fill chambers with gas(es)
+    # -------------------------------------------------------------------------
     def fill_all_chambers(self, purge=False):
         # Close all valves
         self.close_all_valves()
@@ -387,13 +433,15 @@ class GASS():
             # Close all valves
             self.close_all_valves()
         else:
+            """
             # --------------------------------------------------
-            # Fill gas in this ordering (for all chambers):
+            # Fill up gas in chambers on this ordering (for all chambers):
             # --------------------------------------------------
             # 1st: 'He'   -   lightest
             # 2nd: 'N2'
             # 3rd: 'Ar'   -   heaviest
             # --------------------------------------------------
+            """
 
             # --------------------------------------------------
             # Generic preparation
@@ -407,30 +455,20 @@ class GASS():
                 deltaPressures.append(self.pressureWork - updatedPressures[chamberNumber])
 
             # --------------------------------------------------
-            # 'He'
+            # 'He', 'N2' and 'Ar' in sequence...
             # --------------------------------------------------
-            self.fill_all_chambers_with_a_gas(enumGas=Valves.He, deltaPressures=deltaPressures)
-            # Clean manifold
-            self.do_vacuum_manifold()
+            gases = [Valves.He, Valves.N2, Valves.Ar]
 
-            # --------------------------------------------------
-            # 'N2'
-            # --------------------------------------------------
-            self.fill_all_chambers_with_a_gas(enumGas=Valves.N2, deltaPressures=deltaPressures)
-            # Clean manifold
-            self.do_vacuum_manifold()
-
-            # --------------------------------------------------
-            # 'Ar'
-            # --------------------------------------------------
-            self.fill_all_chambers_with_a_gas(enumGas=Valves.Ar, deltaPressures=deltaPressures)
-            # Clean manifold
-            self.do_vacuum_manifold()
+            for gas in gases:
+                # Fill with current gas
+                self.fill_all_chambers_with_a_gas(enumGas=gas, deltaPressures=deltaPressures)
+                # Clean manifold
+                self.do_vacuum_manifold()
 
 
     def fill_all_chambers_with_a_gas(self, enumGas, deltaPressures):
         try:
-            targetPressures, updatedPressures  = self.__GetTargetPressures(deltaPressures=deltaPressures, indexGas=(enumGas.value - 1))
+            targetPressures, updatedPressures  = self.__getTargetPressures(deltaPressures=deltaPressures, indexGas=(enumGas.value - 1))
 
             # Open 'Gas' valve
             self.open_valve(self.valvesArray[enumGas.value])
@@ -460,11 +498,17 @@ class GASS():
             # Close all valves
             self.close_all_valves()
         except:
+            # Close all valves
+            self.close_all_valves()
+            # Raise exception
             raise Exception("Error when filling chambers with gas %s, aborting..." % (enumGas.name))
 
         return True
 
 
+    # -------------------------------------------------------------------------
+    # Main procedure to control the purge chambers operation
+    # -------------------------------------------------------------------------
     def purge_all_chambers(self):
         # Start doing vacuum on all chambers...
         if (self.do_vacuum_all_chambers()):
@@ -478,6 +522,10 @@ class GASS():
             raise Exception("Impossible to purge chambers, problem when doing vacuum...")
 
 
+    # -------------------------------------------------------------------------
+    # Main procedure to control an entire procedure to purge and fill up all chambers
+    # accordingly with chosen Element and Edge
+    # -------------------------------------------------------------------------
     def start(self):
         """
         Main function to proceed with GASS operation...
@@ -495,6 +543,9 @@ class GASS():
         self.close_all_valves()
 
 
+    # -------------------------------------------------------------------------
+    # Internal use methods
+    # -------------------------------------------------------------------------
     def __getChambersPressures(self):
         #
         pressures = []
@@ -515,7 +566,7 @@ class GASS():
         return pressures
 
 
-    def __GetTargetPressures(self, deltaPressures, indexGas):
+    def __getTargetPressures(self, deltaPressures, indexGas):
         #
         targetPressures = []
         updatedPressures = self.__getChambersPressures()
@@ -571,6 +622,9 @@ class GASS():
                 # Raise an exception
                 raise Exception("Error when doing vacuum... did not reach vacuum pressure in %d seconds..." % (MAXIMUM_TIMEOUT))
         except:
+            # Close all valves
+            self.close_all_valves()
+            # Return false
             return False
 
         return True
@@ -619,6 +673,9 @@ class GASS():
                 # Raise an exception
                 raise Exception("Error when doing vacuum... did not reach vacuum pressure in %d seconds..." % (MAXIMUM_TIMEOUT))
         except:
+            # Close all valves
+            self.close_all_valves()
+            # Return false
             return False
 
         return True

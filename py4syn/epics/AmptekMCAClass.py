@@ -19,6 +19,7 @@ DISABLE_MCA    = 'f5faf0030000fd1e'
 KEEP_ALIVE     = 'f5faf0200000fd01'
 REQUEST_PACKET = 'f5fa01010000fe0f'
 
+
 class AmptekMCA():
 
     udp_sock = None
