@@ -13,6 +13,7 @@ This class was tested on QE6500 and HR2000 models.
 """
 from bisect import bisect
 
+import numpy as np
 from epics import PV
 from threading import Event
 from py4syn.utils.timer import Timer
@@ -127,8 +128,8 @@ class OceanOpticsSpectrometer(ImageHDF):
         else:
             super().saveSpectrum()
 
-        # there are ROIS to save
-        if len(self.ROIS) > 0:
+        # there are ROIS to save / works only for points
+        if len(self.ROIS) > 0 and not self.image:
             i = 1
             for mini, maxi in self.ROIS:
                 # get the spectrum positions
@@ -136,24 +137,10 @@ class OceanOpticsSpectrometer(ImageHDF):
                 end = bisect(self.axis, maxi)
                 roi = allSpectrum[start:end]
                 self.spectrum = roi
-                if not self.image:
-                    data = np.array([self.axis[start:end],self.spectrum]).T
-                    self.saveUniquePoint(data, "%f\t%f", suffixName = "_ROI" + str(i))
-                else:
-                    super().saveSpectrum()
+                data = np.array([self.axis[start:end],self.spectrum]).T
+                self.saveUniquePoint(data, "%f\t%f", suffixName = "_ROI" + str(i))
                 i += 1
 
-        # there are ROIS to save
-        if len(self.ROIS) > 0:
-            i = 1
-            for mini, maxi in self.ROIS:
-                # get the spectrum positions
-                start = bisect(self.axis, mini)
-                end = bisect(self.axis, maxi)
-                roi = allSpectrum[start:end]
-                self.spectrum = roi
-                super().saveSpectrum(suffixName="_ROI" + str(i))
-                i += 1
 
     def isCountRunning(self):
         return (self.acquiring)
