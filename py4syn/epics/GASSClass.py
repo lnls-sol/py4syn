@@ -295,7 +295,7 @@ class GASS():
         io_port = -1
 
         try:
-            for (valve in Valves):
+            for valve in Valves:
                 io_port = self.valvesArray[valve.value]
                 # Close
                 self.close_valve(io_port)
