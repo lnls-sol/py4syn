@@ -52,7 +52,7 @@ class ImageHDF(StandardDevice, ICountable):
             snake: if data is collected on snake mode'''
         # save a unique point
         if self.image is None:
-            fileName = self.nameFile(self.output, self.prefix + sufixName, "mca")
+            fileName = self.nameFile(self.output, self.prefix + suffixName, "mca")
             # TODO: change way to define fmt
             np.savetxt(fileName, self.spectrum, fmt='%f')
         else:

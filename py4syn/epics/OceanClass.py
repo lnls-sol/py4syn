@@ -11,17 +11,9 @@ This class was tested on QE6500 and HR2000 models.
 .. Henrique Almeida
     .. note:: 10/18/2016 [gabrielfedel]  first version released
 """
-<<<<<<< HEAD
-import os
-from bisect import bisect
-
-from epics import PV, caget
-import numpy as np
-=======
 from bisect import bisect
 
 from epics import PV
->>>>>>> 946bac7bbebd8673acd0474784d5c41914bcf679
 from threading import Event
 from py4syn.utils.timer import Timer
 from py4syn.epics.ImageHDFClass import ImageHDF
@@ -111,8 +103,8 @@ class OceanOpticsSpectrometer(ImageHDF):
         # Work only when in continuos mode
         pass
 
-    def saveUniquePoint(self, data, fmt, sufixName = ""):
-        fileName = super().nameFile(self.output, self.prefix + sufixName, "mca")
+    def saveUniquePoint(self, data, fmt, suffixName = ""):
+        fileName = super().nameFile(self.output, self.prefix + suffixName, "mca")
         np.savetxt(fileName, data , fmt=fmt)
 
 
@@ -146,7 +138,7 @@ class OceanOpticsSpectrometer(ImageHDF):
                 self.spectrum = roi
                 if not self.image:
                     data = np.array([self.axis[start:end],self.spectrum]).T
-                    self.saveUniquePoint(data, "%f\t%f", sufixName = "_ROI" + str(i))
+                    self.saveUniquePoint(data, "%f\t%f", suffixName = "_ROI" + str(i))
                 else:
                     super().saveSpectrum()
                 i += 1
