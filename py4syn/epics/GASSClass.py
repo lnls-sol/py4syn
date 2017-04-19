@@ -558,9 +558,9 @@ class GASS():
                     press = updatedPressures[chamberNumber]
 
                     if (chamberNumber == 0):
-                        stopWaiting = (greaterThan ? (press >= targetPressure) : (press <= targetPressure))
+                        stopWaiting = (press >= targetPressure) if greaterThan else (press <= targetPressure)
                     else:
-                        stopWaiting = stopWaiting and (greaterThan ? (press >= targetPressure) : (press <= targetPressure))
+                        stopWaiting = stopWaiting and ((press >= targetPressure) if greaterThan else (press <= targetPressure))
 
                 # Increment try number
                 tryNumber += 1
