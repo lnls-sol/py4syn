@@ -30,23 +30,23 @@ class ImageHDF(StandardDevice, ICountable):
         self.prefix = prefix
         self.spectrum = None
 
-    def nameFile(self, output, prefix, sufix):
+    def nameFile(self, output, prefix, suffix):
         '''Generate correct name to file
         output: original fileName
         prefix: added after id
-        sufix: extension'''
+        suffix: extension'''
 
         start = output.split('.')[0]
 
         idx = 0
-        while os.path.exists('%s_%s_%04d.%s' % (start, prefix, idx, sufix)):
+        while os.path.exists('%s_%s_%04d.%s' % (start, prefix, idx, suffix)):
             idx += 1
 
-        resultName= '%s_%s_%04d.%s' % (start, prefix, idx, sufix)
+        resultName= '%s_%s_%04d.%s' % (start, prefix, idx, suffix)
 
         return resultName
 
-    def saveSpectrum(self, snake = True, sufixName = ""):
+    def saveSpectrum(self, snake = True, suffixName = ""):
         ''' save the spectrum intensity in a mca file if is a point
             or an hdf file if is an image
             snake: if data is collected on snake mode'''
