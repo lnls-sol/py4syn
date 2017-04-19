@@ -1,7 +1,11 @@
 """Dxp Class
 
+<<<<<<< HEAD:py4syn/epics/OceanClass.py
+Python Class for EPICS Ocean Control.
+=======
 Python Class for EPICS OceanOpticsSpectrometer Control.
 This class was tested on QE6500 and HR2000 models.
+>>>>>>> d0048a441122431f2ab10cf5c6f9773bb39874aa:py4syn/epics/OceanClass.py
 
 :platform: Unix
 :synopsis: Python Class for EPICS Spectro control.
@@ -11,14 +15,13 @@ This class was tested on QE6500 and HR2000 models.
 .. Henrique Almeida
     .. note:: 10/18/2016 [gabrielfedel]  first version released
 """
-import os
+from bisect import bisect
 
 from epics import PV
-import numpy as np
 from threading import Event
-import h5py
 from py4syn.utils.timer import Timer
 from py4syn.epics.ImageHDFClass import ImageHDF
+
 
 class OceanOpticsSpectrometer(ImageHDF):
     # CONSTRUCTOR OF Ocean CLASS
@@ -41,8 +44,8 @@ class OceanOpticsSpectrometer(ImageHDF):
         self.pvDarkCorrection = PV(pv+":ElectricalDark")
 
         # spectrum
-        self.pvSpectrum = PV(self.pv+":Spectra")
-        self.pvSpectrumCorrected = PV(self.pv+":DarkCorrectedSpectra")
+        self.pvSpectrum = PV(pv+":Spectra")
+        self.pvSpectrumCorrected = PV(pv+":DarkCorrectedSpectra")
 
         # set Acquire Time
         self.pvAcquireTime = PV(pv+":SetIntegration")
@@ -58,8 +61,12 @@ class OceanOpticsSpectrometer(ImageHDF):
         self.pvAcMode = PV(pv+":AcquisitionMode")
         # set to single mode
         self.pvAcMode.put("Single")
+        # axis Spectra
+        pvAxis = PV(pv + ":SpectraAxis")
+        self.axis = pvAxis.get(as_numpy=True)[:self.numPoints]
 
-        self.pv = pv
+        # regions of interest
+        self.ROIS = []
 
         self.responseTimeout = responseTimeout
         self.timer = Timer(self.responseTimeout)
@@ -105,11 +112,26 @@ class OceanOpticsSpectrometer(ImageHDF):
 
         # the spectra come from different pv if use darkcorrection
         if dark == 1:
-            self.spectrum = self.pvSpectrumCorrected.get(as_numpy=True)[:self.numPoints]
+            self.spectrum =\
+                self.pvSpectrumCorrected.get(as_numpy=True)[:self.numPoints]
         else:
             self.spectrum = self.pvSpectrum.get(as_numpy=True)[:self.numPoints]
 
+        allSpectrum = self.pvSpectrum.get(as_numpy=True)[:self.numPoints]
+        self.spectrum = allSpectrum
         super().saveSpectrum()
+
+        # there are ROIS to save
+        if len(self.ROIS) > 0:
+            i = 1
+            for mini, maxi in self.ROIS:
+                # get the spectrum positions
+                start = bisect(self.axis, mini)
+                end = bisect(self.axis, maxi)
+                roi = allSpectrum[start:end]
+                self.spectrum = roi
+                super().saveSpectrum(suffixName="_ROI" + str(i))
+                i += 1
 
     def isCountRunning(self):
         return (self.acquiring)
@@ -171,3 +193,8 @@ class OceanOpticsSpectrometer(ImageHDF):
 
     def startCollectImage(self, rows=0, cols=0):
         super().startCollectImage('float32', rows, cols)
+
+    def addRoi(self, roi):
+        """ Insert a new roi
+        roi: a tuple with begin and end: (begin,end)"""
+        self.ROIS.append(roi)
