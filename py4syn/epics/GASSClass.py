@@ -429,9 +429,6 @@ class GASS():
                 # Raise an exception
                 raise Exception("Error when purging chambers, aborting...")
 
-            # Wait an extra-time to guarantee all chambers are in synch
-            sleep(self.extraTimeManifold)
-
             # Close all valves
             self.close_all_valves()
         else:
