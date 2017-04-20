@@ -1139,17 +1139,18 @@ class Scan(object):
 
         # Scan main loop
         for pointIdx in range(0, self.getNumberOfPoints()):
-            try:
-                self.__check_pause_interrupt(pointIdx)
-            except ScanInterruptedException:
-                break
-
             # Saves point index at SCAN_DATA
             SCAN_DATA['points'].append(pointIdx)
 
             # Pre Point Callback
             if(self.__prePointCallback):
                 self.__prePointCallback(scan=self, pos=positions, idx=indexes)
+
+            # verify pauses and interrupts
+            try:
+                self.__check_pause_interrupt(pointIdx)
+            except ScanInterruptedException:
+                break
 
             self.__waitDelay(scan=self, pos=positions, idx=indexes)
 
@@ -1231,17 +1232,18 @@ class Scan(object):
         self.__initialize()
 
         for pointIdx in range(0, self.getNumberOfPoints()):
-            try:
-                self.__check_pause_interrupt(pointIdx)
-            except ScanInterruptedException:
-                break
-
             # Saves point index at SCAN_DATA
             SCAN_DATA['points'].append(pointIdx)
 
             # Pre Point Callback
             if(self.__prePointCallback):
                 self.__prePointCallback(scan=self, pos=positions, idx=indexes)
+
+            # verify pauses and interrupts
+            try:
+                self.__check_pause_interrupt(pointIdx)
+            except ScanInterruptedException:
+                break
 
             self.__waitDelay(scan=self, pos=positions, idx=indexes)
 
@@ -1306,14 +1308,15 @@ class Scan(object):
 
         pointIdx = 0
         while(True):
+           # Pre Point Callback
+            if(self.__prePointCallback):
+                self.__prePointCallback(scan=self, pos=positions, idx=indexes)
+
+            # verify pauses and interrupts
             try:
                 self.__check_pause_interrupt(pointIdx)
             except ScanInterruptedException:
                 break
-
-            # Pre Point Callback
-            if(self.__prePointCallback):
-                self.__prePointCallback(scan=self, pos=positions, idx=indexes)
 
             # Saves point index at SCAN_DATA
             SCAN_DATA['points'].append(pointIdx)
