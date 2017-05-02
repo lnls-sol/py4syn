@@ -104,7 +104,8 @@ class Dxp(ImageHDF):
         self.timer = Timer(time + self.responseTimeout)
 
     def getCountTime(self):
-        return self.pvDxpTime.get()
+        # AcquireTimes are the same
+        return self.pvDxpAcquireTime[0].get()
 
     def setCountStop(self):
         self.pvDxpStop.put(1, wait=True)
