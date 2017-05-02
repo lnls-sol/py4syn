@@ -54,6 +54,9 @@ class DxpFake(ImageHDF):
     def getCountTime(self):
         pass
 
+    def getRealTime(self):
+        return np.random.rand()
+
     def setCountStop(self):
         pass
 
