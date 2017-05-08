@@ -114,7 +114,7 @@ class Dxp(ImageHDF):
     def getRealTime(self):
         """Return the Real Time"""
         if self.channels == 1:
-            return self.pvDxpRealTime[1].get()
+            return self.pvDxpRealTime[0].get()
         else:
             times = []
             for i in range(0, self.channels):
