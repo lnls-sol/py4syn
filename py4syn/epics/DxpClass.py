@@ -52,12 +52,16 @@ class Dxp(ImageHDF):
 
         # store Acquire Time for each channel
         self.pvDxpAcquireTime = []
+        self.pvDxpRealTime = []
 
         for c in range(0, numberOfChannels):
             # store each channel
             self.pvDxpChannels.append(PV(pv+":"+dxpType+str(c+1)))
             # for each channel store the PV for AcquireTime
             self.pvDxpAcquireTime.append(PV(pv+":" + dxpType + "%d.PLTM"
+                                         % (c+1)))
+            # real time
+            self.pvDxpRealTime.append(PV(pv+":" + dxpType + "%d.ERTM"
                                          % (c+1)))
             self.pvDxpRois.append([])
             # storeing each ROI in your channel
@@ -104,7 +108,19 @@ class Dxp(ImageHDF):
         self.timer = Timer(time + self.responseTimeout)
 
     def getCountTime(self):
-        return self.pvDxpTime.get()
+        # AcquireTimes are the same
+        return self.pvDxpAcquireTime[0].get()
+
+    def getRealTime(self):
+        """Return the Real Time"""
+        if self.channels == 1:
+            return self.pvDxpRealTime[0].get()
+        else:
+            times = []
+            for i in range(0, self.channels):
+                times.append(self.pvDxpRealTime[i].get())
+            return times
+
 
     def setCountStop(self):
         self.pvDxpStop.put(1, wait=True)
