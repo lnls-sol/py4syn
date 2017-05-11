@@ -23,7 +23,7 @@ from py4syn.epics.ImageHDFClass import ImageHDF
 class OceanOpticsSpectrometer(ImageHDF):
     # CONSTRUCTOR OF Ocean CLASS
     def __init__(self, mnemonic, pv=None, responseTimeout=15, output="./out",
-                 numPoints=1044):
+                 numPoints=1044, mcas=False):
         """Constructor
         responseTimeout : how much time to wait qe65000 answer
         numPoints : how many points are collected each time
@@ -65,6 +65,8 @@ class OceanOpticsSpectrometer(ImageHDF):
 
         # regions of interest
         self.ROIS = []
+
+        self.mcas = mcas
 
         self.responseTimeout = responseTimeout
         self.timer = Timer(self.responseTimeout)
@@ -126,10 +128,13 @@ class OceanOpticsSpectrometer(ImageHDF):
         allSpectrum = self.pvSpectrum.get(as_numpy=True)[:self.numPoints]
         self.spectrum = allSpectrum
 
-        if not self.image:
-            self.saveUniquePoint(np.array([self.axis,self.spectrum]).T,"%f\t%f")
-        else:
+        suffix = ""
+        if self.image:
             super().saveSpectrum()
+
+        if not self.image or self.mcas:
+            self.saveUniquePoint(np.array([self.axis,self.spectrum]).T,"%f\t%f")
+
 
         # there are ROIS to save / works only for points
         if len(self.ROIS) > 0 and not self.image:
