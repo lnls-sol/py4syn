@@ -63,7 +63,7 @@ class DefaultWriter(FileWriter):
     def writeData(self, partial=False, idx=-1):
         if(not partial):
             # start writing data        
-            try:    
+            try:
                 for i in range(self.getDataSize()):        
                     line = self.__scanDataToLine(i)
                     self.__file.write(line + '\n')

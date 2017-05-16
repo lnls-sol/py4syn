@@ -33,7 +33,7 @@ class FileWriter:
         self.__startDate = None
         self.__endDate = None
 
-        self.__dataSize = 0
+        self.__dataSize = None
         self.__devices = []
         self.__signals = []
         self.__devicesData = {}
@@ -138,6 +138,10 @@ class FileWriter:
         -------
         `int`
         """
+        if self.__dataSize is None:
+            s = [len(d) for _, d in self.__signalsData.items()]
+            d = [len(d) for _, d in self.__devicesData.items()]
+            self.__dataSize = max(s+d)
         return self.__dataSize
 
     def getDevices(self):

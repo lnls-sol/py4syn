@@ -921,7 +921,7 @@ class Scan(object):
             self.__state = ScanStateEnum.idle
 
             if not PARTIAL_WRITE and FILE_WRITER is not None:
-                print("\tSaving data to file")
+                print("\tSaving data to file: {}".format(FILENAME))
                 FILE_WRITER.setEndDate(self.__endTimestamp)
                 FILE_WRITER.writeHeader()
                 FILE_WRITER.writeData(idx=-1)
@@ -932,7 +932,7 @@ class Scan(object):
             print("\tUser Interrupted")
             if(FILENAME is not None and FILENAME != "" and not PARTIAL_WRITE
                and FILE_WRITER is not None):
-                print("\tSaving data to file")
+                print("\tSaving data to file: {}".format(FILENAME))
                 FILE_WRITER.setEndDate(self.__endTimestamp)
                 FILE_WRITER.writeHeader()
                 FILE_WRITER.writeData(idx=-1)
