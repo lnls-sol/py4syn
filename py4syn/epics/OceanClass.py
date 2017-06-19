@@ -110,8 +110,8 @@ class OceanOpticsSpectrometer(ImageHDF):
         self.setCountStop()
 
     def saveUniquePoint(self, data, fmt, suffixName = ""):
-        fileName = super().nameFile(self.output, self.prefix + suffixName, "mca")
-        np.savetxt(fileName, data , fmt=fmt)
+        self.mcaFile = super().nameFile(self.output, self.prefix + suffixName, "mca")
+        np.savetxt(self.mcaFile, data , fmt=fmt)
 
 
     def saveSpectrum(self, **kwargs):
