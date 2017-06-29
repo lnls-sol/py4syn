@@ -29,6 +29,7 @@ class ImageHDF(StandardDevice, ICountable):
         self.output = output
         self.prefix = prefix
         self.spectrum = None
+        self.fileName = ''
 
     def nameFile(self, output, prefix, suffix):
         '''Generate correct name to file
@@ -52,9 +53,9 @@ class ImageHDF(StandardDevice, ICountable):
             snake: if data is collected on snake mode'''
         # save a unique point
         if self.image is None:
-            fileName = self.nameFile(self.output, self.prefix + suffixName, "mca")
+            self.fileName = self.nameFile(self.output, self.prefix + suffixName, "mca")
             # TODO: change way to define fmt
-            np.savetxt(fileName, self.spectrum, fmt='%f')
+            np.savetxt(self.fileName, self.spectrum, fmt='%f')
         else:
             # add a point on hdf file
             self.col = int(self.lastPos/self.rows)
@@ -74,8 +75,8 @@ class ImageHDF(StandardDevice, ICountable):
         self.rows = rows
         self.cols = cols
         # create HDF file
-        fileName = self.nameFile(self.output, self.prefix, "hdf")
-        self.fileResult = h5py.File(fileName)
+        self.fileName = self.nameFile(self.output, self.prefix, "hdf")
+        self.fileResult = h5py.File(self.fileName)
 
         # TODO: review this
         lineShape = (1, self.rows, self.numPoints)
