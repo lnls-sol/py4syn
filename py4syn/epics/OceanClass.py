@@ -120,12 +120,11 @@ class OceanOpticsSpectrometer(ImageHDF):
 
         # the spectra come from different pv if use darkcorrection
         if dark == 1:
-            self.spectrum =\
+            allSpectrum =\
                 self.pvSpectrumCorrected.get(as_numpy=True)[:self.numPoints]
         else:
-            self.spectrum = self.pvSpectrum.get(as_numpy=True)[:self.numPoints]
+            allSpectrum = self.pvSpectrum.get(as_numpy=True)[:self.numPoints]
 
-        allSpectrum = self.pvSpectrum.get(as_numpy=True)[:self.numPoints]
         self.spectrum = allSpectrum
 
         suffix = ""
