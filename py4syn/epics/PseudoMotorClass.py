@@ -18,7 +18,6 @@ from py4syn.epics.IScannable import IScannable
 from py4syn.epics.StandardDevice import StandardDevice
 from py4syn.epics import MotorClass
 from py4syn.epics.MotorClass import Motor
-from scipy.optimize import minimize
 
 class motorTarget():
     """
@@ -449,6 +448,8 @@ class PseudoMotor(IScannable, StandardDevice):
         -------
         `double`
         """
+
+        from scipy.optimize import minimize
 
         # Optimization function minimizes, so invert when requesting the high limit
         sign = -1 if high else 1
