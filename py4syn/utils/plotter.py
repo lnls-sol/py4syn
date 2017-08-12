@@ -8,8 +8,6 @@ Adapted to work without GTK and support multiple subplots and axis overlay.
 import multiprocessing
 from queue import Empty
 
-from matplotlib.lines import Line2D
-import pylab
 import collections
 import os
 
@@ -154,6 +152,10 @@ class ProcessPlotter(object):
         return call_back
 
     def __call__(self, queue, title):
+        global Line2D, pylab
+        from matplotlib.lines import Line2D
+        import pylab
+
         self.title = title
         self.queue = queue
         self.fig = pylab.figure()
