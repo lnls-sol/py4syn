@@ -23,5 +23,6 @@ setup(
         "pyepics>=3.2.0",
         "h5py>=2.3",
         "lmfit>=0.8.3"
-    ]
+    ],
+    zip_safe=False,
 )
