@@ -14,6 +14,9 @@ import numpy
 from threading import Thread
 from time import sleep
 
+from py4syn.epics.StandardDevice import StandardDevice
+from py4syn.epics.ICountable import ICountable
+
 # ------------------------------------------------------------
 # Resquests
 # ------------------------------------------------------------
@@ -31,19 +34,41 @@ REQUEST_SCA_COUNTERS  = 'f5fa04010000fe0c'
 ACK_OK = 'f5faff000000fd12'
 
 
+"""
+Class to handle Amptek MCA (Multiple Channel Access) devices
+"""
 class AmptekMCA():
 
     udp_sock = None
     mca_alive = False
     mca_pause_alive = False
     mca_status = ''
+    mca_ip = None
+    mca_port = None
 
     def __init__(self, mca_ip='10.2.48.34', udp_port=10001):
+        # update attributes
+        self.mca_ip = mca_ip
+        self.mca_port = udp_port
+
+        # initial instantiation of attributes
+        self.threadToCount = None
+        self.threadToKeepAlive = None
+        self.mca_counting = False
+        self.sca_values = [0] * 16        # 16 channels
+
+        # try to connect
         self.openConnection(mca_ip=mca_ip, udp_port=udp_port)
 
     def __del__(self):
         self.mca_alive = False
         self.udp_sock.close()
+
+    def getMcaIP(self):
+        return str(self.mca_ip)
+
+    def getMcaPort(self):
+        return str(self.mca_port)
 
     def openConnection(self, mca_ip='10.2.48.34', udp_port=10001):
         # Check if exist a previous connection
@@ -213,6 +238,9 @@ class AmptekMCA():
         # Inform thread of keep alive to wait...
         self.mca_pause_alive = True
 
+        # Update that we are counting...
+        self.mca_counting = True
+
         # wait keep-alive stop sending commands
         while (self.mca_status == bytes.fromhex(ACK_OK)):
             sleep(0.2)
@@ -265,11 +293,22 @@ class AmptekMCA():
         # Inform keep alive to continue...
         self.mca_pause_alive = False
 
+        # Update that we stopped counting...
+        self.mca_counting = False
+
+        # Update SCA values, in the case we got them...
+        if ((type(returnInfo) == list) and (len(returnInfo) == 16)):
+            self.sca_values = returnInfo
+
+        # Reset thread of counting
+        self.threadToCount = None
+
         return returnInfo
 
 
     def getStatus(self):
         return self.mca_status
+
 
     def closeConnection(self):
         self.mca_alive = False
@@ -280,3 +319,83 @@ class AmptekMCA():
             pass
 
         self.mca_status = 'disconnected'
+
+
+    def startCount(self):
+        try:
+            if (self.threadToCount is None):
+                self.threadToCount = Thread(target=self.getScaCounters)
+                self.threadToCount.daemon = True
+                self.threadToCount.start()
+        except:
+            pass
+
+    def getValue(self, channel):
+        try:
+            return self.sca_values[channel -1]
+        except:
+            return -1
+
+
+"""
+Class to handle Amptek SCA (Single Channel Access) of a specific MCA
+"""
+class AmptekSCA(StandardDevice, ICountable):
+
+    def __init__(self, mca, mnemonic, channel):
+        StandardDevice.__init__(self, mnemonic)
+
+        self.mca      = mca
+        self.mnemonic = mnemonic
+        self.channel  = channel
+
+
+    def setPresetValue(self, channel, value):
+        # Amptek MCA is configured through a specific software
+        pass
+
+
+    def setCountTime(self, time):
+        # Amptek MCA is configured through a specific software
+        pass
+
+
+    def getCountTime(self):
+        # Amptek MCA is configured through a specific software
+        # Used time to accummulate is 1 second
+        return 1
+
+
+    def getValue(self, **kwargs):
+        if(kwargs):
+            return self.mca.getValue(channel=kwargs['channel'])
+
+        return self.mca.getValue(channel=1)
+
+
+    def startCount(self):
+        self.mca.startCount()
+
+
+    def stopCount(self):
+        # TBD
+        pass
+
+
+    def canMonitor(self):
+        # TBD
+        return False
+
+
+    def canStopCount(self):
+        # TBD
+        return False
+
+
+    def isCounting(self):
+        return self.mca.isCounting()
+
+
+    def wait(self):
+        while(self.mca.isCounting()):
+            sleep(0.1)
