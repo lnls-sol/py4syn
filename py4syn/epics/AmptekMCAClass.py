@@ -35,7 +35,7 @@ ACK_OK = 'f5faff000000fd12'
 
 
 """
-Class to handle Amptek MCA (Multiple Channel Access) devices
+Class to handle Amptek MCA (Multiple Channel Analyzer) devices
 """
 class AmptekMCA():
 
@@ -338,7 +338,7 @@ class AmptekMCA():
 
 
 """
-Class to handle Amptek SCA (Single Channel Access) of a specific MCA
+Class to handle Amptek SCA (Single Channel Analyzer) of a specific MCA
 """
 class AmptekSCA(StandardDevice, ICountable):
 
