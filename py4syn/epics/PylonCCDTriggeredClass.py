@@ -18,7 +18,7 @@ from epics import PV
 from py4syn.epics.PylonCCDClass import PylonCCD
 
 TIMEOUT_SECONDS = 10
-WAIT_ACQUIRING  = 0.001
+WAIT_ACQUIRING  = 0.010           
 
 class PylonCCDTriggered(PylonCCD):
     """
@@ -85,11 +85,11 @@ class PylonCCDTriggered(PylonCCD):
             # Minor pulse width in tests were 10 ms.
             ####################################################################
             self.pvTriggerAcquire.put(1)
+            sleep(0.01)                         # Just to guarantee a 10ms trigger...
+            self.pvTriggerAcquire.put(0)
 
             if ((waitComplete)):
                 self.wait()
-
-            self.pvTriggerAcquire.put(0)
 
     def startLightFieldAcquisition(self):
         self.pvAcquire.put(1)
