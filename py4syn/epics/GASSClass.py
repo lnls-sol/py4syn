@@ -10,8 +10,10 @@ Python class for GAs Selection System (GASS) device
 
 """
 import socket
+import numpy
 
 from threading import Thread
+from queue import Queue
 from time import sleep
 from enum import Enum
 
@@ -21,7 +23,7 @@ from py4syn.epics.BlueRibbonBD306Class  import BlueRibbonBD306
 # -----------------------------------------------------------
 # Global constants
 # -----------------------------------------------------------
-MAXIMUM_TIMEOUT = 30        # seconds
+MAXIMUM_TIMEOUT = 60        # seconds
 
 # -----------------------------------------------------------
 # Valves
@@ -246,6 +248,10 @@ class GASS():
         self.extraTimeManifold = extraTimeManifold
         self.extraTimeManifoldVacuum = extraTimeManifoldVacuum
 
+        # Attribute to store if all target (chamber) pressures were reached
+        self.reachedPressure = numpy.array([False] *3)
+        self.enclosureQueue = Queue()
+
 
     # -------------------------------------------------------------------------
     # Get/Set attributes
@@ -293,7 +299,7 @@ class GASS():
         try:
             self.valvesDigitalIO.putValue(io_port, 1)
         except:
-            raise Exception("Error when trying to open valve at I/O: %d" % str(io_port))
+            raise Exception("Error to open valve at I/O: %d" % str(io_port))
 
 
     def open_all_valves(self):
@@ -305,7 +311,7 @@ class GASS():
                 # Open
                 self.open_valve(io_port)
         except:
-            raise Exception("Error when trying to open valve at I/O: %d" % str(io_port))
+            raise Exception("Error to open valve at I/O: %d" % str(io_port))
 
 
     def open_all_chambers(self):
@@ -317,14 +323,14 @@ class GASS():
                 # Open
                 self.open_valve(io_port)
         except:
-            raise Exception("Error when trying to open chamber valve at I/O: %d" % str(io_port))
+            raise Exception("Error to open chamber's valve, I/O: %d" % str(io_port))
 
 
     def close_valve(self, io_port):
         try:
             self.valvesDigitalIO.putValue(io_port, 0)
         except:
-            raise Exception("Error when trying to close valve at I/O: %d" % str(io_port))
+            raise Exception("Error to close valve at I/O: %d" % str(io_port))
 
 
     def close_all_valves(self):
@@ -336,7 +342,7 @@ class GASS():
                 # Close
                 self.close_valve(io_port)
         except:
-            raise Exception("Error when trying to close valve at I/O: %d" % str(io_port))
+            raise Exception("Error to close valve at I/O: %d" % str(io_port))
 
 
     def close_all_chambers(self):
@@ -348,7 +354,7 @@ class GASS():
                 # Open
                 self.close_valve(io_port)
         except:
-            raise Exception("Error when trying to close chamber valve at I/O: %d" % str(io_port))
+            raise Exception("Error to close chamber's valve, I/O: %d" % str(io_port))
 
 
     # -------------------------------------------------------------------------
@@ -495,7 +501,7 @@ class GASS():
             # Close all valves
             self.close_all_valves()
             # Raise exception
-            raise Exception("Error when filling chambers with gas %s, aborting..." % (enumGas.name))
+            raise Exception("Error to fill IC with gas %s, aborted!" % (enumGas.name))
 
         # Wait until reach target work pressure on each chamber, closing each one individually
         if (not self.__waitEachChamberReachPressure(targetPressures, greaterThan=True)):
@@ -523,7 +529,8 @@ class GASS():
             # Finally, do vacuum on all chambers again...
             self.do_vacuum_all_chambers()
         else:
-            raise Exception("Impossible to purge chambers, problem when doing vacuum... %s" % str(statusExecution))
+            #raise Exception("Impossible to purge chambers, problem when doing vacuum... %s" % str(statusExecution))
+            raise Exception(str(statusExecution))
 
 
     # -------------------------------------------------------------------------
@@ -570,6 +577,24 @@ class GASS():
         return pressures
 
 
+    def __getChamberPressure(self, chamberNumber):
+        pressure = None
+
+        # 
+        try:
+            #
+            if (chamberNumber == 0):
+                pressure = self.pressureI0.getPressure1()
+            elif (chamberNumber == 1):
+                pressure = self.pressureI1_I2.getPressure1()
+            elif (chamberNumber == 2):
+                pressure = self.pressureI1_I2.getPressure2()
+        except:
+            raise Exception("Error when getting pressure: <%d>" % (chamberNumber))
+
+        return pressure
+
+
     def __getTargetPressures(self, deltaPressures, indexGas):
         #
         targetPressures = []
@@ -586,7 +611,7 @@ class GASS():
                 # --------------------------------------------------------------
                 targetPressures.append(curPress + (gasProportion * deltaPress))
         else:
-            raise Exception("Element and/or edge not found in proportions table, aborting...")
+            raise Exception("Element and/or edge is not in table!")
 
         return targetPressures, updatedPressures
 
@@ -595,100 +620,110 @@ class GASS():
         print("---------------------------")
         print("targetPressure for all chambers", targetPressure)
 
-        # Wait until reach target vacuum pressure on all chambers
-        stopWaiting = False
-
-        waitTime = 0.2      # seconds
-        maximumLoops = MAXIMUM_TIMEOUT / waitTime
-
-        tryNumber = 0
-
-        updatedPressures = []
-
-        while((not stopWaiting) and (tryNumber < maximumLoops)):
-            # Wait a while...
-            sleep(waitTime)
-            # Check pressures
-            updatedPressures = self.__getChambersPressures()
-
-            for chamberNumber in range(3):
-                press = updatedPressures[chamberNumber]
-
-                reachedTarget = (press >= targetPressure) if greaterThan else (press <= targetPressure)
-
-                # -------------------------------------------------------------------
-                # If this chamber has been reached the target, close its valve
-                if (reachedTarget):
-                    self.close_valve(self.valvesArray[Valves.I0.value + chamberNumber])
-
-                # -------------------------------------------------------------------
-                # Check if all reached the targets
-                if (chamberNumber == 0):
-                    stopWaiting = reachedTarget
-                else:
-                    stopWaiting = stopWaiting and reachedTarget
-
-            # Increment try number
-            tryNumber += 1
-
-        if (tryNumber >= maximumLoops):
-            # Close all valves
-            self.close_all_valves()
-            # Raise an exception
-            raise Exception("Error when doing vacuum... did not reach vacuum pressure in %d seconds..." % (MAXIMUM_TIMEOUT))
-
-        print("updatedPressures at the end: ", updatedPressures)
-
-        return True
+        return self.__waitEachChamberReachPressure([targetPressure] *3, greaterThan)
 
 
     def __waitEachChamberReachPressure(self, targetPressures, greaterThan=False):
         # Wait until reach target vacuum pressure on all chambers
-        stopWaiting = False
+        for chamberNumber in range(3):
+            self.reachedPressure[chamberNumber] = False
 
-        waitTime = 0.2      # seconds
+            targetPress = targetPressures[chamberNumber]
+
+            #if (chamberNumber == 0):
+            self.enclosureQueue.put(chamberPressTask(chamberNumber))
+
+            # Start a new Thread to wait desired pressure...
+            waitPressure = Thread(target=self.__waitChamberReachPressure, args=(chamberNumber, targetPress, greaterThan))
+            waitPressure.setDaemon(True)
+            waitPressure.start()
+
+        # Wait all threads finish
+        self.enclosureQueue.join()
+
+        if (numpy.all(self.reachedPressure)):
+            # Check all pressures...
+            updatedPressures = self.__getChambersPressures()
+            print("updatedPressures at the end: ", updatedPressures)
+            # OK
+            return True
+        else:
+            # Raise an exception
+            raise Exception("Error! Doesn't reach desired pressures!")
+
+
+    def __waitChamberReachPressure(self, chamberNumber, targetPressure, greaterThan=False):
+        # Obtain a task from queue
+        chamberPressTask = self.enclosureQueue.get()
+
+        # ----------------------------------------------------------------
+        # FIRST APPROACH...
+        # ----------------------------------------------------------------
+        # Wait until reach target vacuum pressure on all chambers
+        waitTime = 0.05      # seconds
         maximumLoops = MAXIMUM_TIMEOUT / waitTime
 
-        tryNumber = 0
+        stopWaiting = False
+        tryNumber   = 0
 
-        updatedPressures = []
-
-        while((not stopWaiting) and (tryNumber < maximumLoops)):
+        while ((not stopWaiting) and (tryNumber < maximumLoops)):
             # Wait a while...
             sleep(waitTime)
-            # Check pressures
-            updatedPressures = self.__getChambersPressures()
 
-            for chamberNumber in range(3):
-                press       = updatedPressures[chamberNumber]
-                targetPress = targetPressures[chamberNumber]
-                # Check
-                reachedTarget = (press >= targetPress) if greaterThan else (press <= targetPress)
+            # Check pressure
+            updatedPressure = self.__getChamberPressure(chamberNumber)
 
+            if (updatedPressure is not None):
+                partialResult = (updatedPressure >= targetPressure) if greaterThan else (updatedPressure <= targetPressure)
                 # -------------------------------------------------------------------
                 # If this chamber has been reached the target, close its valve
-                if (reachedTarget):
+                if (partialResult):
                     self.close_valve(self.valvesArray[Valves.I0.value + chamberNumber])
+                    stopWaiting = True
 
-                # -------------------------------------------------------------------
-                # Check if all reached the targets
-                if (chamberNumber == 0):
-                    stopWaiting = reachedTarget
-                else:
-                    stopWaiting = stopWaiting and reachedTarget
-
-            # Increment try number
             tryNumber += 1
 
-        if (tryNumber >= maximumLoops):
-            # Close all valves
-            self.close_all_valves()
-            # Raise an exception
-            raise Exception("Error when doing vacuum... did not reach vacuum pressure in %d seconds..." % (MAXIMUM_TIMEOUT))
+        # ----------------------------------------------------------------
+        # FINE TUNING...
+        # ----------------------------------------------------------------
+        # Wait until reach target vacuum pressure on all chambers
+        waitFineTuning = 1      # seconds
+        maximumLoops = MAXIMUM_TIMEOUT / waitFineTuning
 
-        print("updatedPressures at the end: ", updatedPressures)
+        stopWaiting = False
+        tryNumber   = 0
 
-        return True
+        # Just for guarantee, wait a while and double check...
+        sleep(waitFineTuning)
+
+        while ((not stopWaiting) and (tryNumber < maximumLoops)):
+            # Check pressure
+            updatedPressure = self.__getChamberPressure(chamberNumber)
+
+            if (updatedPressure is not None):
+                doubleCheckResult = (updatedPressure >= targetPressure) if greaterThan else (updatedPressure <= targetPressure)
+
+                if (doubleCheckResult):
+                    # Stop verification
+                    self.reachedPressure[chamberNumber] = doubleCheckResult
+                    stopWaiting = True
+                else:
+                    # -------------------------------------------------------------------
+                    # If this chamber has not reached the target, re-open chamber just a little moment...
+                    self.__toggleValve(self.valvesArray[Valves.I0.value + chamberNumber])
+
+            tryNumber += 1
+            # Wait a while...
+            sleep(waitFineTuning)
+
+        # End of this thread...
+        self.enclosureQueue.task_done()
+
+
+    def __toggleValve(self, valve, waitTime = 0.02):
+        self.open_valve(valve)
+        sleep(waitTime)
+        self.close_valve(valve)
 
 
     def __getPortNumbers(self, port_sequences):
@@ -725,4 +760,13 @@ class GASS():
 
         except:
             raise Exception("Error when parsing digital I/O ports")
+
+
+
+"""
+Auxiliary chamberNumber class for tasks queue
+"""
+class chamberPressTask():
+    def __init__(self, number):
+        self.number = number
 
