@@ -23,7 +23,7 @@ from py4syn.epics.BlueRibbonBD306Class  import BlueRibbonBD306
 # -----------------------------------------------------------
 # Global constants
 # -----------------------------------------------------------
-MAXIMUM_TIMEOUT = 60        # seconds
+MAXIMUM_TIMEOUT = 30        # seconds
 
 # -----------------------------------------------------------
 # Valves
@@ -211,7 +211,10 @@ class GASS():
                   pressureVacuum            =   -6.26,
                   pressureWork              =   8.0,
                   extraTimeManifold         =   2.0,
-                  extraTimeManifoldVacuum   =   5.0):
+                  extraTimeManifoldVacuum   =   5.0,
+                  argonOrder                =   0,
+                  heliumOrder               =   1,
+                  nitrogenOrder             =   2):
         """
         Constructor
 
@@ -252,6 +255,29 @@ class GASS():
         self.reachedPressure = numpy.array([False] *3)
         self.enclosureQueue = Queue()
 
+        # Check if informed sequence is consistent
+        gasesOrder = [argonOrder, heliumOrder, nitrogenOrder]
+        gasesOrderConsistent = True
+
+        try:
+            for i in range(len(gasesOrder)):
+                gasesOrderConsistent &= (gasesOrder.index(i) > -1)
+        except ValueError:
+            gasesOrderConsistent = False
+
+        if (gasesOrderConsistent):
+            # Just to initiate the array...
+            self.gases = [0, 0, 0]
+
+            # Order of gases to fill up the chambers           
+            self.gases[argonOrder]    = Valves.Ar
+            self.gases[heliumOrder]   = Valves.He
+            self.gases[nitrogenOrder] = Valves.N2
+        else:
+            # --------------------------------------------------
+            # 'Ar', 'He' and 'N2' in sequence (default)...
+            # --------------------------------------------------
+            self.gases = [Valves.Ar, Valves.He, Valves.N2]
 
     # -------------------------------------------------------------------------
     # Get/Set attributes
@@ -440,11 +466,12 @@ class GASS():
         else:
             """
             # --------------------------------------------------
-            # Fill up gas in chambers on this ordering (for all chambers):
+            # Fill up gas in chambers on this ordering (default)
+            # or that one informed by parameter (for all chambers):
             # --------------------------------------------------
-            # 1st: 'He'   -   lightest
-            # 2nd: 'N2'
-            # 3rd: 'Ar'   -   heaviest
+            # 1st: 'Ar'   -   heaviest
+            # 2nd: 'He'   -   lightest
+            # 3rd: 'N2'
             # --------------------------------------------------
             """
 
@@ -459,12 +486,7 @@ class GASS():
             for chamberNumber in range(3):
                 deltaPressures.append(self.pressureWork - updatedPressures[chamberNumber])
 
-            # --------------------------------------------------
-            # 'He', 'N2' and 'Ar' in sequence...
-            # --------------------------------------------------
-            gases = [Valves.He, Valves.N2, Valves.Ar]
-
-            for gas in gases:
+            for gas in self.gases:
                 # Fill with current gas
                 self.fill_all_chambers_with_a_gas(enumGas=gas, deltaPressures=deltaPressures)
                 # Clean manifold
@@ -529,6 +551,8 @@ class GASS():
             # Finally, do vacuum on all chambers again...
             self.do_vacuum_all_chambers()
         else:
+            # Close all valves
+            self.close_all_valves()
             #raise Exception("Impossible to purge chambers, problem when doing vacuum... %s" % str(statusExecution))
             raise Exception(str(statusExecution))
 
@@ -648,6 +672,8 @@ class GASS():
             # OK
             return True
         else:
+            # Close all valves
+            self.close_all_valves()
             # Raise an exception
             raise Exception("Error! Doesn't reach desired pressures!")
 
