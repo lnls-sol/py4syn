@@ -32,44 +32,49 @@ class OceanOpticsSpectrometer(ImageHDF):
         self.acquireChanged = Event()
         self.acquiring = False
 
-        # determines the start of counting
-        self.pvStart = PV(pv+":Acquire")
-        # determines mode of Acquisition (Single,Continous, Dark Spectrum)
-        self.pvAcquireMode = PV(pv+":AcquisitionMode")
+        try:
+            # determines the start of counting
+            self.pvStart = PV(pv+":Acquire")
+            # determines mode of Acquisition (Single,Continous, Dark Spectrum)
+            self.pvAcquireMode = PV(pv+":AcquisitionMode")
 
-        # use darkcorrection
-        self.pvDarkCorrection = PV(pv+":ElectricalDark")
+            # use darkcorrection
+            self.pvDarkCorrection = PV(pv+":ElectricalDark")
 
-        # spectrum
-        self.pvSpectrum = PV(pv+":Spectra")
-        self.pvSpectrumCorrected = PV(pv+":DarkCorrectedSpectra")
+            # spectrum
+            self.pvSpectrum = PV(pv+":Spectra")
+            self.pvSpectrumCorrected = PV(pv+":DarkCorrectedSpectra")
 
-        # set Acquire Time
-        self.pvAcquireTime = PV(pv+":SetIntegration")
+            # set Acquire Time
+            self.pvAcquireTime = PV(pv+":SetIntegration")
 
-        # integration Time
-        self.pvTime = PV(pv+":IntegrationTime:Value")
+            # integration Time
+            self.pvTime = PV(pv+":IntegrationTime:Value")
 
-        # control the end of acquire process
-        self.pvAcquire = PV(pv+":Acquiring")
-        self.pvAcquire.add_callback(self.statusChange)
+            # control the end of acquire process
+            self.pvAcquire = PV(pv+":Acquiring")
+            self.pvAcquire.add_callback(self.statusChange)
 
-        # acquisition mode
-        self.pvAcMode = PV(pv+":AcquisitionMode")
-        # set to single mode
-        self.pvAcMode.put("Single")
+            # acquisition mode
+            self.pvAcMode = PV(pv+":AcquisitionMode")
+            # set to single mode
+            self.pvAcMode.put("Single")
 
-        # axis Spectra
-        pvAxis = PV(pv + ":SpectraAxis")
-        self.axis = pvAxis.get(as_numpy=True)[:self.numPoints]
+            # axis Spectra
+            pvAxis = PV(pv + ":SpectraAxis")
+            self.axis = pvAxis.get(as_numpy=True)[:self.numPoints]
 
-        # regions of interest
-        self.ROIS = []
+            # regions of interest
+            self.ROIS = []
 
-        self.mcas = mcas
+            self.mcas = mcas
 
-        self.responseTimeout = responseTimeout
-        self.timer = Timer(self.responseTimeout)
+            self.responseTimeout = responseTimeout
+            self.timer = Timer(self.responseTimeout)
+        except TypeError:
+            raise RuntimeError('PV not found')
+        except ValueError:
+            raise RuntimeError('Device is offline')
 
     def statusChange(self, value, **kw):
         """
