@@ -2,6 +2,7 @@ import collections
 import datetime
 from enum import Enum
 import os
+import pwd
 
 import numpy
 
@@ -894,7 +895,15 @@ class Scan(object):
             if(FILE_WRITER is not None):
                 FILE_WRITER.setStartDate(self.__startTimestamp)
                 FILE_WRITER.insertComment(SCAN_COMMENT)
-                FILE_WRITER.setUsername(os.getlogin())
+
+                try:
+                    user = os.getlogin()
+                except FileNotFoundError:
+                    user = os.environ.get('LOGNAME') or os.environ.get('USERNAME')
+                    if not user:
+                        user = pwd.getpwuid(os.getuid())[0]
+
+                FILE_WRITER.setUsername(user)
                 FILE_WRITER.setCommand(SCAN_CMD)
                 FILE_WRITER.setDataSize(self.getNumberOfPoints())
 
