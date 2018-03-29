@@ -38,11 +38,11 @@ class Eurotherm2408(StandardDevice, IScannable):
 
         self.device = Device(pvName + ':', ['PV:RBV', 'SP','RR', 'RR:RBV',
         'WSP:RBV', 'O:RBV'])
-        
+
         self.newTemp = Event()
         self.pvName = pvName
-        
-        
+
+
 
     def getValue(self):
         """
@@ -53,8 +53,8 @@ class Eurotherm2408(StandardDevice, IScannable):
         `float`
         """
         return self.device.get('PV:RBV')
-        
-        
+
+
     def getSP(self):
         """
         Returns the current Set Point.
@@ -64,11 +64,11 @@ class Eurotherm2408(StandardDevice, IScannable):
         `float
         """
         return self.device.get('SP')
-                
-        
+
+
     def getTarget(self):
         """
-        Returns the current target temperature. 
+        Returns the current target temperature.
 
         Returns
         -------
@@ -88,7 +88,7 @@ class Eurotherm2408(StandardDevice, IScannable):
         `float`
         """
         return self.getValue()
-        
+
     def getRampRate(self):
         """
         Returns the defined ramp rate.
@@ -118,15 +118,15 @@ class Eurotherm2408(StandardDevice, IScannable):
         `float`
         """
         return 1000
-        
+
     def getRRHighLimitValue(self):
         return 25.0
 
     def getRRLowLimitValue(self):
-        return 1.0 
-        
+        return 1.0
+
     def setRampRate(self, value):
-        self.device.put('RR', value)       
+        self.device.put('RR', value)
 
     def stop(self):
         '''Define SP to minimum temperature on maximum ramp rate'''
@@ -137,7 +137,7 @@ class Eurotherm2408(StandardDevice, IScannable):
         '''Set temperature to actual temperature'''
         actual_temp = self.getValue()
         self.setValue(actual_temp)
-        
+
     def setValue(self, value, wait = False):
         if value < self.getLowLimitValue() or value > self.getHighLimitValue():
             raise ValueError('Value exceeds limits')
@@ -154,7 +154,7 @@ class Eurotherm2408(StandardDevice, IScannable):
         `double`
         """
         getPV = self.device.PV('P')
-        
+
         return getPV.get()
 
     def getI(self):
@@ -166,7 +166,7 @@ class Eurotherm2408(StandardDevice, IScannable):
         `double`
         """
         getPV = self.device.PV('I')
-        
+
         return getPV.get()
 
     def getD(self):
@@ -178,7 +178,7 @@ class Eurotherm2408(StandardDevice, IScannable):
         `double`
         """
         getPV = self.device.PV('D')
-        
+
         return getPV.get()
 
     def getPower(self):
@@ -190,7 +190,7 @@ class Eurotherm2408(StandardDevice, IScannable):
         `double`
         """
         getPV = self.device.PV('O:RBV')
-        
+
         return getPV.get()
 
     def reachTemp(self):
@@ -198,7 +198,7 @@ class Eurotherm2408(StandardDevice, IScannable):
           self.getValue() > self.getTarget() - DELTA:
           return True
         return False
-           
+
 
     def wait(self):
         """
@@ -209,3 +209,17 @@ class Eurotherm2408(StandardDevice, IScannable):
             ca.flush_io()
             self.newTemp.wait(5)
             self.newTemp.clear()
+
+    def setVelocity(self, velo):
+        """
+        Same as :meth:`setRampRate`.
+
+        See: :meth:`setRampRate`
+
+        Parameters
+        ----------
+        r : `float`
+            Ramp speed
+        """
+        self.setRampRate(velo)
+
