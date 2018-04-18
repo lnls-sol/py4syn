@@ -63,6 +63,7 @@ class Eurotherm2408(StandardDevice, IScannable):
         -------
         `float
         """
+        time.sleep(0.5)
         return self.device.get('SP')
 
 
@@ -130,7 +131,7 @@ class Eurotherm2408(StandardDevice, IScannable):
 
     def stop(self):
         '''Define SP to minimum temperature on maximum ramp rate'''
-        self.setRampRate(self.getRRHighlimitValue)
+        self.setRampRate(self.getRRHighLimitValue)
         self.setValue(self.getLowLimitValue())
 
     def hold(self):
@@ -194,8 +195,8 @@ class Eurotherm2408(StandardDevice, IScannable):
         return getPV.get()
 
     def reachTemp(self):
-        if self.getValue() < self.getTarget() + DELTA and \
-          self.getValue() > self.getTarget() - DELTA:
+        if self.getValue() < self.getSP() + DELTA and \
+          self.getValue() > self.getSP() - DELTA:
           return True
         return False
 
