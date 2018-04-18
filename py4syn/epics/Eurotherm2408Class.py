@@ -130,7 +130,7 @@ class Eurotherm2408(StandardDevice, IScannable):
 
     def stop(self):
         '''Define SP to minimum temperature on maximum ramp rate'''
-        self.setRampRate(self.getRRHighlimitValue)
+        self.setRampRate(self.getRRHighLimitValue)
         self.setValue(self.getLowLimitValue())
 
     def hold(self):
