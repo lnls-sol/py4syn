@@ -195,8 +195,8 @@ class Eurotherm2408(StandardDevice, IScannable):
         return getPV.get()
 
     def reachTemp(self):
-        if self.getValue() < self.getTarget() + DELTA and \
-          self.getValue() > self.getTarget() - DELTA:
+        if self.getValue() < self.getSP() + DELTA and \
+          self.getValue() > self.getSP() - DELTA:
           return True
         return False
 
