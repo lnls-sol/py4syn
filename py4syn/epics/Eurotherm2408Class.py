@@ -63,6 +63,7 @@ class Eurotherm2408(StandardDevice, IScannable):
         -------
         `float
         """
+        time.sleep(0.5)
         return self.device.get('SP')
 
 
