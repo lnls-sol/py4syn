@@ -54,6 +54,7 @@ class PylonCCDTriggered(PylonCCD):
         PylonCCD.__init__(self, pvName, mnemonic)
         # Configurable timeout to control triggers
         self.triggerTimeout = None
+        self._interrupt = False
 
     def isDone(self):
         # If 'Output Signal' of Trigger in LF is 'Waiting For Trigger',
@@ -77,6 +78,8 @@ class PylonCCDTriggered(PylonCCD):
             repeatTimes = 1
         
         for currentAccumulation in range(repeatTimes):
+            if self._interrupt:
+                break
             # Set the attribute of done acquisition to False
             self._done = False
 
@@ -91,12 +94,16 @@ class PylonCCDTriggered(PylonCCD):
             if ((waitComplete)):
                 self.wait()
 
+
+    def interrupt(self):
+        self._interrupt = True
+
     def startLightFieldAcquisition(self):
         self.pvAcquire.put(1)
 
     def waitFinishAcquiring(self):
         accumulation_wait = 0
-        while(not self._done and accumulation_wait < self.getTriggerTimeout()):
+        while(not self._done and accumulation_wait < self.getTriggerTimeout() and not self._interrupt):
             accumulation_wait += WAIT_ACQUIRING
             sleep(WAIT_ACQUIRING)
 
