@@ -37,7 +37,7 @@ class Eurotherm2408(StandardDevice, IScannable):
         super().__init__(mnemonic)
 
         self.device = Device(pvName + ':', ['PV:RBV', 'SP','RR', 'RR:RBV',
-        'WSP:RBV', 'O:RBV'])
+        'WSP:RBV', 'O' , 'O:RBV', 'MAN'])
 
         self.newTemp = Event()
         self.pvName = pvName
@@ -154,9 +154,7 @@ class Eurotherm2408(StandardDevice, IScannable):
         -------
         `double`
         """
-        getPV = self.device.PV('P')
-
-        return getPV.get()
+        return self.device.get('P')
 
     def getI(self):
         """
@@ -166,9 +164,7 @@ class Eurotherm2408(StandardDevice, IScannable):
         -------
         `double`
         """
-        getPV = self.device.PV('I')
-
-        return getPV.get()
+        return self.device.get('I')
 
     def getD(self):
         """
@@ -178,9 +174,7 @@ class Eurotherm2408(StandardDevice, IScannable):
         -------
         `double`
         """
-        getPV = self.device.PV('D')
-
-        return getPV.get()
+        return self.device.get('D')
 
     def getPower(self):
         """
@@ -190,9 +184,33 @@ class Eurotherm2408(StandardDevice, IScannable):
         -------
         `double`
         """
-        getPV = self.device.PV('O:RBV')
+        return self.device.get('O:RBV')
 
-        return getPV.get()
+    def setPower(self, value):
+        """
+        Set Power value at the furnace
+
+        Returns
+        -------
+        `double`
+        """
+        # it is necessary go to Manual mode to change power
+        self.setManual()
+        time.sleep(0.5)
+        self.device.put('O', value)
+
+    def setManual(self):
+        """
+        Set furnance to Manual mode
+        """
+        self.device.put('MAN', 1)
+
+    def setAutomatic(self):
+        """
+        Set furnance to Automatic mode
+        """
+        self.device.put('MAN', 0)
+
 
     def reachTemp(self):
         if self.getValue() < self.getSP() + DELTA and \
