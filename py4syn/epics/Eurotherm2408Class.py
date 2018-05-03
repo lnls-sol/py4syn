@@ -37,7 +37,7 @@ class Eurotherm2408(StandardDevice, IScannable):
         super().__init__(mnemonic)
 
         self.device = Device(pvName + ':', ['PV:RBV', 'SP','RR', 'RR:RBV',
-        'WSP:RBV', 'O:RBV', 'MAN'])
+        'WSP:RBV', 'O' , 'O:RBV', 'MAN'])
 
         self.newTemp = Event()
         self.pvName = pvName
@@ -185,6 +185,19 @@ class Eurotherm2408(StandardDevice, IScannable):
         `double`
         """
         return self.device.get('O:RBV')
+
+    def setPower(self, value):
+        """
+        Set Power value at the furnace
+
+        Returns
+        -------
+        `double`
+        """
+        # it is necessary go to Manual mode to change power
+        self.setManual()
+        time.sleep(0.5)
+        self.device.put('O', value)
 
     def setManual(self):
         """
