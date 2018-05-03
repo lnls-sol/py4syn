@@ -37,7 +37,7 @@ class Eurotherm2408(StandardDevice, IScannable):
         super().__init__(mnemonic)
 
         self.device = Device(pvName + ':', ['PV:RBV', 'SP','RR', 'RR:RBV',
-        'WSP:RBV', 'O:RBV'])
+        'WSP:RBV', 'O:RBV', 'MAN'])
 
         self.newTemp = Event()
         self.pvName = pvName
@@ -185,6 +185,18 @@ class Eurotherm2408(StandardDevice, IScannable):
         `double`
         """
         return self.device.get('O:RBV')
+
+    def setManual(self):
+        """
+        Set furnance to Manual mode
+        """
+        self.device.put('MAN', 1)
+
+    def setAutomatic(self):
+        """
+        Set furnance to Automatic mode
+        """
+        self.device.put('MAN', 0)
 
 
     def reachTemp(self):
