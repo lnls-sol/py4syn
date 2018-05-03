@@ -154,9 +154,7 @@ class Eurotherm2408(StandardDevice, IScannable):
         -------
         `double`
         """
-        getPV = self.device.PV('P')
-
-        return getPV.get()
+        return self.device.get('P')
 
     def getI(self):
         """
@@ -166,9 +164,7 @@ class Eurotherm2408(StandardDevice, IScannable):
         -------
         `double`
         """
-        getPV = self.device.PV('I')
-
-        return getPV.get()
+        return self.device.get('I')
 
     def getD(self):
         """
@@ -178,9 +174,7 @@ class Eurotherm2408(StandardDevice, IScannable):
         -------
         `double`
         """
-        getPV = self.device.PV('D')
-
-        return getPV.get()
+        return self.device.get('D')
 
     def getPower(self):
         """
@@ -190,9 +184,8 @@ class Eurotherm2408(StandardDevice, IScannable):
         -------
         `double`
         """
-        getPV = self.device.PV('O:RBV')
+        return self.device.get('O:RBV')
 
-        return getPV.get()
 
     def reachTemp(self):
         if self.getValue() < self.getSP() + DELTA and \
