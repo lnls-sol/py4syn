@@ -16,6 +16,9 @@ from py4syn.epics.ICountable import ICountable
 from py4syn.utils.timer import Timer
 from epics import PV, ca, caput
 
+# Pilatus ReadOut time
+READOUTTIME = 1
+
 class Pilatus(StandardDevice, ICountable):
     """
     Class to control Pilatus cameras via EPICS.
@@ -168,6 +171,7 @@ class Pilatus(StandardDevice, ICountable):
             Acquisition time
         """
         self.pvAcquireTime.put(t, wait=True)
+        self.pvAcquirePeriod.put(t + READOUTTIME, wait=True)
         self.timer = Timer(t + self.RESPONSE_TIMEOUT)
 
     def getAcquireTime(self):
