@@ -1,92 +1,304 @@
-"""Lauda Class
+"""Lauda temperature controller class
 
-Python Class for EPICS Lauda
+Python class for Lauda temperature controllers
 
 :platform: Unix
-:synopsis: Python Class for EPICS Lauda 
+:synopsis: Python class for Lauda temperature controllers
 
-.. moduleauthor:: Henrique Ferreira Canova <henrique.canova@lnls.br>
-    .. note:: 31/03/2014 [henrique.canova]  first version released
+.. moduleauthor:: Henrique Dante de Almeida <henrique.almeida@lnls.br>
+
 """
+from threading import Event
 
-from epics import PV
-from time import sleep
+from epics import Device, ca
+
+from py4syn.epics.IScannable import IScannable
 from py4syn.epics.StandardDevice import StandardDevice
+from py4syn.utils.timer import Timer
 
-class Lauda(StandardDevice):
+class Lauda(StandardDevice, IScannable):
     """
-    Python class to help configuration and control of Lauda devices via Hyppie over EPICS.
+    Class to control Lauda temperature controllers via EPICS.
 
     Examples
     --------
     >>> from py4syn.epics.LaudaClass import Lauda
-    >>> lauda = Lauda("TEST:LAUDA", 'lauda1')
-    >>> lauda.changeSetPoint(20)
-    >>> lauda.start()
-    >>> lauda.getInternalTemp()
-    >>>
+    >>>    
+    >>> def showTemperature(pv):
+    ...    lauda = Lauda(pv, 'lauda')
+    ...    print('Temperature is: %d' % lauda.getValue())
+    ...
+    >>> def setTemperature(lauda, temperature):
+    ...    lauda.setValue(temperature)
+    ...    lauda.run()
     """
 
-    def __init__ (self,pvPrefix="", mnemonic=""):
+    EPSILON = 0.1
+
+    def __init__(self, pvName, mnemonic):
         """
         **Constructor**
         See :class:`py4syn.epics.StandardDevice`
-        
+
         Parameters
         ----------
-        pvPrefix : `string`
-            Lauda's device base naming of the PV (Process Variable)
+        pvName : `string`
+            Power supply base naming of the PV (Process Variable)
         mnemonic : `string`
-            Lauda's mnemonic
+            Temperature controller mnemonic
         """
-        StandardDevice.__init__(self, mnemonic)
-        self.pvBTemp = PV(pvPrefix + ":BTEMP")
-        self.pvETemp = PV(pvPrefix + ":ETEMP")
-        self.pvBLevel = PV(pvPrefix+ ":BLEVEL")
-        self.pvBSP = PV(pvPrefix+":BSP")
-        self.pvBPower = PV(pvPrefix+":BPOWER") 
-        self.pvBOverTemp = PV(pvPrefix+":BOVERTEMP")
-        self.pvBTN = PV(pvPrefix+":BTN")
-        self.pvBStatus = PV(pvPrefix + ":BSTATS")
-        self.pvBThermoStatus = PV(pvPrefix + ":BTHERMOSTATS")
-        self.pvWSP = PV(pvPrefix + ":WSP")
-        self.pvWPump = PV(pvPrefix + ":WPUMP")
-        self.pvWTN = PV(pvPrefix + ":WTN")
-        self.pvWStart = PV(pvPrefix + ":WSTART")
-        self.pvWStop = PV(pvPrefix + ":WSTOP")
+        super().__init__(mnemonic)
+        self.pvName = pvName
+
+        self.lauda = Device(pvName + ':', ['BLEVEL', 'BOVERTEMP', 'BPOWER', 'BSP',
+                            'BSTATS', 'BTEMP', 'BTN', 'BTHERMOSTATS', 'WSP', 'WSTART',
+                            'ETEMP', 'WPUMP', 'WSTOP', 'WTN'])
+        self.newTemperature = Event()
+        self.lauda.add_callback('BTEMP', self.onTemperatureChange)
+        # Skip initial callback
+        self.newTemperature.wait(1)
+
+    def __str__(self):
+        return '%s (%s)' % (self.getMnemonic(), self.pvName)
+
+    def getValue(self):
+        """
+        Returns the current measured temperature.
+
+        Returns
+        -------
+        `int`
+        """
+        return self.lauda.get('BTEMP')
+
+    def getRealPosition(self):
+        """
+        Returns the same as :meth:`getValue`.
+
+        See: :meth:`getValue`
+
+        Returns
+        -------
+        `int`
+        """
+        return self.getValue()
+
+    def onTemperatureChange(self, **kwargs):
+        """
+        Helper callback that indicates when the measured temperature changed.
+        """
+        self.newTemperature.set()
+
+    def setVelocity(self, r):
+        """
+        Dummy method setVelocity()
+
+        Parameters
+        ----------
+        r : `float`
+            Ramp speed in °C/min
+        """
+        pass
+
+    def setValue(self, v):
+        """
+        Changes the temperature to a new value.
+
+        Parameters
+        ----------
+        v : `int`
+            The target temperature in °C
+        """
+        self.lauda.put('WSP', v)
+        self.run()
+        self.requestedValue = v
+
+    def wait(self):
+        """
+        Blocks until the requested temperature is achieved.
+        """
+
+        ca.flush_io()
+        self.newTemperature.clear()
+
+        while abs(self.getValue()-self.requestedValue) > self.EPSILON:
+            # Give up after 60 seconds without an update
+            if not self.newTemperature.wait(60):
+                break
+
+            self.newTemperature.clear()
+
+    def getLowLimitValue(self):
+        """
+        Returns the controller low limit temperature.
+
+        Returns
+        -------
+        `int`
+        """
+        return -20
+
+    def getHighLimitValue(self):
+        """
+        Returns the controller high limit temperature.
+
+        Returns
+        -------
+        `int`
+        """
+        return 200
+
+    def run(self):
+        """
+        Starts or resumes executing the current temperature program.
+        """
+        self.lauda.put('WSTART', 1)
+
+    def stop(self):
+        """
+        Stops executing the current temperature program and puts the device in idle state.
+        In the idle state, the device will not try to set a target temperature.
+        """
+        self.lauda.put('WSTOP', 1)
+
+    def setPumpSpeed(self, speed):
+        """
+        Changes the pump speed.
+
+        Parameters
+        ----------
+        speed : `int`
+            The requested pump speed, ranging from 1 to 8.
+        """
+
+        if speed < 1 or speed > 8:
+            raise ValueError('Invalid speed')
+
+        self.lauda.put('WPUMP', speed)
 
     def getInternalTemp(self):
-        return self.pvBTemp.get() 
+        """
+        Same as :meth:`getValue`.
+
+        See :meth:`getValue`
+
+        Returns
+        -------
+        `int`
+        """
+        return self.getValue()
+
     def getExternalTemp(self):
-        return self.pvETemp.get()
+        """
+        Returns the device's external temperature.
+
+        Returns
+        -------
+        `int`
+        """
+        return self.lauda.get('ETEMP')
+
     def getLevel(self):
-        return self.pvBLevel.get()
+        """
+        Returns the device's bath level.
+
+        Returns
+        -------
+        `int`
+        """
+        return self.lauda.get('BLEVEL')
+
     def getSetPoint(self):
-        return self.pvBSP.get()
+        """
+        Returns the current target temperature.
+
+        Returns
+        -------
+        `int`
+        """
+        return self.lauda.get('BSP')
+
     def getPower(self):
-        return self.pvBPower.get()
+        """
+        Returns the current device power.
+
+        Returns
+        ----------
+        `int`
+        """
+        return self.lauda.get('BPOWER')
+
     def getOverTemp(self):
-        return self.pvBOverTemp.get()
+        """
+        Returns the maximum temperature software defined limit.
+
+        Returns
+        ----------
+        `int`
+        """
+        return self.lauda.get('BOVERTEMP')
+
     def getTN(self):
-        return self.pvBTN.get()
+        """
+        Returns
+        ----------
+        `int`
+        """
+        return self.lauda.get('BTN')
+
     def getStatus(self):
-        return self.pvBStatus.get()
+        """
+        Returns the device status word.
+
+        Returns
+        ----------
+        `int`
+        """
+        return self.lauda.get('BSTATS')
+
     def getThermoStatus(self):
-        return self.pvBThermoStatus.get()
+        """
+        Returns the device thermostat error word.
 
+        Returns
+        ----------
+        `int`
+        """
+        return self.lauda.get('BTHERMOSTATS')
 
-    def changeSetPoint(self,val):
-        self.pvWSP.put(val)
-    def changePump(self,val):
-        self.pvWPump.put(val)
-    def changeTN(self,val):
-        self.pvWTN.put(val)
+    def changeSetPoint(self, val):
+        """
+        Same as :meth:`setValue`.
 
-    def start(self,val):
-        self.pvWStart.put(val)
-    def stop(self,val):
-        self.pvWStop.put(val)
-  
+        See :meth:`setValue`
 
+        Parameters
+        ----------
+        val : `int`
+            The requested temperature.
+        """
+        self.setValue(val)
 
+    def changePump(self, val):
+        """
+        Same as :meth:`setPumpSpeed`.
 
+        See :meth:`setPumpSpeed`
+
+        Parameters
+        ----------
+        val : `int`
+            The requested pump speed.
+        """
+        self.setPumpSpeed(val)
+
+    def changeTN(self, val):
+        self.lauda.put('WTN', val)
+
+    def start(self):
+        """
+        Same as :meth:`run`.
+
+        See :meth:`run`
+        """
+        self.run()
