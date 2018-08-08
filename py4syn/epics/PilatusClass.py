@@ -83,6 +83,7 @@ class Pilatus(StandardDevice, ICountable):
         self.pvTriggerMode = PV(pv + ':TriggerMode')
         self.pvDet2Theta = PV(pv + ':Det2theta')
         self.pvCamserverConnectStatus = PV(pv +':CamserverAsyn.CNCT')
+        self.pvLastFileName = PV(pv+ ":FullFileName_RBV")
 
         self.timer = Timer(self.RESPONSE_TIMEOUT)
 
