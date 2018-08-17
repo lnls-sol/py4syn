@@ -259,6 +259,8 @@ class GASS():
         gasesOrder = [argonOrder, heliumOrder, nitrogenOrder]
         gasesOrderConsistent = True
 
+        self.set_gas_proportions(GAS_PROPORTIONS)
+
         try:
             for i in range(len(gasesOrder)):
                 gasesOrderConsistent &= (gasesOrder.index(i) > -1)
@@ -317,6 +319,12 @@ class GASS():
 
     def get_extratime_manifold_vacuum(self):
         return self.extraTimeManifoldVacuum
+    
+    def set_gas_proportions(self, gas_proportions):
+        self.gas_proportions = gas_proportions
+
+    def get_gas_proportions(self):
+        return self.gas_proportions
 
     # -------------------------------------------------------------------------
     # Valves control
@@ -624,12 +632,12 @@ class GASS():
         targetPressures = []
         updatedPressures = self.__getChambersPressures()
 
-        if (GAS_PROPORTIONS.get(self.element).get(self.edge)):
+        if (self.get_gas_proportions().get(self.element).get(self.edge)):
             for chamberNumber in range(3):
                 # Get values
                 curPress        = updatedPressures[chamberNumber]
                 deltaPress      = deltaPressures[chamberNumber]
-                gasProportion   = 0.01 * GAS_PROPORTIONS.get(self.element).get(self.edge)[chamberNumber][indexGas]
+                gasProportion   = 0.01 * self.get_gas_proportions().get(self.element).get(self.edge)[chamberNumber][indexGas]
                 # --------------------------------------------------------------
                 # targetPressure = P1 + (Proportion * DeltaPressure)
                 # --------------------------------------------------------------
