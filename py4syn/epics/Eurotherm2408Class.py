@@ -36,8 +36,8 @@ class Eurotherm2408(StandardDevice, IScannable):
         """
         super().__init__(mnemonic)
 
-        self.device = Device(pvName + ':', ['PV:RBV', 'SP','RR', 'RR:RBV',
-        'WSP:RBV', 'O' , 'O:RBV', 'MAN'])
+        self.device = Device(pvName + ':', ['PVCOR:RBV', 'SPCOR','RR', 'RR:RBV',
+        'WSPCOR:RBV', 'O' , 'O:RBV', 'MAN'])
 
         self.newTemp = Event()
         self.pvName = pvName
@@ -52,7 +52,7 @@ class Eurotherm2408(StandardDevice, IScannable):
         -------
         `float`
         """
-        return self.device.get('PV:RBV')
+        return self.device.get('PVCOR:RBV')
 
 
     def getSP(self):
@@ -64,7 +64,7 @@ class Eurotherm2408(StandardDevice, IScannable):
         `float
         """
         time.sleep(0.5)
-        return self.device.get('SP')
+        return self.device.get('SPCOR')
 
 
     def getTarget(self):
@@ -76,7 +76,7 @@ class Eurotherm2408(StandardDevice, IScannable):
         `float`
         """
         time.sleep(0.5)
-        return self.device.get('WSP:RBV')
+        return self.device.get('WSPCOR:RBV')
 
     def getRealPosition(self):
         """
@@ -142,7 +142,7 @@ class Eurotherm2408(StandardDevice, IScannable):
     def setValue(self, value, wait = False):
         if value < self.getLowLimitValue() or value > self.getHighLimitValue():
             raise ValueError('Value exceeds limits')
-        self.device.put('SP', value)
+        self.device.put('SPCOR', value)
         if wait:
             self.wait()
 
