@@ -1,7 +1,7 @@
 
-==============
+=================
 EPICS Digital I/O
-==============
+=================
 
 .. module:: py4syn.epics.DigitalIOClass
    :synopsis: Python Class for Digital I/O control using EPICS.
@@ -12,7 +12,7 @@ Once it is based on EPICS resources, one can get and set PV values related to th
 Its also possible to add and delete ports from the set, and list their names.
 
 Using EPICS Digital I/O module
-=================================
+==============================
 
 Usage of Python class for EPICS Digital I/O control
 

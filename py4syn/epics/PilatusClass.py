@@ -321,6 +321,7 @@ class Pilatus(StandardDevice, ICountable):
     def setTriggerMode(self, mode):
         """
         Trigger mode
+
         Parameters
         ----------
         mode  : `int`
