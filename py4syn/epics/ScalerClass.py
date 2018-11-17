@@ -27,7 +27,7 @@ class Scaler(StandardDevice, ICountable):
         self._counting = (value == 0)
 
     #CONSTRUCTOR OF SHUTTER CLASS
-    def __init__(self, pvScalerName="", numberOfChannels=1, mnemonic=""):
+    def __init__(self, pvScalerName="", numberOfChannels=1, mnemonic="", factor = 1):
         StandardDevice.__init__(self, mnemonic)
         self._counting = False
         self.pvScalerTP = PV(pvScalerName+".TP") # envia para o IOC do cintilador o tempo de exposicao
@@ -38,7 +38,8 @@ class Scaler(StandardDevice, ICountable):
         self.pvScalerCounters = []
         self.pvScalerGates = []
         self.pvScalerPresets = []
-        
+        self.factor = factor
+
         # Initial State
         if(self.pvScalerCNT.get() == 0 and self.pvScalerVAL.get() == 0):
             self._counting = False
@@ -91,7 +92,7 @@ class Scaler(StandardDevice, ICountable):
         self.pvScalerVAL.put(1)
 
     def getIntensity(self, channel=2):
-        return self.pvScalerCounters[channel-1].get()
+        return self.pvScalerCounters[channel-1].get()/self.factor
 
     def getIntensityInTime(self, tempoMedida, channel=2):
         self.setCountTime(tempoMedida)
