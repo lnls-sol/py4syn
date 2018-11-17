@@ -43,7 +43,7 @@ class Pilatus(StandardDevice, ICountable):
     ...     camera.close()
     ...
     """
-    RESPONSE_TIMEOUT = 15
+    RESPONSE_TIMEOUT = 35
 
     def __init__(self, mnemonic, pv):
         """
