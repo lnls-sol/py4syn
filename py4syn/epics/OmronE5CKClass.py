@@ -85,7 +85,7 @@ class OmronE5CK(StandardDevice, IScannable):
                              'programTable', 'programming', 'run', 'stop', 'advance',
                              'setPatternCount', 'timeScale', 'level1', 'reset', 'pause',
                              'sendCommand', 'pidtable', 'numPIDElements', 'paused', 'getP',
-                             'getI', 'getD', 'power'])
+                             'getI', 'getD', 'power', 'programEnd'])
 
         self.programmingDone = Event()
         self.newTemperature = Event()
@@ -595,3 +595,7 @@ class OmronE5CK(StandardDevice, IScannable):
                 return
 
             self.newTemperature.clear()
+
+    def isProgramEnd(self):
+        v = self.device.get('programEnd')
+        return bool(v)
