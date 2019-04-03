@@ -507,7 +507,7 @@ def mesh(*kwargs):
         .. note::
             Instead of the common use of start and end, one can use an array of
             points. Beware that the array length cannot be different of points
-            parameter. 
+            parameter.
 
         .. note::
             To use delay between points one can use a scalar value representing
@@ -854,7 +854,7 @@ class Scan(object):
                 FILENAME = createUniqueFileName(FILENAME)
                 FILE_WRITER = DefaultWriter(FILENAME)
 
-        # Setup of SCAN_DATA with points, scannable and countable        
+        # Setup of SCAN_DATA with points, scannable and countable
         SCAN_DATA = collections.OrderedDict()
         SCAN_DATA['points'] = []
         SCAN_DATA['scan_object'] = self
@@ -897,11 +897,11 @@ class Scan(object):
                 FILE_WRITER.insertComment(SCAN_COMMENT)
 
                 try:
-                    user = os.getlogin()
-                except FileNotFoundError:
                     user = os.environ.get('LOGNAME') or os.environ.get('USERNAME')
                     if not user:
                         user = pwd.getpwuid(os.getuid())[0]
+                except Exception as e:
+                    raise Exception('Error while getting username: ' + str(e))
 
                 FILE_WRITER.setUsername(user)
                 FILE_WRITER.setCommand(SCAN_CMD)
