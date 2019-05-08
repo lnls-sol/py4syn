@@ -41,6 +41,8 @@ class DefaultWriter(FileWriter):
             
         r += "#S 1 " + self.getCommand() + "\n"
         r += "#D " + "{0:%a %b %d %H:%M:%S %Y}".format(self.getStartDate()) + "\n"
+
+        r += "#M " + str(self.getDataSize()) + "\n"
         
         numberOfFields = len(self.getDevices()) + len(self.getSignals())
         r += "#N " + str(numberOfFields) + "\n"     
