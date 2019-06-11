@@ -10,11 +10,9 @@ Python class for Vortex using EPICS area detector IOC.
                   Luciano Carneiro Guedes<luciano.guedes@lnls.br>
 """
 
-from threading import Event
-
 from py4syn.epics.StandardDevice import StandardDevice
 from py4syn.epics.ICountable import ICountable
-from epics import PV, ca, caput
+from epics import PV
 
 from time import sleep, time
 
@@ -56,13 +54,11 @@ class VortexXspress3(StandardDevice, ICountable):
         self.pvStatusScan = PV(pv + ':Acquire_RBV.SCAN')
         self.pvStatusScan.put(9)
 
-        self.inicio = time()
-        self.fim = 0
-
         # Channels 1-4
         for i in range(1, 5):
             for j in range(1, 5):            
-               self.pvMcaCounters.append(PV(pv + ':C' + str(j) + '_ROI'+str(i)+':Value_RBV'))
+               self.pvMcaCounters.append(PV('{}:C{}_ROI{}:Value_RBV'.format(pv, j, i))
+
         self.pvClear.put(1, wait=True)
         
 	
@@ -70,7 +66,7 @@ class VortexXspress3(StandardDevice, ICountable):
         """
         Stops an ongoing acquisition, if any, and puts the EPICS IOC in idle state.
         """
-        pass
+        self._done = 1
 
 
     def getIntensity(self, channel=1):
@@ -80,12 +76,12 @@ class VortexXspress3(StandardDevice, ICountable):
     def getValue(self, **kwargs):
         if(kwargs):                 
             count = 0            
-            a=self.getIntensity(kwargs['channel'])
-            while (a==0 and count < 3):
+            value = self.getIntensity(kwargs['channel'])
+            while (value==0 and count<3):
                 sleep(.05) 
-                a = self.getIntensity(kwargs['channel'])
-                count+=1
-            return a
+                value = self.getIntensity(kwargs['channel'])
+                count += 1
+            return value
 
 
     def setCountTime(self, t):
@@ -128,6 +124,7 @@ class VortexXspress3(StandardDevice, ICountable):
         
         See: :meth:`close`
         """
+        self.pvAcquire.put(0)
         self.close()
 
 
