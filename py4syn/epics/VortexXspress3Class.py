@@ -57,7 +57,7 @@ class VortexXspress3(StandardDevice, ICountable):
         # Channels 1-4
         for i in range(1, 5):
             for j in range(1, 5):            
-               self.pvMcaCounters.append(PV('{}:C{}_ROI{}:Value_RBV'.format(pv, j, i))
+               self.pvMcaCounters.append(PV('{}:C{}_ROI{}:Value_RBV'.format(pv, j, i)))
 
         self.pvClear.put(1, wait=True)
         
