@@ -868,7 +868,7 @@ class Scan(object):
         for c in py4syn.counterDB:
             if(py4syn.counterDB[c]['enable']):
                 SCAN_DATA[c] = []
-                if(FILE_WRITER is not None):
+                if(FILE_WRITER is not None) and (py4syn.counterDB[c]['write']):
                     FILE_WRITER.insertSignal(c)
 
         for u in USER_DATA_FIELDS:
