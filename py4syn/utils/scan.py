@@ -847,7 +847,7 @@ class Scan(object):
         global SCAN_DATA
         global SCAN_COMMENT
         global SCAN_CMD
-
+        global not_data_fields
         # Setup of File Writer
         if FILE_WRITER is None:
             if(FILENAME is not None and FILENAME != ""):
@@ -868,9 +868,12 @@ class Scan(object):
         for c in py4syn.counterDB:
             if(py4syn.counterDB[c]['enable']):
                 SCAN_DATA[c] = []
-                if(FILE_WRITER is not None):
+                if(FILE_WRITER is not None) and (py4syn.counterDB[c]['write']):
                     FILE_WRITER.insertSignal(c)
 
+            if not  py4syn.counterDB[c]['write']:
+                not_data_fields.append(c)
+                
         for u in USER_DATA_FIELDS:
             SCAN_DATA[u] = []
             if(FILE_WRITER is not None):
