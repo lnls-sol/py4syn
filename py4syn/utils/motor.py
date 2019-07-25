@@ -467,7 +467,7 @@ def wa():
     data[0].append("User:")
     data[0].append("Dial:")
     i = 1
-    for mtr in py4syn.mtrDB:
+    for mtr in sorted(py4syn.mtrDB):
         data[i].append(mtr)
         data[i].append(str ("%5.4f"%py4syn.mtrDB[mtr].getRealPosition()))
         data[i].append(str ("%5.4f"%py4syn.mtrDB[mtr].getDialRealPosition()))
