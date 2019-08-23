@@ -10,7 +10,7 @@ def findMonitor():
 
     return None, None
 
-def createCounter(mnemonic, device, channel=None, monitor=False, factor=1, write=True): 
+def createCounter(mnemonic, device, channel=None, monitor=False, factor=1, write=True, autowrite=False): 
     """
     Add a countable to the counterDB dictionary
 
@@ -64,6 +64,7 @@ def createCounter(mnemonic, device, channel=None, monitor=False, factor=1, write
         counterData['factor'] = factor
         counterData['enable'] = True
         counterData['write'] = write
+        counterData['autowrite']= autowrite
         py4syn.counterDB[mnemonic] = counterData
 
     except Exception as e:
