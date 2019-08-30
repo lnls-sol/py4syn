@@ -56,6 +56,9 @@ FILE_WRITER = None
 global PARTIAL_WRITE
 PARTIAL_WRITE = False
 
+global RESET_WRITER
+RESET_WRITER = True
+
 global FILENAME
 FILENAME = ""
 
@@ -679,7 +682,6 @@ class Scan(object):
         self.__countTime = 1
         self.__delayTime = 0
         self.__repeat = -1
-
         self.__plotter = None
         self.__plotter_axis = None
 
@@ -966,8 +968,9 @@ class Scan(object):
         global FILE_WRITER
         global SCAN_PLOTTER
         global SCAN_PLOTTER_AXIS
-
-        FILE_WRITER = None
+        global RESET_WRITER
+        if RESET_WRITER:
+            FILE_WRITER = None
         SCAN_PLOTTER = None
         SCAN_PLOTTER_AXIS = 1
 
@@ -1034,6 +1037,7 @@ class Scan(object):
         global PARTIAL_WRITE
         global FILE_WRITER
         global SCAN_DATA
+        global FILENAME
 
         if (FILE_WRITER is not None):
             for d in FILE_WRITER.getDevices():
@@ -1041,13 +1045,11 @@ class Scan(object):
                     FILE_WRITER.insertDeviceData(d, SCAN_DATA[d][idx])
                 except:
                     pass
-
             for s in FILE_WRITER.getSignals():
                 try:
                     FILE_WRITER.insertSignalData(s, SCAN_DATA[s][idx])
                 except:
                     pass
-
             if PARTIAL_WRITE:
                 FILE_WRITER.writeData(partial=PARTIAL_WRITE, idx=idx)
 
@@ -1236,13 +1238,11 @@ class Scan(object):
         positions = []
         indexes = []
 
-
         # Pre Scan Callback
         if(self.__preScanCallback):
             self.__preScanCallback(scan=self, pos=positions, idx=indexes)
 
         self.__initialize()
-
         for pointIdx in range(0, self.getNumberOfPoints()):
             # Saves point index at SCAN_DATA
             SCAN_DATA['points'].append(pointIdx)
@@ -1303,7 +1303,6 @@ class Scan(object):
                 self.__postPointCallback(scan=self, pos=positions, idx=indexes)
 
         self.__terminate()
-
         # Post Scan Callback
         if(self.__postScanCallback):
             self.__postScanCallback(scan=self)
@@ -1817,6 +1816,35 @@ def getFileWriter():
     """
     global FILE_WRITER
     return FILE_WRITER
+
+def setResetWriter(value):
+    """
+    Set if file writer will be reset at the end of each scan. For the **DefaultWriter** 
+    this value should be False. For HDF5Writer this value should be True
+
+    Parameters
+    ----------
+    writer : `bool`
+
+    Examples
+    ----------
+    >>> setFileWrite(True)
+    """
+    global RESET_WRITER
+
+    RESET_WRITER = value
+
+def getResetWriter():
+    """
+    Get if the FILEWRITER will be reseted after each scan
+
+    Returns
+    -------
+    `RESET_WRITER`
+
+    """
+    global RESET_WRITER
+    return RESET_WRITER
 
 def setPartialWrite(partial):
     """
