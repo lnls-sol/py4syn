@@ -181,3 +181,25 @@ class Py4synLogger:
         self.log_filename = filename
 
         self._reload_file_handler()
+
+    def set_filehandler_level(self, new_level):
+        """
+            Set a new log level to the file handler.
+
+        Parameters
+        ----------
+        new_level : :obj:`int`
+            New value of the file handler.
+        """
+        self.file_handler.setLevel(new_level)
+
+    def set_console_level(self, new_level):
+        """
+            Set a new log level to the console handler.
+
+        Parameters
+        ----------
+        new_level : :obj:`int`
+            New value of the console handler.
+        """
+        self.console_handler.setLevel(new_level)
