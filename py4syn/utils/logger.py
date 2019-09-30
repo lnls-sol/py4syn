@@ -47,6 +47,10 @@ class Py4synLogger:
         # creates the default paths to the log file
         self.username = str(pwd.getpwuid(os.getuid())[0])
         self.user_home = os.path.expanduser('~' + self.username)
+
+        # We chose the $HOME/.local as default path, because using this
+        # path we avoid permission problems and also avoid possibility of users
+        # seeing other users logs   
         self.log_path = pathlib.Path(self.user_home + '/.local/var/log')
         self.log_filename = 'py4syn_logger.log'
 
