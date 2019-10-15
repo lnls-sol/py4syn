@@ -29,8 +29,14 @@ class AreaDetectorClass(StandardDevice, ICountable):
     def onAcquireChange(self, value, **kw):
         self._done = (value == 0)
 
+    def onArrayCounterChange(self, value, **kw):
+        self._done = (value != self.counter)
+        if value != self.counter:
+            self.counter = value 
 
-    def __init__(self, mnemonic, pv,device, fileplugin,write,autowrite):
+
+    def __init__(self, mnemonic, pv,device, fileplugin,
+                 write, autowrite, path,trigger):
         """
         **Constructor**
         See :class:`py4syn.epics.StandardDevice`
@@ -43,36 +49,61 @@ class AreaDetectorClass(StandardDevice, ICountable):
         """
         super().__init__(mnemonic)
         self._done = 1
-
+        self.counter= None,
         self.detector_name = pv+':'+device+':'
         self.write_name = pv+':'+fileplugin+':'
-
+        self.path = path
         self.detector = AD_Camera(self.detector_name)
-        self.detector.add_pv(self.detector_name+"Acquire_RBV",attr='Scan')
-        self.detector.add_callback("Acquire_RBV",callback=self.onAcquireChange)
+        self.detector.add_pv(self.detector_name+"Acquire_RBV",
+                             attr='Scan')
+        self.trigger = trigger
 
-        self.setImageMode(0)
+        self.detector.Acquire = 0
+        if self.trigger == 'External':
+            print("External")
+            self.setImageMode(2)
+            self.detector.add_callback("ArrayCounter_RBV",
+                                   callback=self.onArrayCounterChange)
+        else:
+            self.detector.add_callback("Acquire_RBV",
+                                   callback=self.onAcquireChange)
+            self.setImageMode(0)
+
         self.detector.Scan = 9
         self.detector.ImageMode = self.getImageMode()
-
+        self.detector.AcquirePeriod = 0
         
+
         if write and autowrite:
             self.file = AD_FilePlugin(self.write_name)
-            self.file.add_pv(self.write_name+"NumExtraDims",attr="NumExtraDims")
-            self.file.add_pv(self.write_name+"ExtraDimSizeX",attr="ExtraDimSizeX")
-            self.file.add_pv(self.write_name+"ExtraDimSizeY",attr="ExtraDimSizeY")
-
+            self.file.add_pv(self.write_name+"NumExtraDims",
+                             attr="NumExtraDims")
+            self.file.add_pv(self.write_name+"ExtraDimSizeX",
+                             attr="ExtraDimSizeX")
+            self.file.add_pv(self.write_name+"ExtraDimSizeY",
+                             attr="ExtraDimSizeY")
+            self.file.EnableCallbacks = 1
             for i in range (3,10):
-                self.file.add_pv(self.write_name+"ExtraDimSize"+str(i),attr="ExtraDimSize"+str(i))
+                self.file.add_pv(self.write_name+"ExtraDimSize"+str(i),
+                                 attr="ExtraDimSize"+str(i))
 
-            self.setFilePath("/tmp")
-            self.setImageMode(0)
-            self.setTriggerMode(0)
+            self.setFilePath(self.path)
+            if self.trigger == 'External':
+                self.setImageMode(2)
+            else:
+                self.setImageMode(0)
+   
             self.setEnableCallback(1)
             self.setAutoSave(1)
             self.setWriteMode(1)
-            self.setOutputFormat("%s%s.hdf5")
+            self.setOutputFormat("%s%s_%3.3d.hdf5")
             self.stopCapture()
+    
+        if self.trigger == 'External':
+            self.setTriggerMode(4)
+        else:
+            self.setTriggerMode(0)
+        self.detector.ImageMode = self.getImageMode()
 
     def getNframes(self):
         """
@@ -314,14 +345,9 @@ class AreaDetectorClass(StandardDevice, ICountable):
     def getIntensity(self):
         return self.detector.ArrayCounter_RBV
 
-    def getValue(self, **kwargs):
-        if(kwargs):                 
-            count = 0            
-            value = self.getIntensity()
-            while (value==0 and count<3):
-                value = self.getIntensity()
-                count += 1
-            return value
+    def getValue(self, **kwargs):        
+        value = self.getIntensity()
+        return value
 
 
     def setCountTime(self, t):
@@ -363,6 +389,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
         
         See: :meth:`close`
         """
+        
         self.detector.Acquire = 0
         self.close()
 
