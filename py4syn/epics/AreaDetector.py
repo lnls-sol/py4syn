@@ -11,7 +11,7 @@ Python class for AreaDetector devices using EPICS area detector IOC.
 
 from py4syn.epics.StandardDevice import StandardDevice
 from py4syn.epics.ICountable import ICountable
-from epics import PV
+from epics import PV, poll
 from epics.devices.ad_base import AD_Camera
 from epics.devices.ad_fileplugin import AD_FilePlugin
 from time import sleep, time
@@ -24,7 +24,6 @@ class AreaDetectorClass(StandardDevice, ICountable):
     --------
     """
 
-    WAIT_ACQUIRING = 0.005
 
     def onAcquireChange(self, value, **kw):
         self._done = (value == 0)
@@ -49,6 +48,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
         """
         super().__init__(mnemonic)
         self._done = 1
+        self.timi = time()
         self.counter= None,
         self.detector_name = pv+':'+device+':'
         self.write_name = pv+':'+fileplugin+':'
@@ -72,7 +72,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
         self.detector.Scan = 9
         self.detector.ImageMode = self.getImageMode()
         self.detector.AcquirePeriod = 0
-        
+        self.autowrite = autowrite
 
         if write and autowrite:
             self.file = AD_FilePlugin(self.write_name)
@@ -347,6 +347,8 @@ class AreaDetectorClass(StandardDevice, ICountable):
 
     def getValue(self, **kwargs):        
         value = self.getIntensity()
+        val = time()-self.timi
+        self.timi = time()
         return value
 
 
@@ -377,7 +379,6 @@ class AreaDetectorClass(StandardDevice, ICountable):
         """
         if not self._done:
             raise RuntimeError('Already counting')
-        #self.pvClear.put(1, wait=True) # clear the ROI value before start a new acquire
         self.detector.Acquire = 1
         self._done = 0 # force the confirmation that the detector has already received acquire function
         
@@ -423,4 +424,4 @@ class AreaDetectorClass(StandardDevice, ICountable):
         Blocks until the acquisition completes.
         """
         while not self._done:
-            sleep(self.WAIT_ACQUIRING)
+            poll(evt=1.e-5, iot=0.1)
