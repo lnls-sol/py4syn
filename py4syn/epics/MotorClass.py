@@ -51,7 +51,6 @@ class Motor(IScannable, StandardDevice):
         """
         StandardDevice.__init__(self, mnemonic)
         self.pvName = pvName
-
         self.pvType = PV(pvName+".RTYP", connection_timeout=3)
 
         if(self.pvType.status is None):
@@ -793,6 +792,19 @@ class Motor(IScannable, StandardDevice):
             The desired value (Absolute Position) to set
         """
         self.setAbsolutePosition(v)
+
+    def startFly(self):
+        """
+        Abstract method for starting a motor fly scan
+
+        Parameters
+        ----------
+        lv :
+        positions : `list`
+            The list of desired positions to set
+        """
+
+        raise NotImplementedError("Can't call startFly method with abstract motor.")
 
     def homeForward(self):
         """

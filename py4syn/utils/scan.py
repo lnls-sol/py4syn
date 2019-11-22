@@ -142,7 +142,7 @@ class ScanType(Enum):
     SCAN = 0
     MESH = 1
     TIME = 2
-
+    FLY  = 3
 
 class ScanStateEnum(str, Enum):
     idle = "idle"
@@ -162,7 +162,6 @@ class ScanInterruptedException(Exception):
 #
 def findDevice(device):
     d = None
-
     if(isinstance(device, str)):
         if(device in py4syn.mtrDB):
             d = py4syn.mtrDB[device]
@@ -656,6 +655,114 @@ def timescan(t=1, delay=1, repeat=-1):
     s.setRepeat(repeat)
     s.start()
 
+def flyscan(*args, **kwargs):
+    """
+    Executes a scan in time.
+
+    Parameters
+    ----------
+    t : `double`
+        Time in seconds to count
+    delay : `double`
+        Time to wait before new count
+    repeat : `int`
+        Number of repeats to acquire (default is infinity), if repeat = 1
+        it will run 2 times an acquire
+    """
+    import numbers
+    
+    global SCAN_CMD
+    SCAN_CMD = "flyscan(haha)"
+
+    setX("points")
+
+    device = None
+    countTime = None
+
+    waitingDevice = True
+    waitingStart = False
+    waitingEnd = False
+    waitingSteps = False
+    waitingTime = False
+    waitingDelay = False
+
+    # Criar Objeto Scan
+    s = Scan(ScanType.FLY)
+
+    for item in args:
+        print(item)
+        if(isinstance(item, numbers.Number) or isinstance(item, list)):
+            waitingDevice = False
+
+        if(waitingDevice):
+            # check if its not the time
+            device = findDevice(item)
+
+            param = ScanParam(device)
+            s.addScanParam(param)
+            continue
+
+        if(waitingSteps):
+            # user sent the points array
+            if isinstance(item, collections.Iterable):
+                points = item
+                param.setPoints(points)
+                s.addScanParam(param)
+                waitingSteps = False
+                waitingDevice = True
+                waitingTime = True
+                continue
+
+            if(start is None):
+                start = item
+                continue
+
+            if(end is None):
+                end = item
+                continue
+
+            if(steps is None):
+                if not isinstance(item, int):
+                    raise Exception('Step value is not a valid integer.' \
+                                    'Please check.')
+
+                steps = item
+                param.setPoints(start, end, steps)
+                s.addScanParam(param)
+                waitingSteps = False
+                waitingDevice = True
+                waitingTime = True
+                continue
+
+        if(waitingTime):
+            countTime = item
+            if(isinstance(countTime, collections.Iterable)):
+                if(s.getNumberOfPoints() != len(countTime)):
+                    err_msg = 'Error creating the mesh. The time array ({} '\
+                              'points) and the mesh ({} points) must have '\
+                              'the same number of points. Please check.'
+                    raise Exception(err_msg.format(len(countTime),s.getNumberOfPoints()))
+
+            s.setCountTime(countTime)
+            waitingDelay = True
+            waitingTime = False
+            continue
+
+        if(waitingDelay):
+            delayTime = item
+            if(isinstance(delayTime, collections.Iterable)):
+                if(s.getNumberOfPoints() != len(delayTime)):
+                    err_msg = 'Error creating the mesh. The delay array ({} '\
+                              'points) and the mesh ({} points) must have '\
+                              'the same number of points. Please check.'
+                    raise Exception(err_msg.format(len(delayTime),s.getNumberOfPoints()))
+
+            s.setDelayTime(delayTime)
+            continue
+
+    s.setRepeat(1)
+    s.start()
+
 """
 SCAN AND SCAN PARAM CLASSES
 """
@@ -818,7 +925,7 @@ class Scan(object):
     def getElapsedTimePerPoint(self):
         return self.getElapsedTime() / self.getNumberOfPoints()
 
-    def setPausePoolingRate(rate):
+    def setPausePoolingRate(self, rate):
         self.__pause_pooling_rate = float(rate)
 
     def interrupt(self):
@@ -926,6 +1033,8 @@ class Scan(object):
                 self.doMesh()
             elif(self.__scanType == ScanType.TIME):
                 self.doTime()
+            elif(self.__scanType == ScanType.FLY):
+                self.doFly()
             else:
                 self.__startTimestamp = datetime.datetime.now()
                 self.__endTimestamp = datetime.datetime.now()
@@ -1372,6 +1481,48 @@ class Scan(object):
         # Post Scan Callback
         if(self.__postScanCallback):
             self.__postScanCallback(scan=self)
+
+    def doFly(self):
+        global FIT_SCAN
+
+        positions = []
+        indexes = []
+	 	
+        # Pre Scan Callback
+        if(self.__preScanCallback):
+            self.__preScanCallback(scan=self)
+	
+        pointIdx = 0
+        self.__initialize()
+
+        positions = [pointIdx]
+        indexes = [pointIdx]
+        
+        # Pre Operation Callback
+        if(self.__preOperationCallback):
+            self.__preOperationCallback(scan=self, pos=positions, idx=indexes)
+        a = time.time()
+        self.__launchCounters(scan=self, pos=positions, idx=indexes)
+        for deviceIdx in range(0, self.getNumberOfParams()):
+            param = self.getScanParams()[deviceIdx]
+            param.getDevice().startFly()
+            indexes.append(pointIdx)
+        
+        # Todo fly scan
+        self.__waitDevices()
+            
+            # Post Operation Callback
+        if(self.__postOperationCallback):
+           self.__postOperationCallback(scan=self, pos=positions, idx=indexes)
+
+        FIT_SCAN = False
+        self.__terminate()
+        print("TOTAL: ",time.time()-a)
+        # Post Scan Callback
+        if(self.__postScanCallback):
+            self.__postScanCallback(scan=self)
+            print(self.__writeData)
+
 
 class ScanParam(object):
     def __init__(self, device):

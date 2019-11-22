@@ -102,7 +102,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
         if self.trigger == 'External':
             self.setTriggerMode(4)
         else:
-            self.setTriggerMode(0)
+            self.setTriggerMode(4)
         self.detector.ImageMode = self.getImageMode()
 
     def getNframes(self):
