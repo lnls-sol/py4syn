@@ -96,7 +96,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
             self.setEnableCallback(1)
             self.setAutoSave(1)
             self.setWriteMode(1)
-            self.setOutputFormat("%s%s_%3.3d.hdf5")
+            self.setOutputFormat("%s%s.hdf5")
             self.stopCapture()
     
         if self.trigger == 'External':
