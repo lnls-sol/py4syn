@@ -91,7 +91,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
             if self.trigger == 'External':
                 self.setImageMode(2)
             else:
-                self.setImageMode(0)
+                self.setImageMode(2)
    
             self.setEnableCallback(1)
             self.setAutoSave(1)
