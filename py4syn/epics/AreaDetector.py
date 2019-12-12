@@ -96,7 +96,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
             self.setEnableCallback(1)
             self.setAutoSave(1)
             self.setWriteMode(1)
-            self.setOutputFormat("%s%s.hdf5")
+            self.setOutputFormat("%s%s_%03d.hdf5")
             self.stopCapture()
     
         if self.trigger == 'External':
@@ -104,6 +104,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
         else:
             self.setTriggerMode(4)
         self.detector.ImageMode = self.getImageMode()
+
 
     def getNframes(self):
         """
@@ -290,6 +291,12 @@ class AreaDetectorClass(StandardDevice, ICountable):
 
     def setOutputFormat(self,val):
         self._outputformat = val
+    
+    def setRepeatNumber(self, val):
+        self._repeat_number = val
+    
+    def getRepeatNumber(self):
+        return self._repeat_number
 
     def startCapture(self):
         self.file.Capture = 1
@@ -302,7 +309,8 @@ class AreaDetectorClass(StandardDevice, ICountable):
 
         nframes = 1
         for ipoints_motor in dictionary['points']:
-            self.dimensions.append(len(set(ipoints_motor)))
+            # Gambiarra pq ele conta o ultimo ponto
+            self.dimensions.append(len(set(ipoints_motor)) - 1)
         self.setNextraDim(len(self.dimensions))
 
         for i in range(len(self.dimensions),10):
@@ -317,6 +325,8 @@ class AreaDetectorClass(StandardDevice, ICountable):
         for i in self.dimensions:
             nframes = nframes * i
         self.setNframes(nframes)
+
+        self.setRepeatNumber(dictionary['repetition'])
 
     def setWriteParams(self):
         self.detector.ImageMode     =   self.getImageMode()
@@ -335,6 +345,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
         self.file.setTemplate(self.getOutputFormat())
         self.file.setFileName(self.getFileName())
         self.file.setNumCapture(self.getNframes())
+        self.file.FileNumber        =   self.getRepeatNumber()
 
     def close(self):
         """
@@ -361,9 +372,11 @@ class AreaDetectorClass(StandardDevice, ICountable):
             Acquisition time
         """
         self.detector.AcquireTime = t
+        self.detector.AcquirePeriod = 0
+        print('inside setCountTime', self.detector.AcquireTime)
 
     def getAcquireTime(self):
-        return self.detector.AcquireTime
+        return self.detector.AcquireTime, self.detector.AcquirePeriod
 
 
     def setPresetValue(self, channel, val):
