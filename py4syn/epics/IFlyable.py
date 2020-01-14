@@ -1,4 +1,4 @@
-"""Scannable Interface
+"""FlyScannable Interface
 
 Python interface to support Abstract methods related to FlyScan process.
 
