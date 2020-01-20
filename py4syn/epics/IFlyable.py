@@ -8,10 +8,11 @@ Python interface to support Abstract methods related to FlyScan process.
 .. moduleauthor:: Gabriel Previato de Andrade <gabriel.andrade@lnls.br>
     .. note:: 14/01/2020 [gabrielpreviato]  first version released
 """
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
+from py4syn.epics.IScannable import IScannable
 
 
-class IFlyable:
+class IFlyable(IScannable):
     """
 
     Python interface to be implemented in all devices in order to create default methods for FlyScan process
