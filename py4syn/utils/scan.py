@@ -690,7 +690,6 @@ def flyscan(*args, **kwargs):
     s = Scan(ScanType.FLY)
 
     for item in args:
-        print(item)
         if(isinstance(item, numbers.Number) or isinstance(item, list)):
             waitingDevice = False
 
@@ -1348,6 +1347,7 @@ class Scan(object):
         # Arrays to store positions and indexes to be used as callback arguments
         positions = []
         indexes = []
+        print('')
         # Pre Scan Callback
         if(self.__preScanCallback):
             self.__preScanCallback(scan=self, pos=positions, idx=indexes)
@@ -1502,6 +1502,8 @@ class Scan(object):
         if(self.__preOperationCallback):
             self.__preOperationCallback(scan=self, pos=positions, idx=indexes)
         a = time.time()
+        print('')
+        print('** Starting  **')
         self.__launchCounters(scan=self, pos=positions, idx=indexes)
         for deviceIdx in range(0, self.getNumberOfParams()):
             param = self.getScanParams()[deviceIdx]

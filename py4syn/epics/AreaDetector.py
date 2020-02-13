@@ -35,7 +35,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
 
 
     def __init__(self, mnemonic, pv,device, fileplugin,
-                 write, autowrite, path,trigger):
+                 write, autowrite, path, trigger):
         """
         **Constructor**
         See :class:`py4syn.epics.StandardDevice`
@@ -57,10 +57,10 @@ class AreaDetectorClass(StandardDevice, ICountable):
         self.detector.add_pv(self.detector_name+"Acquire_RBV",
                              attr='Scan')
         self.trigger = trigger
-
+        self.dumbnumb = 0
         self.detector.Acquire = 0
+        self.setFilePath('')
         if self.trigger == 'External':
-            print("External")
             self.setImageMode(2)
             self.detector.add_callback("ArrayCounter_RBV",
                                    callback=self.onArrayCounterChange)
@@ -73,8 +73,9 @@ class AreaDetectorClass(StandardDevice, ICountable):
         self.detector.ImageMode = self.getImageMode()
         self.detector.AcquirePeriod = 0
         self.autowrite = autowrite
+        self.write = write
 
-        if write and autowrite:
+        if self.write and self.autowrite:
             self.file = AD_FilePlugin(self.write_name)
             self.file.add_pv(self.write_name+"NumExtraDims",
                              attr="NumExtraDims")
@@ -91,18 +92,18 @@ class AreaDetectorClass(StandardDevice, ICountable):
             if self.trigger == 'External':
                 self.setImageMode(2)
             else:
-                self.setImageMode(2)
+                self.setImageMode(0)
    
-            self.setEnableCallback(1)
+            self.setEnableCallback(2)
             self.setAutoSave(1)
-            self.setWriteMode(1)
+            self.setWriteMode(2)
             self.setOutputFormat("%s%s_%03d.hdf5")
             self.stopCapture()
     
         if self.trigger == 'External':
-            self.setTriggerMode(4)
+            self.setTriggerMode(3)
         else:
-            self.setTriggerMode(4)
+            self.setTriggerMode(1)
         self.detector.ImageMode = self.getImageMode()
 
 
@@ -299,54 +300,59 @@ class AreaDetectorClass(StandardDevice, ICountable):
         return self._repeat_number
 
     def startCapture(self):
-        self.file.Capture = 1
-
+        if self.write and self.autowrite:
+            self.file.Capture = 1
     def stopCapture(self):
-        self.file.Capture = 0
+        if self.write and self.autowrite:
+            self.file.Capture = 0
                 
     def setParams(self,dictionary):
-        self.dimensions = []
+        if self.write and self.autowrite:
+            self.dimensions = []
 
-        nframes = 1
-        for ipoints_motor in dictionary['points']:
-            # Gambiarra pq ele conta o ultimo ponto
-            self.dimensions.append(len(set(ipoints_motor)) - 1)
-        self.setNextraDim(len(self.dimensions))
+            nframes = 1
+            for ipoints_motor in dictionary['points']:
+                # Gambiarra pq ele conta o ultimo ponto
+                self.dimensions.append(len(set(ipoints_motor)) - 1)
+            self.setNextraDim(len(self.dimensions))
 
-        for i in range(len(self.dimensions),10):
-            self.dimensions.append(1)
+            for i in range(len(self.dimensions),10):
+                self.dimensions.append(1)
 
-        self.setDimX(self.dimensions[0])
-        self.setDimY(self.dimensions[1])
+            self.setDimX(self.dimensions[0])
+            self.setDimY(self.dimensions[1])
 
-        for i in range(3,10):
-            self.file.put("ExtraDimSize"+str(i),self.dimensions[i-1])
+            for i in range(3,10):
+                self.file.put("ExtraDimSize"+str(i),self.dimensions[i-1])
 
-        for i in self.dimensions:
-            nframes = nframes * i
-        self.setNframes(nframes)
+            for i in self.dimensions:
+                nframes = nframes * i
+            self.setNframes(nframes)
 
-        self.setRepeatNumber(dictionary['repetition'])
+            self.setRepeatNumber(dictionary['repetition'])
 
     def setWriteParams(self):
+        self.detector.Acquire = 0
         self.detector.ImageMode     =   self.getImageMode()
         self.detector.TriggerMode   =   self.getTriggerMode()
-        self.file.EnableCallbacks   =   self.getEnableCallback()
+        if self.write and self.autowrite:
+            self.file.EnableCallbacks   =   self.getEnableCallback()
 
-        #points
-        self.file.NumExtraDims      =   self.getNextraDim()
-        self.file.ExtraDimSizeX     =   self.getDimX()
-        self.file.ExtraDimSizeY     =   self.getDimY()
-        self.file.setWriteMode(mode=self.getWriteMode())
-
-        #Set output path
-        self.file.AutoSave          =   self.getAutoSave()
-        self.file.setPath(self.getFilePath())
-        self.file.setTemplate(self.getOutputFormat())
-        self.file.setFileName(self.getFileName())
-        self.file.setNumCapture(self.getNframes())
-        self.file.FileNumber        =   self.getRepeatNumber()
-
+            #points
+            self.file.NumExtraDims      =   self.getNextraDim()
+            self.file.ExtraDimSizeX     =   self.getDimX()
+            self.file.ExtraDimSizeY     =   self.getDimY()
+            self.file.setWriteMode(mode=self.getWriteMode())
+            #Set output path
+            self.file.AutoSave          =   self.getAutoSave()
+            self.file.setPath(self.getFilePath())
+            self.file.setTemplate(self.getOutputFormat())
+            self.file.setFileName(self.getFileName())
+            self.file.setNumCapture(self.getNframes())
+            self.file.FileNumber        =   self.getRepeatNumber()
+        else:
+            self.dumbnumb += 1
+            self.setRepeatNumber(self.dumbnumb)
     def close(self):
         """
         Stops an ongoing acquisition, if any, and puts the EPICS IOC in idle state.
@@ -373,7 +379,6 @@ class AreaDetectorClass(StandardDevice, ICountable):
         """
         self.detector.AcquireTime = t
         self.detector.AcquirePeriod = 0
-        print('inside setCountTime', self.detector.AcquireTime)
 
     def getAcquireTime(self):
         return self.detector.AcquireTime, self.detector.AcquirePeriod
