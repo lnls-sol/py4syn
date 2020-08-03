@@ -11,7 +11,7 @@ Python Class for EPICS Scaler control.
     .. note:: 07/04/2014 [hugo.slepicka]  fix to read the correct values after
                                     count, based on Tim Mooney's recommendation
 """
-from epics import PV, ca
+from epics import PV, ca, poll
 from py4syn.epics.StandardDevice import StandardDevice
 from py4syn.epics.ICountable import ICountable
 from time import sleep
@@ -106,8 +106,7 @@ class Scaler(StandardDevice, ICountable):
 
     def wait(self):
         while(self._counting):
-            sleep(0.1)
-            ca.poll()
+            poll(evt=1.e-5, iot=0.1)
 
     def getIntensityCheck(self):
         self.setCountStart()
