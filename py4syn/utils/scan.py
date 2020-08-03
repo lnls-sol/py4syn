@@ -1093,7 +1093,6 @@ class Scan(object):
 
         if isinstance(t, collections.Iterable):
             t = t[int(idxs[-1])]
-
         if(t < 0):
             ctr(t * -1, use_monitor=True, wait=False)
         else:
@@ -1129,7 +1128,10 @@ class Scan(object):
         d = getCountersData()
 
         for k, v in d.items():
-            SCAN_DATA[k].append(v)
+            if type(v) is numpy.ndarray:
+                SCAN_DATA[k] = [(v)]
+            else:
+                SCAN_DATA[k].append(v)
 
 
     def __printAndPlot(self, **kwargs):
@@ -1150,16 +1152,20 @@ class Scan(object):
         if (FILE_WRITER is not None):
             for d in FILE_WRITER.getDevices():
                 try:
+                    # TODO
+                    # Send to insert devide all the data
                     #FILE_WRITER.insertDeviceData(d, SCAN_DATA[d][idx])
                     FILE_WRITER.insertDeviceData(d, SCAN_DATA[d])
                 except:
                     pass
-            for s in FILE_WRITER.getSignals():
-                try:
-                    #FILE_WRITER.insertSignalData(s, SCAN_DATA[s][idx])
-                    FILE_WRITER.insertSignalData(s, SCAN_DATA[s])
-                except:
-                    pass
+                
+            #for s in FILE_WRITER.getSignals():
+            #    try:
+            #        #FILE_WRITER.insertSignalData(s, SCAN_DATA[s][idx])
+            #        FILE_WRITER.insertSignalData(s, SCAN_DATA[s])
+            #    except:
+            #        pass
+            FILE_WRITER.insertSignalData(FILE_WRITER.getSignals(), SCAN_DATA)
             if PARTIAL_WRITE:
                 FILE_WRITER.writeData(partial=PARTIAL_WRITE, idx=idx)
 
@@ -1352,9 +1358,14 @@ class Scan(object):
         if(self.__preScanCallback):
             self.__preScanCallback(scan=self, pos=positions, idx=indexes)
         self.__initialize()
+
+        NumberOfParams = self.getNumberOfParams()
+        ScanParams = self.getScanParams()
+
         for pointIdx in range(0, self.getNumberOfPoints()):
             # Saves point index at SCAN_DATA
             SCAN_DATA['points'].append(pointIdx)
+
             # Pre Point Callback
             if(self.__prePointCallback):
                 self.__prePointCallback(scan=self, pos=positions, idx=indexes)
@@ -1363,17 +1374,23 @@ class Scan(object):
                 self.__check_pause_interrupt(pointIdx)
             except ScanInterruptedException:
                 break
+
             self.__waitDelay(scan=self, pos=positions, idx=indexes)
             positions = []
             indexes = []
 
-            for deviceIdx in range(0, self.getNumberOfParams()):
-                param = self.getScanParams()[deviceIdx]
-                param.getDevice().setValue(param.getPoints()[pointIdx])
+            for deviceIdx in range(0, NumberOfParams):
+                param = ScanParams[deviceIdx]
+                point = param.getPoints()[pointIdx]
+                device = param.getDevice()
+                device.setValue(point)
+  
                 indexes.append(pointIdx)
+
             self.__waitDevices()
-            for deviceIdx in range(0, self.getNumberOfParams()):
-                param = self.getScanParams()[deviceIdx]
+
+            for deviceIdx in range(0, NumberOfParams):
+                param = ScanParams[deviceIdx]
                 positions.append(param.getDevice().getValue())
                 # Saves device position at SCAN_DATA
                 SCAN_DATA[param.getDevice().getMnemonic()].append(param.getDevice().getValue())
@@ -1392,16 +1409,18 @@ class Scan(object):
             # Save data to SCAN_DATA
             self.__saveCounterData(scan=self, pos=positions, idx=indexes)
 
-            a = time.time()
             # Post Operation Callback
             if(self.__postOperationCallback):
                 self.__postOperationCallback(scan=self, pos=positions, idx=indexes)
 
-            self.b = threading.Thread(target=self.__writeData,args=[pointIdx])
-            self.b.start()
+            self.write_thread = threading.Thread(target=self.__writeData,args=[pointIdx])
+            self.write_thread.start()
+
             #self.__writeData(idx=pointIdx)
 
             # Updates the screen and plotter
+            self.print_thread = threading.Thread(target=self.__printAndPlot)
+            self.print_thread.start()
             #self.__printAndPlot()
 
             # Post Point Callback
