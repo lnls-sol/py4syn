@@ -1347,7 +1347,6 @@ class Scan(object):
         # Arrays to store positions and indexes to be used as callback arguments
         positions = []
         indexes = []
-        print('')
         # Pre Scan Callback
         if(self.__preScanCallback):
             self.__preScanCallback(scan=self, pos=positions, idx=indexes)
