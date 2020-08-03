@@ -2,6 +2,7 @@ import py4syn
 from py4syn.epics.ICountable import ICountable
 from py4syn.epics.ScalerClass import Scaler
 import collections
+from time import time
 
 def findMonitor():
     for k, v in py4syn.counterDB.items():
@@ -82,6 +83,7 @@ def waitAll(monitor=False):
         for k, v in py4syn.counterDB.items():
             v = py4syn.counterDB[k]
             if v['enable']:
+                t1 = time()
                 dev = v['device']
                 dev.wait()
 
@@ -108,8 +110,9 @@ def printCountersValue(data):
         else:
             print("{0:>10} {1:>20}".format(m, int(v)))
     print("-"*32)
-
+SETCOUNT_FLAG = True
 def ctr(t=1, use_monitor=False, wait=True):
+    global SETCOUNT_FLAG
     from epics import ca
     k, v = findMonitor()
     if(k is not None and use_monitor):
@@ -130,13 +133,14 @@ def ctr(t=1, use_monitor=False, wait=True):
             stopAll()
             return getCountersData()
     else:
+
         for k, v in py4syn.counterDB.items():
             dev = v['device']
-            if not dev.isCounting() and v['enable']:
+            if SETCOUNT_FLAG and (not dev.isCounting()) and v['enable']:
                 dev.setCountTime(t)
+        SETCOUNT_FLAG =False
 
         startCounters()
-
         ca.poll()
         if(wait):
             waitAll()
