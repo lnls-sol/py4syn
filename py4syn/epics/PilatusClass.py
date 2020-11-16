@@ -13,334 +13,137 @@ from threading import Event
 
 from py4syn.epics.StandardDevice import StandardDevice
 from py4syn.epics.ICountable import ICountable
-from py4syn.utils.timer import Timer
 from epics import PV, ca, caput
+from py4syn.epics.AreaDetector import AreaDetectorClass
+from epics.devices.ad_base import AD_Camera
+from epics.devices.ad_fileplugin import AD_FilePlugin
+from time import sleep, time
+
 
 # Pilatus ReadOut time
 READOUTTIME = 1
 
-class Pilatus(StandardDevice, ICountable):
-    """
-    Class to control Pilatus cameras via EPICS.
 
-    Examples
-    --------
-    >>> from shutil import move
-    >>> from py4syn.epics.PilatusClass import Pilatus
-    >>> from py4syn.epics.ShutterClass import SimpleShutter
-    >>> 
-    >>> def getImage(pv, fileName='image.tif', shutter=''):
-    ...     shutter = SimpleShutter(shutter, shutter)
-    ...     camera = Pilatus('pilatus', pv)
-    ...     camera.setImageName('/remote/' + fileName)
-    ...     camera.setCountTime(10)
-    ...     camera.startCount()
-    ...     shutter.open()
-    ...     camera.wait()
-    ...     camera.stopCount()
-    ...     shutter.close()
-    ...     move('/remote/' + fileName, '/home/user/' + fileName)
-    ...     camera.close()
-    ...
-    """
-    RESPONSE_TIMEOUT = 35
+class Pilatus(AreaDetectorClass):
+    def __init__(self, mnemonic, pv, device, fileplugin, write, autowrite, path, trigger):
+        super().__init__(mnemonic, pv,device, fileplugin,
+                 write, autowrite, path, trigger)
 
-    def __init__(self, mnemonic, pv):
-        """
-        **Constructor**
-        See :class:`py4syn.epics.StandardDevice`
+        self._done = 1
+        self.timi = time()
+        self.counter= None,
+        self.detector_name = pv+':'+device+':'
+        self.write_name = pv+':'+fileplugin+':'
+        self.path = path
+        self.detector = AD_Camera(self.detector_name)
+        self.detector.add_pv(self.detector_name+"Acquire_RBV",
+                             attr='Scan')
 
-        Parameters
-        ----------
-        mnemonic : `string`
-            A mnemonic for the camera
-        pv : `string`
-            Base name of the EPICS process variable
-        """
-        super().__init__(mnemonic)
-        self.acquireChanged = Event()
-        self.acquiring = False
-        self.pvAcquire = PV(pv + ':Acquire')
-        self.pvAcquire.add_callback(self.statusChange)
+        self.detector.add_pv(self.detector_name + "Armed", attr='Armed')
 
-        caput(pv + ':FileTemplate', '%s%s\0')
-        caput(pv + ':FilePath', '\0')
-        
-        self.pvAcquireTime = PV(pv + ':AcquireTime')
-        self.pvAcquirePeriod = PV(pv + ':AcquirePeriod')
-        self.pvFilePath = PV(pv + ':FilePath')
-        self.pvFileName = PV(pv + ':FileName')
-        self.pvFileTemplate = PV(pv + ':FileTemplate')
-        self.pvThreshold = PV(pv + ':ThresholdEnergy')
-        self.pvBeamX = PV(pv + ':BeamX')
-        self.pvBeamY = PV(pv + ':BeamY')
-        self.pvWavelength = PV(pv + ':Wavelength')
-        self.pvStartAngle = PV(pv + ':StartAngle')
-        self.pvAngleIncr = PV(pv + ':AngleIncr')
-        self.pvDetDist = PV(pv + ':DetDist')
-        self.pvNumImages = PV(pv + ':NumImages')
-        self.pvDelayTime = PV(pv + ':DelayTime')
-        self.pvTriggerMode = PV(pv + ':TriggerMode')
-        self.pvDet2Theta = PV(pv + ':Det2theta')
-        self.pvCamserverConnectStatus = PV(pv +':CamserverAsyn.CNCT')
-        self.pvLastFileName = PV(pv+ ":FullFileName_RBV")
+        self.detector.add_pv(self.detector_name + "FilePath", attr='FilePath')
+        self.detector.add_pv(self.detector_name + "FileName", attr='FileName')
+        self.detector.add_pv(self.detector_name + "FileTemplate", attr='FileTemplate')
 
-        self.timer = Timer(self.RESPONSE_TIMEOUT)
+        self.detector.FilePath = self.path
+        self.detector.FileTemplate = '%s%s_%03d.tif'
+        self.detector.FileName = 'temp'
 
-    def setImageName(self, name):
-        """
-        Sets the output image file name. The image will be saved with this name
-        after the acquisition.
-        
-        Parameters
-        ----------
-        name : `string`
-            The full pathname of the image.
-        """
-        self.pvFileName.put(name + "\0", wait=True)
 
-    def setFilePath(self, path):
-        """
-        Sets the output image file path. The image will be saved in this location
-        after the acquisition.
-        
-        Parameters
-        ----------
-        name : `string`
-            The path of location to save the image.
-        """
-        self.pvFilePath.put(path + "\0", wait=True)
+        self.armed_status = self.armedStatus()
 
-    def getFilePath(self):
-        """
-        Returns the path where image file should be saved.
-        """
-        return self.pvFilePath.get(as_string=True)
+        self.trigger = trigger
+        self.dumbnumb = 0
+        self.detector.Acquire = 0
+        self.setFilePath('')
 
-    def setFileName(self, name):
-        """
-        Sets the output image file name. The image will be saved with this name
-        after the acquisition.
-        
-        Parameters
-        ----------
-        name : `string`
-            The name of image to save.
-        """
-        self.pvFileName.put(name + "\0", wait=True)
+        if self.trigger == 'External':
+            self.setImageMode(2)
+            self.detector.add_callback("ArrayCounter_RBV",
+                                   callback=self.onArrayCounterChange)
+        else:
+            self.detector.add_callback("Acquire_RBV",
+                                   callback=self.onAcquireChange)
+            self.setImageMode(0)
 
-    def getFileName(self):
-        """
-        Returns the name of the image to be saved.
-        """
-        return self.pvFileName.get(as_string=True)
+        self.detector.Scan = 9
+        self.detector.ImageMode = self.getImageMode()
+        self.autowrite = autowrite
+        self.write = write
 
-    def setFileTemplate(self, template="%s%s"):
-        self.pvFileTemplate.put(template + "\0", wait=True)
 
-    def getFileTemplate(self):
-        return self.pvFileTemplate.get(as_string=True)
+        if self.write and self.autowrite:
+            self.file = AD_FilePlugin(self.write_name)
+            self.file.add_pv(self.write_name+"NumExtraDims",
+                             attr="NumExtraDims")
+            self.file.add_pv(self.write_name+"ExtraDimSizeX",
+                             attr="ExtraDimSizeX")
+            self.file.add_pv(self.write_name+"ExtraDimSizeY",
+                             attr="ExtraDimSizeY")
+            self.file.EnableCallbacks = 1
 
-    def statusChange(self, value, **kw):
-        """
-        Helper callback used to wait for the end of the acquisition.
-        """
-        self.acquiring = value
-        self.acquireChanged.set()
+            self.setFilePath(self.path)
+            self.setEnableCallback(1)
+            self.setAutoSave(1)
+            self.setWriteMode(2)
+            self.setOutputFormat("%s%s_%03d.hdf5")
+            self.stopCapture()
+    
+        if self.trigger == 'External':
+            self.setTriggerMode(3)
+        else:
+            self.setTriggerMode(0)
+        self.detector.ImageMode = self.getImageMode()
 
-    def close(self):
-        """
-        Stops an ongoing acquisition, if any, and puts the EPICS IOC in idle state.
-        """
-        self.pvAcquire.put(0, wait=True)
+        self.detector.ArrayCallbacks = 1
 
-    def getValue(self, **kwargs):
-        """
-        This is a dummy method that always returns zero, which is part of the
-        :class:`py4syn.epics.ICountable` interface. Pilatus does not return
-        a value while scanning. Instead, it stores a file with the resulting image.
-        """
-        return 0
+        print("Finish init")
 
-    def setCountTime(self, t):
-        """
-        Sets the image acquisition time.
+    def setParams(self,dictionary):
+        if self.write and self.autowrite:
+            self.dimensions = []
+            nframes = 1
+            for ipoints_motor in dictionary['points']:
+                # Gambiarra pq ele conta o ultimo ponto
+                self.dimensions.append(len(set(ipoints_motor)))
+            self.setNextraDim(len(self.dimensions))
 
-        Parameters
-        ----------
-        t : `float`
-            Acquisition time
-        """
-        self.pvAcquireTime.put(t, wait=True)
-        self.pvAcquirePeriod.put(t + READOUTTIME, wait=True)
-        self.timer = Timer(t + self.RESPONSE_TIMEOUT)
+            for i in range(len(self.dimensions),10):
+                self.dimensions.append(1)
 
-    def getAcquireTime(self):
-        return self.pvAcquireTime.get()
+            self.setDimX(self.dimensions[0])
+            self.setDimY(self.dimensions[1])
 
-    def setAcquirePeriod(self, period):
-        """
-        Sets the acquire period.
+            for i in self.dimensions:
+                nframes = nframes * i
 
-        Parameters
-        ----------
-        t : `float`
-            Acquisition period
-        """
-        self.pvAcquirePeriod.put(period, wait=True)
+            self.setNframes(nframes)
+            self.detector.NumImages = nframes
 
-    def getAcquirePeriod(self):
-        return self.pvAcquirePeriod.get()
+            if (self.trigger == 'Internal'):
+                self.detector.NumImages = 1
 
-    def setPresetValue(self, channel, val):
-        """
-        Dummy method to set initial counter value.
-        """
-        pass
+            try:
+                self.detector.AcquirePeriod = dictionary['aquire_time'][0][0]
+            except Exception:
+                print(dictionary['time'])
+                self.detector.AcquirePeriod = dictionary['sleep'] + dictionary['time'][0][0]
+
+            self.setRepeatNumber(dictionary['repetition'])
+
+    def armedStatus(self):
+        return self.detector.Armed
 
     def startCount(self):
         """
-        Starts acquiring an image. It will acquire for the duration set with
-        :meth:`setCountTime`. The resulting file will be stored in the file set with
-        :meth:`setImageName`.
-
-        See: :meth:`setCountTime`, :meth:`setImageName`
-
-            Examples
-            --------
-            >>> def acquire(pilatus, time, filename):
-            ...     pilatus.setCountTime(time)
-            ...     pilatus.setImageName(filename)
-            ...     pilatus.startCount()
-            ...     pilatus.wait()
-            ...     pilatus.stopCount()
-            ...
+        Starts acquiring 
         """
-        if self.acquiring:
+        if not self._done:
             raise RuntimeError('Already counting')
 
-        self.acquiring = True
-        self.pvAcquire.put(1)
-        self.timer.mark()
-
-    def stopCount(self):
-        """
-        Stops acquiring the image. This method simply calls :meth:`close`.
         
-        See: :meth:`close`
-        """
-        self.close()
+        self.detector.Acquire = 1
 
-    def canMonitor(self):
-        """
-        Returns false indicating that Pilatus cannot be used as a counter monitor.
-        """
-        return False
-
-    def canStopCount(self):
-        """
-        Returns true indicating that Pilatus has a stop command.
-        """
-        return True
-
-
-    def isCounting(self):
-        """
-        Returns true if the camera is acquiring an image, or false otherwise.
-
-        Returns
-        -------
-        `bool`
-        """
-        return self.acquiring
-
-    def wait(self):
-        """
-        Blocks until the acquisition completes.
-        """
-        if not self.acquiring:
-            return
-
-        self.acquireChanged.clear()
-        while self.acquiring and self.timer.check():
-            self.acquireChanged.wait(5)
-            self.acquireChanged.clear()
-
-        if self.timer.expired():
-            raise RuntimeError('Camera is not answering')
-
-    def setThreshold(self, threshold, wait=True):
-        self.pvThreshold.put(threshold, wait=wait)
-
-    def getThreshold(self):
-        return self.pvThreshold.get()
-
-    def setBeamPosition(self, position=[0,0]):
-        self.pvBeamX.put(position[0], wait=True)
-        self.pvBeamY.put(position[1], wait=True)
-
-    def getBeamPosition(self):
-        return [self.pvBeamX.get(), self.pvBeamY.get()]
-
-    def setWavelength(self, wavelength):
-        self.pvWavelength.put(wavelength, wait=True)
-
-    def getWavelength(self):
-        return self.pvWavelength.get()
-
-    def setStartAngle(self, start):
-        self.pvStartAngle.put(start, wait=True)
-
-    def getStartAngle(self):
-        return self.pvStartAngle.get()
-
-    def setAngleIncr(self, incr):
-        self.pvAngleIncr.put(incr, wait=True)
-
-    def getAngleIncr(self):
-        return self.pvAngleIncr.get()
-
-    def setDetDist(self, distance):
-        self.pvDetDist.put(distance, wait=True)
-
-    def getDetDist(self):
-        return self.pvDetDist.get()
-
-    def setNumImages(self, num):
-        self.pvNumImages.put(num, wait=True)
-
-    def getNumImages(self):
-        return self.pvNumImages.get()
-
-    def setDelayTime(self, delay):
-        self.pvDelayTime.put(delay, wait=True)
-
-    def getDelayTime(self):
-        return self.pvDelayTime.get()
-
-    def setTriggerMode(self, mode):
-        """
-        Trigger mode
-
-        Parameters
-        ----------
-        mode  : `int`
-            0 : Internal
-            1 : Ext. Enable
-            2 : Ext. Trigger
-            3 : Mult. Trigger
-            4 : Alignment
-        """
-        self.pvTriggerMode.put(mode, wait=True)
-
-    def getTriggerMode(self):
-        return self.pvTriggerMode.get()
-
-    def setDet2Theta(self, det2theta):
-        self.pvDet2Theta.put(det2theta, wait=True)
-
-    def getDet2Theta(self):
-        return self.pvDet2Theta.get()
-
-    def isCamserverConnected(self):
-        return (self.pvCamserverConnectStatus.get() == 1)
+        while not self.armedStatus():
+            sleep(.1)
+        self._done = 0 # force the confirmation that the detector has already received acquire function
