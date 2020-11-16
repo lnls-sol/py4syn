@@ -16,6 +16,7 @@ from py4syn.utils.plotter import Plotter
 from py4syn.writing.FileWriter import FileWriter
 from py4syn.writing.DefaultWriter import DefaultWriter
 import threading
+import time
 
 #
 #DEFAULT CALLBACKS
@@ -1150,22 +1151,10 @@ class Scan(object):
         global FILENAME
 
         if (FILE_WRITER is not None):
-            for d in FILE_WRITER.getDevices():
-                try:
-                    # TODO
-                    # Send to insert devide all the data
-                    #FILE_WRITER.insertDeviceData(d, SCAN_DATA[d][idx])
-                    FILE_WRITER.insertDeviceData(d, SCAN_DATA[d])
-                except:
-                    pass
-                
-            #for s in FILE_WRITER.getSignals():
-            #    try:
-            #        #FILE_WRITER.insertSignalData(s, SCAN_DATA[s][idx])
-            #        FILE_WRITER.insertSignalData(s, SCAN_DATA[s])
-            #    except:
-            #        pass
-            FILE_WRITER.insertSignalData(FILE_WRITER.getSignals(), SCAN_DATA)
+
+            FILE_WRITER.insertDeviceData(FILE_WRITER.getDevices(), SCAN_DATA, index=idx)
+            FILE_WRITER.insertSignalData(FILE_WRITER.getSignals(), SCAN_DATA, index=idx)
+
             if PARTIAL_WRITE:
                 FILE_WRITER.writeData(partial=PARTIAL_WRITE, idx=idx)
 
@@ -1211,12 +1200,12 @@ class Scan(object):
 
         x = SCAN_DATA[XFIELD]
         y = SCAN_DATA[YFIELD]
-        if(FIT_SCAN):
-            fitData(x, y)
-            if(PRINT_SCAN):
-                print("Peak = ", PEAK, " at ", PEAK_AT)
-                print("Fwhm = ", FWHM, " at ", FWHM_AT)
-                print("COM = ", COM)
+        #if(FIT_SCAN):
+            #fitData(x, y)
+            #if(PRINT_SCAN):
+            #    print("Peak = ", PEAK, " at ", PEAK_AT)
+            #    print("Fwhm = ", FWHM, " at ", FWHM_AT)
+            #    print("COM = ", COM)
 
 
     def __check_pause_interrupt(self, pointIdx):
@@ -1353,6 +1342,7 @@ class Scan(object):
         # Arrays to store positions and indexes to be used as callback arguments
         positions = []
         indexes = []
+
         # Pre Scan Callback
         if(self.__preScanCallback):
             self.__preScanCallback(scan=self, pos=positions, idx=indexes)
@@ -1363,6 +1353,7 @@ class Scan(object):
 
         for pointIdx in range(0, self.getNumberOfPoints()):
             # Saves point index at SCAN_DATA
+
             SCAN_DATA['points'].append(pointIdx)
 
             # Pre Point Callback
@@ -1382,8 +1373,8 @@ class Scan(object):
                 param = ScanParams[deviceIdx]
                 point = param.getPoints()[pointIdx]
                 device = param.getDevice()
+
                 device.setValue(point)
-  
                 indexes.append(pointIdx)
 
             self.__waitDevices()
@@ -1414,19 +1405,19 @@ class Scan(object):
 
             self.write_thread = threading.Thread(target=self.__writeData,args=[pointIdx])
             self.write_thread.start()
-
             #self.__writeData(idx=pointIdx)
 
             # Updates the screen and plotter
-            self.print_thread = threading.Thread(target=self.__printAndPlot)
-            self.print_thread.start()
-            #self.__printAndPlot()
+            #self.print_thread = threading.Thread(target=self.__printAndPlot)
+            #self.print_thread.start()
+            self.__printAndPlot()
 
             # Post Point Callback
             if(self.__postPointCallback):
                 self.__postPointCallback(scan=self, pos=positions, idx=indexes)
 
         self.__terminate()
+
         # Post Scan Callback
         if(self.__postScanCallback):
             self.__postScanCallback(scan=self)
@@ -2468,3 +2459,4 @@ if __name__ == "__main__":
 
     print("Scan Ended")
     print("Time elapsed: ", SCAN_DATA['scan_duration'])
+
