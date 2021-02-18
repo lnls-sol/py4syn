@@ -180,10 +180,12 @@ class Hexapode(StandardDevice, IScannable):
     def getDialLowLimitValue(self):
         """Not implemented yet."""
         warn("getDialLowLimitValue: not implemented yet")
+		return 0.
 
     def getDialHighLimitValue(self):
         """Not implemented yet."""
         warn("getDialHighLimitValue: not implemented yet")
+		return 0.
 
     def isMoving(self):
         """Check whether the hexapod is moving or not.
@@ -203,6 +205,7 @@ class Hexapode(StandardDevice, IScannable):
     def getDialRealPosition(self):
         """Not implemented yet."""
         warn("getDialRealPosition: not implemented yet")
+		return 0.
 
     def validateLimits(self):
         """Not implemented yet."""
