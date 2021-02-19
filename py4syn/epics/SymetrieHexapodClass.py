@@ -11,9 +11,12 @@ Tested on Bora and Breva models.
 """
 
 from warnings import warn
+
 from epics import PV
+
 from py4syn.epics.IScannable import IScannable
 from py4syn.epics.StandardDevice import StandardDevice
+
 
 class Hexapode(StandardDevice, IScannable):
 
@@ -35,23 +38,23 @@ class Hexapode(StandardDevice, IScannable):
 
         super().__init__(mnemonic)
 
-        self.s_uto_axis_RBV = PV("{}:s_uto_{}_RBV".format(pvName, axis.lower()))
-        self.MOVE_PTP_Axis = PV("{}:MOVE_PTP:{}".format(pvName, axis.capitalize()))
-        self.MOVE_PTP = PV("{}:MOVE_PTP".format(pvName))
-        self.InPosition_RBV = PV("{}:s_hexa:InPosition_RBV".format(pvName))
-        self.User_Axis_Neg_RBV = PV("{}:CFG_LIMIT:User_{}_Neg_RBV".format(pvName, axis.capitalize()))
-        self.User_Axis_Pos_RBV = PV("{}:CFG_LIMIT:User_{}_Pos_RBV".format(pvName, axis.capitalize()))
-        self.Valid_RBV = PV("{}:Drv:ValidateMove:Valid_RBV".format(pvName))
-        self.STOP = PV("{}:STOP".format(pvName))
+        self._sUtoAxisRbv = PV("{}:s_uto_{}_RBV".format(pvName, axis.lower()))
+        self._movePtpAxis = PV("{}:MOVE_PTP:{}".format(pvName, axis.capitalize()))
+        self._movePtp = PV("{}:MOVE_PTP".format(pvName))
+        self._inPositionRbv = PV("{}:s_hexa:InPosition_RBV".format(pvName))
+        self._userAxisNegRbv = PV("{}:CFG_LIMIT:User_{}_Neg_RBV".format(pvName, axis.capitalize()))
+        self._userAxisPosRbv = PV("{}:CFG_LIMIT:User_{}_Pos_RBV".format(pvName, axis.capitalize()))
+        self._validRbv = PV("{}:Drv:ValidateMove:Valid_RBV".format(pvName))
+        self._stop = PV("{}:STOP".format(pvName))
 
-        self.s_uto_axis_RBV.wait_for_connection()
-        self.MOVE_PTP_Axis.wait_for_connection()
-        self.MOVE_PTP.wait_for_connection()
-        self.InPosition_RBV.wait_for_connection()
-        self.User_Axis_Neg_RBV.wait_for_connection()
-        self.User_Axis_Pos_RBV.wait_for_connection()
-        self.Valid_RBV.wait_for_connection()
-        self.STOP.wait_for_connection()
+        self._sUtoAxisRbv.wait_for_connection()
+        self._movePtpAxis.wait_for_connection()
+        self._movePtp.wait_for_connection()
+        self._inPositionRbv.wait_for_connection()
+        self._userAxisNegRbv.wait_for_connection()
+        self._userAxisPosRbv.wait_for_connection()
+        self._validRbv.wait_for_connection()
+        self._stop.wait_for_connection()
 
     ### IScannable methods overriding ###
 
@@ -63,7 +66,7 @@ class Hexapode(StandardDevice, IScannable):
         `double`
         """
 
-        return self.s_uto_axis_RBV.get()
+        return self._sUtoAxisRbv.get()
 
     def setValue(self, v, waitComplete=True, autoMove=True):
         """Move axis.
@@ -87,9 +90,9 @@ class Hexapode(StandardDevice, IScannable):
             3. an invalid movement is issued? We will be stuck in an infinite loop waiting for it to move.
         """
 
-        self.MOVE_PTP_Axis.put(v, wait=True)
+        self._movePtpAxis.put(v, wait=True)
         if autoMove:
-            self.MOVE_PTP.put(0, wait=True)
+            self._movePtp.put(0, wait=True)
             while not self.isMoving():
                 pass
             if waitComplete:
@@ -108,13 +111,15 @@ class Hexapode(StandardDevice, IScannable):
         `double`
 
         For any given axis its upper and lower limits depend on the position of the other axes.
+
         E.g.: x upper limit can be +50 mm when z equals 0 mm, but only +10 mm when z equals -30 mm (hypothetical values).
+
         However the PVs associated with them do not reflect this dynamic behavior.
         Because of this :meth:`getLowLimitValue` and :meth:`getHighLimitValue` MUST NOT be used for movement validation; :meth:`canPerformMovement` must be used instead.
         """
 
         warn("getLowLimitValue() MUST NOT be used for movement validation, use canPerformMovement() instead.")
-        return self.User_Axis_Neg_RBV.get()
+        return self._userAxisNegRbv.get()
 
     def getHighLimitValue(self):
         """Returns axis' upper soft limit.
@@ -123,7 +128,7 @@ class Hexapode(StandardDevice, IScannable):
         """
 
         warn("getHighLimitValue() MUST NOT be used for movement validation, use canPerformMovement() instead.")
-        return self.User_Axis_Pos_RBV.get()
+        return self._userAxisPosRbv.get()
 
     ### HexapodeClass.py API compatibility ###
 
@@ -144,7 +149,7 @@ class Hexapode(StandardDevice, IScannable):
             If True waits for the hexapod to stop moving, otherwise only sends the command.
         """
 
-        self.STOP.put(1, wait=True)
+        self._stop.put(1, wait=True)
         if waitComplete:
             self.wait()
 
@@ -164,10 +169,10 @@ class Hexapode(StandardDevice, IScannable):
                 Reason why it cannot reach target, empty if it can.
         """
 
-        rollback = self.MOVE_PTP_Axis.get()
-        self.MOVE_PTP_Axis.put(target, wait=True)
-        answer = not self.Valid_RBV.get()
-        self.MOVE_PTP_Axis.put(rollback, wait=True)
+        rollback = self._movePtpAxis.get()
+        self._movePtpAxis.put(target, wait=True)
+        answer = not self._validRbv.get()
+        self._movePtpAxis.put(rollback, wait=True)
         if answer:
             return answer, ""
         else:
@@ -196,7 +201,7 @@ class Hexapode(StandardDevice, IScannable):
             True if any of the axes is moving, False otherwise.
         """
 
-        return not self.InPosition_RBV.get()
+        return not self._inPositionRbv.get()
 
     def getRealPosition(self, *args, **kwargs):
         """Wrapper for :meth:`getValue`."""
