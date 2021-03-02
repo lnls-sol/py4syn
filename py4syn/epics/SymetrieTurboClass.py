@@ -1,9 +1,9 @@
-"""Hexapode Bora controller class
+"""Symetrie hexapod (TurboPmac) controller class
 
-Python class for Hexapode Bora controllers
+Python class for Symetrie hexapod that use TurboPmac controllers
 
 :platform: Unix
-:synopsis: Python class for Hexapode Bora from Symetrie controllers
+:synopsis: Python class for Symetrie hexapod that use TurboPmac controllers
 
 
 .. moduleauthors::     Douglas Henrique C. de Araújo <douglas.araujo@lnls.br> 
