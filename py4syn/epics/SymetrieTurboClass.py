@@ -3,7 +3,7 @@
 Python class for Symetrie hexapod that use TurboPmac controllers
 
 :platform: Unix
-:synopsis: Python class for Symetrie hexapod that use TurboPmac controllers
+:synopsis: Python class for Symetrie hexapods that use TurboPmac controllers
 
 
 .. moduleauthors::     Douglas Henrique C. de Araújo <douglas.araujo@lnls.br> 
