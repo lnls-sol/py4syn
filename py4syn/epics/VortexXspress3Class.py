@@ -138,3 +138,4 @@ class VortexXspress3(StandardDevice, ICountable):
         """
         while not self._done:
             epics.poll(evt=1.e-5, iot=0.1)
+        sleep(0.1)
