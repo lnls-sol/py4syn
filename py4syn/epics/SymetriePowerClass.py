@@ -1,11 +1,11 @@
-"""Symetrie hexapod (proprietary IOC)
+"""Symetrie hexapod (PowerPmac)
 
 Class for controlling a single axis of a Symetrie hexapod (limited to x, y, z and respective rotations).
-Supports Symetrie"s proprietary IOC while maintaining the same API as HexapodeClass.py.
+Supports Symetrie hexapods that use PowerPmac controllers while maintaining the same API as SymetrieTurboClass.py.
 Tested on Bora and Breva models.
 
 :platform: Unix
-:synopsis: Python3 class for hexapods using Symetrie"s proprietary IOC
+:synopsis: Python3 class for Symetrie hexapods that use PowerPmac controllers
 
 .. moduleauthors:: Carlos Doro Neto <carlos.doro@lnls.br>
 """
