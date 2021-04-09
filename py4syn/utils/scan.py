@@ -1206,7 +1206,8 @@ class Scan(object):
         x = SCAN_DATA[XFIELD]
         y = SCAN_DATA[YFIELD]
         if(FIT_SCAN):
-            fitData(x, y)
+            if type(y[0]) is not numpy.ndarray:
+                fitData(x, y)
             if(PRINT_SCAN):
                 print("Peak = ", PEAK, " at ", PEAK_AT)
                 print("Fwhm = ", FWHM, " at ", FWHM_AT)
@@ -1484,7 +1485,7 @@ class Scan(object):
 
     def doFly(self):
         global FIT_SCAN
-
+        FIT_SCAN = False
         positions = []
         indexes = []
 	 	

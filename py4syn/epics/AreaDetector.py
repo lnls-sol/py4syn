@@ -68,7 +68,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
             self.detector.add_callback("Acquire_RBV",
                                    callback=self.onAcquireChange)
             self.setImageMode(0)
-
+            self.detector.TriggerMode = 1
         self.detector.Scan = 9
         self.detector.ImageMode = self.getImageMode()
         self.detector.AcquirePeriod = 0
@@ -101,7 +101,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
             self.stopCapture()
     
         if self.trigger == 'External':
-            self.setTriggerMode(3)
+            self.setTriggerMode(4)
         else:
             self.setTriggerMode(1)
         self.detector.ImageMode = self.getImageMode()
@@ -378,6 +378,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
             Acquisition time
         """
         self.detector.AcquireTime = t
+        
         self.detector.AcquirePeriod = 0
 
     def getAcquireTime(self):
@@ -397,6 +398,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
         """
         if not self._done:
             raise RuntimeError('Already counting')
+        self.detector.AcquirePeriod = 0
         self.detector.Acquire = 1
         self._done = 0 # force the confirmation that the detector has already received acquire function
         
