@@ -16,27 +16,35 @@ from py4syn.utils.plotter import Plotter
 from py4syn.writing.FileWriter import FileWriter
 from py4syn.writing.DefaultWriter import DefaultWriter
 import threading
+import time
 
 #
-#DEFAULT CALLBACKS
+# DEFAULT CALLBACKS
 #
+
+
 def defaultPreScanCallback(**kwargs):
     pass
+
 
 def defaultPostScanCallback(**kwargs):
     pass
 
+
 def defaultPreScanOperationCallback(**kwargs):
     pass
+
 
 def defaultScanOperationCallback(**kwargs):
     pass
 
+
 def defaultPostScanOperationCallback(**kwargs):
     pass
 
+
 #
-#GLOBALS
+# GLOBALS
 #
 global not_data_fields
 not_data_fields = ['scan_object', 'scan_duration', 'scan_start', 'scan_end']
@@ -142,7 +150,8 @@ class ScanType(Enum):
     SCAN = 0
     MESH = 1
     TIME = 2
-    FLY  = 3
+    FLY = 3
+
 
 class ScanStateEnum(str, Enum):
     idle = "idle"
@@ -158,7 +167,7 @@ class ScanInterruptedException(Exception):
 
 
 #
-#UTILITARY FUNCTIONS
+# UTILITARY FUNCTIONS
 #
 def findDevice(device):
     d = None
@@ -172,7 +181,9 @@ def findDevice(device):
     if(isinstance(d, IScannable)):
         return d
     else:
-        raise Exception("Error. Only Scannable devices can be used on a scan. Please Check.")
+        raise Exception(
+            "Error. Only Scannable devices can be used on a scan. Please Check.")
+
 
 def createUniqueFileName(name):
     import re
@@ -185,20 +196,22 @@ def createUniqueFileName(name):
     # check if fileName contains the number part and if so ignores it to
     # generate the next part
     expression = r'_\d{'+str(leadingZeros)+'}'
-    fileName = re.sub(expression,'', fileName, count=1)
+    fileName = re.sub(expression, '', fileName, count=1)
     fileName = os.path.join(filePath, fileName)
 
     newName = ""
     cont = 0
     while(True):
         cont += 1
-        newName = fileName + "_" + str(cont).zfill(leadingZeros) + fileExtension
+        newName = fileName + "_" + \
+            str(cont).zfill(leadingZeros) + fileExtension
         if(os.path.isfile(newName)):
             continue
         else:
             break
 
     return newName
+
 
 def scanHeader():
     global not_data_fields
@@ -213,6 +226,7 @@ def scanHeader():
 
     return line
 
+
 def fmt(n, precision):
     import math
     try:
@@ -222,7 +236,8 @@ def fmt(n, precision):
         pass
     return '{:.{}f}'.format(n, precision)
 
-def scanDataToLine(idx = -1, format=""):
+
+def scanDataToLine(idx=-1, format=""):
     global not_data_fields
     line = ''
     for key, val in SCAN_DATA.items():
@@ -231,7 +246,7 @@ def scanDataToLine(idx = -1, format=""):
         line += ' ' if line != '' else ''
         try:
             if(format != ""):
-                try: # some values are not possible to format, e.g strings, arrays, etc...
+                try:  # some values are not possible to format, e.g strings, arrays, etc...
                     line += fmt(val[idx], int(format))
                 except Exception:
                     line += str(val[idx])
@@ -240,6 +255,7 @@ def scanDataToLine(idx = -1, format=""):
         except Exception:
             line += 'N/A'
     return line
+
 
 def fitData(x, y):
     """
@@ -272,7 +288,7 @@ def fitData(x, y):
 
     X = numpy.asarray(x)
     Y = numpy.asarray(y)
-    d = fitGauss(X,Y)
+    d = fitGauss(X, Y)
     pkv = d[0]
     pkp = d[1]
     minv = d[2]
@@ -294,6 +310,7 @@ def fitData(x, y):
     except Exception:
         FITTED_DATA = None
         FIT_RESULT = None
+
 
 def plot():
     """
@@ -326,8 +343,10 @@ def plot():
             print("COM = ", COM)
 
 #
-#SCAN AND MESH WRAPPERS
+# SCAN AND MESH WRAPPERS
 #
+
+
 def scan(*args, **kwargs):
     """
     Run a scan with the given parameters
@@ -471,7 +490,8 @@ def scan(*args, **kwargs):
                     err_msg = 'Error creating the scan. The time array ({} ' \
                               'points) and the scan ({} points) must have '\
                               'the same number of points. Please check.'
-                    raise Exception(err_msg.format(len(countTime),s.getNumberOfPoints()))
+                    raise Exception(err_msg.format(
+                        len(countTime), s.getNumberOfPoints()))
 
             s.setCountTime(countTime)
             waitingTime = False
@@ -485,11 +505,13 @@ def scan(*args, **kwargs):
                     err_msg = 'Error creating the scan. The delay array ({} ' \
                               'points) and the scan ({} points) must have '\
                               'the same number of points. Please check.'
-                    raise Exception(err_msg.format(len(delayTime),s.getNumberOfPoints()))
+                    raise Exception(err_msg.format(
+                        len(delayTime), s.getNumberOfPoints()))
             s.setDelayTime(delayTime)
             continue
 
     s.start()
+
 
 def mesh(*kwargs):
     """
@@ -590,7 +612,7 @@ def mesh(*kwargs):
 
             if(steps is None):
                 if not isinstance(item, int):
-                    raise Exception('Step value is not a valid integer.' \
+                    raise Exception('Step value is not a valid integer.'
                                     'Please check.')
 
                 steps = item
@@ -608,7 +630,8 @@ def mesh(*kwargs):
                     err_msg = 'Error creating the mesh. The time array ({} '\
                               'points) and the mesh ({} points) must have '\
                               'the same number of points. Please check.'
-                    raise Exception(err_msg.format(len(countTime),s.getNumberOfPoints()))
+                    raise Exception(err_msg.format(
+                        len(countTime), s.getNumberOfPoints()))
 
             s.setCountTime(countTime)
             waitingDelay = True
@@ -622,12 +645,14 @@ def mesh(*kwargs):
                     err_msg = 'Error creating the mesh. The delay array ({} '\
                               'points) and the mesh ({} points) must have '\
                               'the same number of points. Please check.'
-                    raise Exception(err_msg.format(len(delayTime),s.getNumberOfPoints()))
+                    raise Exception(err_msg.format(
+                        len(delayTime), s.getNumberOfPoints()))
 
             s.setDelayTime(delayTime)
             continue
 
     s.start()
+
 
 def timescan(t=1, delay=1, repeat=-1):
     """
@@ -655,6 +680,7 @@ def timescan(t=1, delay=1, repeat=-1):
     s.setRepeat(repeat)
     s.start()
 
+
 def flyscan(*args, **kwargs):
     """
     Executes a scan in time.
@@ -670,7 +696,7 @@ def flyscan(*args, **kwargs):
         it will run 2 times an acquire
     """
     import numbers
-    
+
     global SCAN_CMD
     SCAN_CMD = "flyscan(haha)"
 
@@ -722,7 +748,7 @@ def flyscan(*args, **kwargs):
 
             if(steps is None):
                 if not isinstance(item, int):
-                    raise Exception('Step value is not a valid integer.' \
+                    raise Exception('Step value is not a valid integer.'
                                     'Please check.')
 
                 steps = item
@@ -740,7 +766,8 @@ def flyscan(*args, **kwargs):
                     err_msg = 'Error creating the mesh. The time array ({} '\
                               'points) and the mesh ({} points) must have '\
                               'the same number of points. Please check.'
-                    raise Exception(err_msg.format(len(countTime),s.getNumberOfPoints()))
+                    raise Exception(err_msg.format(
+                        len(countTime), s.getNumberOfPoints()))
 
             s.setCountTime(countTime)
             waitingDelay = True
@@ -754,7 +781,8 @@ def flyscan(*args, **kwargs):
                     err_msg = 'Error creating the mesh. The delay array ({} '\
                               'points) and the mesh ({} points) must have '\
                               'the same number of points. Please check.'
-                    raise Exception(err_msg.format(len(delayTime),s.getNumberOfPoints()))
+                    raise Exception(err_msg.format(
+                        len(delayTime), s.getNumberOfPoints()))
 
             s.setDelayTime(delayTime)
             continue
@@ -762,9 +790,12 @@ def flyscan(*args, **kwargs):
     s.setRepeat(1)
     s.start()
 
+
 """
 SCAN AND SCAN PARAM CLASSES
 """
+
+
 class Scan(object):
     def __init__(self, type):
         global PRE_SCAN_CALLBACK
@@ -778,8 +809,8 @@ class Scan(object):
         self.setScanType(type)
 
         # state, pause and interrupt support
-        self.__interrupt=False
-        self.__pause=False
+        self.__interrupt = False
+        self.__pause = False
         self.__state = ScanStateEnum.idle
         self.__pause_polling_rate = 0.1
 
@@ -848,7 +879,7 @@ class Scan(object):
         if(self.__scanType == ScanType.SCAN):
             if (len(self.__scanParams) != 0) and (param.getNumberOfPoints() !=
                                                   self.__minNumberOfPoints):
-                raise Exception('All devices must have the same number of'\
+                raise Exception('All devices must have the same number of'
                                 'points, please check.')
             else:
                 self.__minNumberOfPoints = param.getNumberOfPoints()
@@ -928,17 +959,18 @@ class Scan(object):
         self.__pause_pooling_rate = float(rate)
 
     def interrupt(self):
-        self.__interrupt=True
-        self.__pause=False
+        self.__interrupt = True
+        self.__pause = False
 
     def pause(self):
-        self.__pause=True
+        self.__pause = True
 
     def resume(self):
         if self.__state == ScanStateEnum.paused:
             self.__pause = False
         else:
-            raise ValueError('Cannot resume, scan is not paused. Current state is: {}'.format(self.__state))
+            raise ValueError(
+                'Cannot resume, scan is not paused. Current state is: {}'.format(self.__state))
 
     def getState(self):
         return self.__state
@@ -979,9 +1011,9 @@ class Scan(object):
                 if(FILE_WRITER is not None) and (py4syn.counterDB[c]['write']):
                     FILE_WRITER.insertSignal(c)
 
-            if not  py4syn.counterDB[c]['write']:
+            if not py4syn.counterDB[c]['write']:
                 not_data_fields.append(c)
-                
+
         for u in USER_DATA_FIELDS:
             SCAN_DATA[u] = []
             if(FILE_WRITER is not None):
@@ -998,7 +1030,6 @@ class Scan(object):
             except IndexError:
                 YFIELD = XFIELD
 
-
         try:
             self.__startTimestamp = datetime.datetime.now()
 
@@ -1008,7 +1039,8 @@ class Scan(object):
                 FILE_WRITER.insertComment(SCAN_COMMENT)
 
                 try:
-                    user = os.environ.get('LOGNAME') or os.environ.get('USERNAME')
+                    user = os.environ.get(
+                        'LOGNAME') or os.environ.get('USERNAME')
                     if not user:
                         user = pwd.getpwuid(os.getuid())[0]
                 except Exception as e:
@@ -1017,7 +1049,6 @@ class Scan(object):
                 FILE_WRITER.setUsername(user)
                 FILE_WRITER.setCommand(SCAN_CMD)
                 FILE_WRITER.setDataSize(self.getNumberOfPoints())
-
 
             # If its a partial write the header must be ready
             if(PARTIAL_WRITE and FILE_WRITER is not None):
@@ -1046,7 +1077,7 @@ class Scan(object):
                 print("\tSaving data to file: {}".format(FILENAME))
                 FILE_WRITER.setEndDate(self.__endTimestamp)
                 FILE_WRITER.writeHeader()
-                FILE_WRITER.writeData(idx=-1,partial=2)
+                FILE_WRITER.writeData(idx=-1, partial=2)
 
         except KeyboardInterrupt:
             self.__endTimestamp = datetime.datetime.now()
@@ -1081,7 +1112,6 @@ class Scan(object):
             FILE_WRITER = None
         SCAN_PLOTTER = None
         SCAN_PLOTTER_AXIS = 1
-
 
     def __waitDevices(self):
         for p in self.getScanParams():
@@ -1133,7 +1163,6 @@ class Scan(object):
             else:
                 SCAN_DATA[k].append(v)
 
-
     def __printAndPlot(self, **kwargs):
         p = self.getPlotter()
         if(PLOT_GRAPH):
@@ -1150,22 +1179,25 @@ class Scan(object):
         global FILENAME
 
         if (FILE_WRITER is not None):
-            for d in FILE_WRITER.getDevices():
-                try:
-                    # TODO
-                    # Send to insert devide all the data
-                    #FILE_WRITER.insertDeviceData(d, SCAN_DATA[d][idx])
-                    FILE_WRITER.insertDeviceData(d, SCAN_DATA[d])
-                except:
-                    pass
-                
-            #for s in FILE_WRITER.getSignals():
+            # for d in FILE_WRITER.getDevices():
+            # try:
+            #    # TODO
+            #    # Send to insert devide all the data
+            #    #FILE_WRITER.insertDeviceData(d, SCAN_DATA[d][idx])
+            #    FILE_WRITER.insertDeviceData(FILE_WRITER.getDevices(), SCAN_DATA, idx=idx)
+            # except:
+            #    print("nada")
+            #    pass
+            FILE_WRITER.insertDeviceData(
+                FILE_WRITER.getDevices(), SCAN_DATA, index=idx)
+            # for s in FILE_WRITER.getSignals():
             #    try:
             #        #FILE_WRITER.insertSignalData(s, SCAN_DATA[s][idx])
             #        FILE_WRITER.insertSignalData(s, SCAN_DATA[s])
             #    except:
             #        pass
-            FILE_WRITER.insertSignalData(FILE_WRITER.getSignals(), SCAN_DATA)
+            FILE_WRITER.insertSignalData(
+                FILE_WRITER.getSignals(), SCAN_DATA, index=idx)
             if PARTIAL_WRITE:
                 FILE_WRITER.writeData(partial=PARTIAL_WRITE, idx=idx)
 
@@ -1211,13 +1243,12 @@ class Scan(object):
 
         x = SCAN_DATA[XFIELD]
         y = SCAN_DATA[YFIELD]
-        if(FIT_SCAN):
-            fitData(x, y)
-            if(PRINT_SCAN):
-                print("Peak = ", PEAK, " at ", PEAK_AT)
-                print("Fwhm = ", FWHM, " at ", FWHM_AT)
-                print("COM = ", COM)
-
+        # if(FIT_SCAN):
+        #fitData(x, y)
+        # if(PRINT_SCAN):
+        #    print("Peak = ", PEAK, " at ", PEAK_AT)
+        #    print("Fwhm = ", FWHM, " at ", FWHM_AT)
+        #    print("COM = ", COM)
 
     def __check_pause_interrupt(self, pointIdx):
         if self.__pause:
@@ -1233,7 +1264,6 @@ class Scan(object):
             print('Aborting the Scan... Please wait for cleanup!')
             raise ScanInterruptedException()
 
-
     def doMesh(self):
         """
         IDX = MOD(QUOTIENT(I,MULT(Steps(N->1))),Steps(N))
@@ -1241,13 +1271,16 @@ class Scan(object):
         import operator
         import functools
 
-        numberOfStepsArray = [p.getNumberOfPoints() for p in self.getScanParams()]
-        multiplicationIndexArray = numpy.zeros(self.getNumberOfParams(), dtype=int)
+        numberOfStepsArray = [p.getNumberOfPoints()
+                              for p in self.getScanParams()]
+        multiplicationIndexArray = numpy.zeros(
+            self.getNumberOfParams(), dtype=int)
         for i in range(0, self.getNumberOfParams()):
             if(i == self.getNumberOfParams() - 1):
                 multiplicationIndexArray[i] = 1
             else:
-                multiplicationIndexArray[i] = functools.reduce(operator.mul, numberOfStepsArray[i + 1:])
+                multiplicationIndexArray[i] = functools.reduce(
+                    operator.mul, numberOfStepsArray[i + 1:])
 
         def calculatePositionIndex(idx, divisor, steps):
             """
@@ -1314,11 +1347,13 @@ class Scan(object):
                 positions.append(param.getDevice().getValue())
 
                 # Saves device position at SCAN_DATA
-                SCAN_DATA[param.getDevice().getMnemonic()].append(param.getDevice().getValue())
+                SCAN_DATA[param.getDevice().getMnemonic()].append(
+                    param.getDevice().getValue())
 
             # Pre Operation Callback
             if(self.__preOperationCallback):
-                self.__preOperationCallback(scan=self, pos=positions, idx=indexes)
+                self.__preOperationCallback(
+                    scan=self, pos=positions, idx=indexes)
 
             # Launch the counters
             self.__launchCounters(scan=self, pos=positions, idx=indexes)
@@ -1332,7 +1367,8 @@ class Scan(object):
 
             # Post Operation Callback
             if(self.__postOperationCallback):
-                self.__postOperationCallback(scan=self, pos=positions, idx=indexes)
+                self.__postOperationCallback(
+                    scan=self, pos=positions, idx=indexes)
 
             self.__writeData(idx=pointIdx)
 
@@ -1353,18 +1389,21 @@ class Scan(object):
         # Arrays to store positions and indexes to be used as callback arguments
         positions = []
         indexes = []
+        print('')
+        self.t1 = time.time()
         # Pre Scan Callback
         if(self.__preScanCallback):
             self.__preScanCallback(scan=self, pos=positions, idx=indexes)
         self.__initialize()
-
+        self.t2 = time.time()
         NumberOfParams = self.getNumberOfParams()
         ScanParams = self.getScanParams()
 
         for pointIdx in range(0, self.getNumberOfPoints()):
             # Saves point index at SCAN_DATA
+            self.t3 = time.time()
             SCAN_DATA['points'].append(pointIdx)
-
+            #self.t3 = time.time()
             # Pre Point Callback
             if(self.__prePointCallback):
                 self.__prePointCallback(scan=self, pos=positions, idx=indexes)
@@ -1373,7 +1412,7 @@ class Scan(object):
                 self.__check_pause_interrupt(pointIdx)
             except ScanInterruptedException:
                 break
-
+            self.t4 = time.time()
             self.__waitDelay(scan=self, pos=positions, idx=indexes)
             positions = []
             indexes = []
@@ -1382,55 +1421,71 @@ class Scan(object):
                 param = ScanParams[deviceIdx]
                 point = param.getPoints()[pointIdx]
                 device = param.getDevice()
+                t1 = time.time()
                 device.setValue(point)
-  
                 indexes.append(pointIdx)
-
+            self.t5 = time.time()
             self.__waitDevices()
-
+            self.t6 = time.time()
+            # print(time.time()-t1)
             for deviceIdx in range(0, NumberOfParams):
                 param = ScanParams[deviceIdx]
                 positions.append(param.getDevice().getValue())
                 # Saves device position at SCAN_DATA
-                SCAN_DATA[param.getDevice().getMnemonic()].append(param.getDevice().getValue())
-
+                SCAN_DATA[param.getDevice().getMnemonic()].append(
+                    param.getDevice().getValue())
+            self.t7 = time.time()
             # Pre Operation Callback
             if(self.__preOperationCallback):
-                self.__preOperationCallback(scan=self, pos=positions, idx=indexes)
-
+                self.__preOperationCallback(
+                    scan=self, pos=positions, idx=indexes)
+            self.t8 = time.time()
             # Launch the counters
             self.__launchCounters(scan=self, pos=positions, idx=indexes)
-
+            self.t9 = time.time()
             # Operation Callback
             if(self.__operationCallback):
                 self.__operationCallback(scan=self, pos=positions, idx=indexes)
-
+            self.t10 = time.time()
             # Save data to SCAN_DATA
             self.__saveCounterData(scan=self, pos=positions, idx=indexes)
-
+            self.t11 = time.time()
             # Post Operation Callback
             if(self.__postOperationCallback):
-                self.__postOperationCallback(scan=self, pos=positions, idx=indexes)
-
-            self.write_thread = threading.Thread(target=self.__writeData,args=[pointIdx])
-            self.write_thread.start()
-
-            #self.__writeData(idx=pointIdx)
+                self.__postOperationCallback(
+                    scan=self, pos=positions, idx=indexes)
+            self.t12 = time.time()
+            #self.write_thread = threading.Thread(target=self.__writeData,args=[pointIdx])
+            # self.write_thread.start()
+            self.__writeData(idx=pointIdx)
 
             # Updates the screen and plotter
-            self.print_thread = threading.Thread(target=self.__printAndPlot)
-            self.print_thread.start()
-            #self.__printAndPlot()
-
+            #self.print_thread = threading.Thread(target=self.__printAndPlot)
+            # self.print_thread.start()
+            # self.__printAndPlot()
+            self.t13 = time.time()
             # Post Point Callback
             if(self.__postPointCallback):
                 self.__postPointCallback(scan=self, pos=positions, idx=indexes)
+            #print("t1", self.t1-self.t1)
+            #print("t2", self.t2-self.t1)
+            #print("t3", self.t3-self.t2)
+            #print("t4", self.t4-self.t3)
+            #print("t5", self.t5-self.t4)
+            #print("t6", self.t6-self.t5)
+            #print("t7", self.t7-self.t6)
+            #print("t8", self.t8-self.t7)
+            #print("t9", self.t9-self.t8)
+            # print("t10",self.t10-self.t9)
+            # print("t11",self.t11-self.t10)
+            # print("t12",self.t12-self.t11)
+            print("tpoint", self.t13-self.t3)
 
         self.__terminate()
+        print("\nTOTAL", self.t13-self.t1)
         # Post Scan Callback
         if(self.__postScanCallback):
             self.__postScanCallback(scan=self)
-
 
     def doTime(self):
         positions = []
@@ -1464,7 +1519,8 @@ class Scan(object):
 
             # Pre Operation Callback
             if(self.__preOperationCallback):
-                self.__preOperationCallback(scan=self, pos=positions, idx=indexes)
+                self.__preOperationCallback(
+                    scan=self, pos=positions, idx=indexes)
 
             # Launch the counters
             self.__launchCounters(scan=self, pos=positions, idx=indexes)
@@ -1478,7 +1534,8 @@ class Scan(object):
 
             # Post Operation Callback
             if(self.__postOperationCallback):
-                self.__postOperationCallback(scan=self, pos=positions, idx=indexes)
+                self.__postOperationCallback(
+                    scan=self, pos=positions, idx=indexes)
 
             self.__writeData(idx=pointIdx)
 
@@ -1505,17 +1562,17 @@ class Scan(object):
 
         positions = []
         indexes = []
-	 	
+
         # Pre Scan Callback
         if(self.__preScanCallback):
             self.__preScanCallback(scan=self)
-	
+
         pointIdx = 0
         self.__initialize()
 
         positions = [pointIdx]
         indexes = [pointIdx]
-        
+
         # Pre Operation Callback
         if(self.__preOperationCallback):
             self.__preOperationCallback(scan=self, pos=positions, idx=indexes)
@@ -1524,20 +1581,21 @@ class Scan(object):
         print('** Starting  **')
         self.__launchCounters(scan=self, pos=positions, idx=indexes)
         for deviceIdx in range(0, self.getNumberOfParams()):
+            print("deviceIdx: ", deviceIdx)
             param = self.getScanParams()[deviceIdx]
             param.getDevice().startFly()
             indexes.append(pointIdx)
-        
+
         # Todo fly scan
         self.__waitDevices()
-            
-            # Post Operation Callback
+
+        # Post Operation Callback
         if(self.__postOperationCallback):
-           self.__postOperationCallback(scan=self, pos=positions, idx=indexes)
+            self.__postOperationCallback(scan=self, pos=positions, idx=indexes)
 
         FIT_SCAN = False
         self.__terminate()
-        print("TOTAL: ",time.time()-a)
+        print("TOTAL: ", time.time()-a)
         # Post Scan Callback
         if(self.__postScanCallback):
             self.__postScanCallback(scan=self)
@@ -1553,8 +1611,10 @@ class ScanParam(object):
         self.__points = []
 
     def __str__(self):
-        pointsstr = "[" + str(self.getPoints()[0]) + "..." + str(self.getPoints()[-1]) + "]"
-        r = "#Scan Param: device = " + str(self.__device) + " / Points: " + pointsstr + " >"
+        pointsstr = "[" + str(self.getPoints()[0]) + \
+            "..." + str(self.getPoints()[-1]) + "]"
+        r = "#Scan Param: device = " + \
+            str(self.__device) + " / Points: " + pointsstr + " >"
         return r
 
     def getDevice(self):
@@ -1565,7 +1625,8 @@ class ScanParam(object):
             self.__points = start
         else:
             if steps < 1:
-                raise Exception("At least one point is needed to create scan points")
+                raise Exception(
+                    "At least one point is needed to create scan points")
             diff = (float(end) - start) / (steps)
             self.__points = [diff * i + start for i in range(steps + 1)]
 
@@ -1610,8 +1671,10 @@ class ScanParam(object):
         return len(self.__points)
 
 #
-#GLOBALS GETTERS AND SETTERS
+# GLOBALS GETTERS AND SETTERS
 #
+
+
 def setPlotGraph(b):
     """
     Set the global variable PLOT_GRAPH to enable or disable the live plot
@@ -1623,6 +1686,7 @@ def setPlotGraph(b):
     """
     global PLOT_GRAPH
     PLOT_GRAPH = b
+
 
 def getPlotGraph():
     """
@@ -1636,6 +1700,7 @@ def getPlotGraph():
     global PLOT_GRAPH
     return PLOT_GRAPH
 
+
 def setFitScan(b):
     """
     Set the global variable FIT_SCAN to enable or disable the scan fit at end
@@ -1647,6 +1712,7 @@ def setFitScan(b):
     """
     global FIT_SCAN
     FIT_SCAN = b
+
 
 def getFitScan():
     """
@@ -1674,6 +1740,7 @@ def setPrintScan(b):
     global PRINT_SCAN
     PRINT_SCAN = b
 
+
 def getPrintScan():
     """
     Get the global variable PRINT_SCAN value
@@ -1685,6 +1752,7 @@ def getPrintScan():
     """
     global PRINT_SCAN
     return PRINT_SCAN
+
 
 def setPreScanCallback(c):
     """
@@ -1709,9 +1777,10 @@ def setPreScanCallback(c):
     """
     global PRE_SCAN_CALLBACK
     if not callable(c):
-        raise Exception('Error. Only functions can be used as callbacks.'\
+        raise Exception('Error. Only functions can be used as callbacks.'
                         'Please check.')
     PRE_SCAN_CALLBACK = c
+
 
 def setPrePointCallback(c):
     """
@@ -1736,9 +1805,10 @@ def setPrePointCallback(c):
     """
     global PRE_POINT_CALLBACK
     if not callable(c):
-        raise Exception('Error. Only functions can be used as callbacks. '\
+        raise Exception('Error. Only functions can be used as callbacks. '
                         'Please check.')
     PRE_POINT_CALLBACK = c
+
 
 def setPreOperationCallback(c):
     """
@@ -1763,9 +1833,10 @@ def setPreOperationCallback(c):
     """
     global PRE_OPERATION_CALLBACK
     if not callable(c):
-        raise Exception('Error. Only functions can be used as callbacks. '\
+        raise Exception('Error. Only functions can be used as callbacks. '
                         'Please check.')
     PRE_OPERATION_CALLBACK = c
+
 
 def setOperationCallback(c):
     """
@@ -1790,9 +1861,10 @@ def setOperationCallback(c):
     """
     global OPERATION_CALLBACK
     if not callable(c):
-        raise Exception('Error. Only functions can be used as callbacks. '\
+        raise Exception('Error. Only functions can be used as callbacks. '
                         'Please check.')
     OPERATION_CALLBACK = c
+
 
 def setPostOperationCallback(c):
     """
@@ -1817,9 +1889,10 @@ def setPostOperationCallback(c):
     """
     global POST_OPERATION_CALLBACK
     if not callable(c):
-        raise Exception('Error. Only functions can be used as callbacks. '\
+        raise Exception('Error. Only functions can be used as callbacks. '
                         'Please check.')
     POST_OPERATION_CALLBACK = c
+
 
 def setPostPointCallback(c):
     """
@@ -1844,9 +1917,10 @@ def setPostPointCallback(c):
     """
     global POST_POINT_CALLBACK
     if not callable(c):
-        raise Exception('Error. Only functions can be used as callbacks. '\
+        raise Exception('Error. Only functions can be used as callbacks. '
                         'Please check.')
     POST_POINT_CALLBACK = c
+
 
 def setPostScanCallback(c):
     """
@@ -1871,9 +1945,10 @@ def setPostScanCallback(c):
     """
     global POST_SCAN_CALLBACK
     if not callable(c):
-        raise Exception('Error. Only functions can be used as callbacks. '\
+        raise Exception('Error. Only functions can be used as callbacks. '
                         'Please check.')
     POST_SCAN_CALLBACK = c
+
 
 def getPreScanCallback(c):
     """
@@ -1886,6 +1961,7 @@ def getPreScanCallback(c):
     global PRE_SCAN_CALLBACK
     return PRE_SCAN_CALLBACK
 
+
 def getPrePointCallback(c):
     """
     Get the pre point callback.
@@ -1896,6 +1972,7 @@ def getPrePointCallback(c):
     """
     global PRE_POINT_CALLBACK
     return PRE_POINT_CALLBACK
+
 
 def getPreOperationCallback(c):
     """
@@ -1908,6 +1985,7 @@ def getPreOperationCallback(c):
     global PRE_OPERATION_CALLBACK
     return PRE_OPERATION_CALLBACK
 
+
 def getOperationCallback(c):
     """
     Get the operation callback.
@@ -1918,6 +1996,7 @@ def getOperationCallback(c):
     """
     global OPERATION_CALLBACK
     return OPERATION_CALLBACK
+
 
 def getPostOperationCallback(c):
     """
@@ -1930,6 +2009,7 @@ def getPostOperationCallback(c):
     global POST_OPERATION_CALLBACK
     return POST_OPERATION_CALLBACK
 
+
 def getPostPointCallback(c):
     """
     Get the post point callback.
@@ -1941,6 +2021,7 @@ def getPostPointCallback(c):
     global POST_POINT_CALLBACK
     return POST_POINT_CALLBACK
 
+
 def getPostScanCallback(c):
     """
     Get the post scan callback.
@@ -1951,6 +2032,7 @@ def getPostScanCallback(c):
     """
     global POST_SCAN_CALLBACK
     return POST_SCAN_CALLBACK
+
 
 def setFileWriter(writer):
     """
@@ -1969,10 +2051,11 @@ def setFileWriter(writer):
     global FILE_WRITER
 
     if not isinstance(writer, FileWriter):
-        raise Exception('Error. The parameter is not a valid File Writer. '\
+        raise Exception('Error. The parameter is not a valid File Writer. '
                         'Please check.')
 
     FILE_WRITER = writer
+
 
 def getFileWriter():
     """
@@ -1985,6 +2068,7 @@ def getFileWriter():
     """
     global FILE_WRITER
     return FILE_WRITER
+
 
 def setResetWriter(value):
     """
@@ -2003,6 +2087,7 @@ def setResetWriter(value):
 
     RESET_WRITER = value
 
+
 def getResetWriter():
     """
     Get if the FILEWRITER will be reseted after each scan
@@ -2014,6 +2099,7 @@ def getResetWriter():
     """
     global RESET_WRITER
     return RESET_WRITER
+
 
 def setPartialWrite(partial):
     """
@@ -2032,6 +2118,7 @@ def setPartialWrite(partial):
     global PARTIAL_WRITE
     PARTIAL_WRITE = partial
 
+
 def getPartialWrite():
     """
     Check if Partial write is enable.
@@ -2043,6 +2130,7 @@ def getPartialWrite():
     """
     global PARTIAL_WRITE
     return PARTIAL_WRITE
+
 
 def setOutput(out):
     """
@@ -2068,6 +2156,7 @@ def setOutput(out):
     global FILENAME
     FILENAME = out
 
+
 def getOutput():
     """
     Get the Output, if output is set to **None** then the data is only stored
@@ -2079,6 +2168,7 @@ def getOutput():
     """
     global FILENAME
     return FILENAME
+
 
 def setX(x):
     """
@@ -2097,6 +2187,7 @@ def setX(x):
     global XFIELD
     XFIELD = x
 
+
 def setY(y):
     """
     Set which field will be used to plot in the Y axis
@@ -2114,6 +2205,7 @@ def setY(y):
     global YFIELD
     YFIELD = y
 
+
 def getX():
     """
     Get which field will be used to plot in the X axis
@@ -2124,6 +2216,7 @@ def getX():
     """
     global XFIELD
     return XFIELD
+
 
 def getY():
     """
@@ -2136,6 +2229,7 @@ def getY():
     global YFIELD
     return YFIELD
 
+
 def getScanData():
     """
     Get the SCAN_DATA dictionary
@@ -2146,6 +2240,7 @@ def getScanData():
     """
     global SCAN_DATA
     return SCAN_DATA
+
 
 def getFitValues():
     """
@@ -2164,6 +2259,7 @@ def getFitValues():
 
     return PEAK, PEAK_AT, FWHM, FWHM_AT, COM
 
+
 def getPeak():
     """
     Get the Peak value of Fit
@@ -2173,6 +2269,7 @@ def getPeak():
     `double`
     """
     return PEAK
+
 
 def getPeakAt():
     """
@@ -2184,6 +2281,7 @@ def getPeakAt():
     """
     return PEAK_AT
 
+
 def getFwhm():
     """
     Get the FWHM value of Fit
@@ -2193,6 +2291,7 @@ def getFwhm():
     `double`
     """
     return FWHM
+
 
 def getFwhmAt():
     """
@@ -2204,6 +2303,7 @@ def getFwhmAt():
     """
     return FWHM_AT
 
+
 def getMin():
     """
     Get the Min value of Fit
@@ -2213,6 +2313,7 @@ def getMin():
     `double`
     """
     return MIN
+
 
 def getMinAt():
     """
@@ -2224,6 +2325,7 @@ def getMinAt():
     """
     return FWHM_AT
 
+
 def getCom():
     """
     Get the Center Of Mass of Fit (COM)
@@ -2233,6 +2335,7 @@ def getCom():
     `double`
     """
     return COM
+
 
 def getFittedData():
     """
@@ -2244,6 +2347,7 @@ def getFittedData():
 
     """
     return FITTED_DATA
+
 
 def getFitResult():
     """
@@ -2268,9 +2372,11 @@ def getScanCommand():
     global SCAN_CMD
     return SCAN_CMD
 
+
 def getUserDefinedDataFields():
     global USER_DATA_FIELDS
     return USER_DATA_FIELDS
+
 
 def createUserDefinedDataField(field_name):
     """
@@ -2289,6 +2395,7 @@ def createUserDefinedDataField(field_name):
     global USER_DATA_FIELDS
     USER_DATA_FIELDS.append(field_name)
 
+
 def removeUserDefinedDataField(field_name):
     """
     Remove an user defined field in the SCAN_DATA dictionary
@@ -2306,6 +2413,7 @@ def removeUserDefinedDataField(field_name):
     global USER_DATA_FIELDS
     USER_DATA_FIELDS.remove(field_name)
 
+
 def clearUserDefinedDataField():
     """
     Remove all user defined fields
@@ -2317,6 +2425,7 @@ def clearUserDefinedDataField():
     """
     global USER_DATA_FIELDS
     USER_DATA_FIELDS = []
+
 
 def setPlotDaemon(b):
     """
@@ -2335,6 +2444,7 @@ def setPlotDaemon(b):
     global DAEMON_GRAPH
     DAEMON_GRAPH = b
 
+
 def setScanComment(c):
     """
     Insert a custom comment in the scan file
@@ -2352,6 +2462,7 @@ def setScanComment(c):
     global SCAN_COMMENT
     SCAN_COMMENT = c
 
+
 def getScanComment():
     """
     Get the custom comment
@@ -2368,6 +2479,7 @@ def getScanComment():
     """
     global SCAN_COMMENT
     return SCAN_COMMENT
+
 
 def setScanPlotter(p):
     """
@@ -2388,8 +2500,9 @@ def setScanPlotter(p):
         global SCAN_PLOTTER
         SCAN_PLOTTER = p
     else:
-        raise Exception('Error. Parameter is not a valid Plotter. '\
+        raise Exception('Error. Parameter is not a valid Plotter. '
                         'Please check.')
+
 
 def getScanPlotter():
     """
@@ -2407,6 +2520,7 @@ def getScanPlotter():
     """
     global SCAN_PLOTTER
     return SCAN_PLOTTER
+
 
 def setScanPlotterAxis(ax):
     """
@@ -2432,6 +2546,7 @@ def setScanPlotterAxis(ax):
     else:
         raise Exception("Error. Invalid axis value index.")
 
+
 def getScanPlotterAxis():
     """
     Get the current plotter axis
@@ -2448,6 +2563,7 @@ def getScanPlotterAxis():
     """
     global SCAN_PLOTTER_AXIS
     return SCAN_PLOTTER_AXIS
+
 
 if __name__ == "__main__":
     #createMotor('m1', 'SOL:DMC1:m1')
