@@ -71,7 +71,6 @@ class AreaDetectorClass(StandardDevice, ICountable):
 
         self.detector.Scan = 9
         self.detector.ImageMode = self.getImageMode()
-        self.detector.AcquirePeriod = 0
         self.autowrite = autowrite
         self.write = write
 
@@ -307,6 +306,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
             self.file.Capture = 0
                 
     def setParams(self,dictionary):
+        print(dictionary)
         if self.write and self.autowrite:
             self.dimensions = []
 
@@ -378,7 +378,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
             Acquisition time
         """
         self.detector.AcquireTime = t
-        self.detector.AcquirePeriod = 0
+        self.detector.AcquirePeriod = self.getAcquireTime()[1]
 
     def getAcquireTime(self):
         return self.detector.AcquireTime, self.detector.AcquirePeriod
