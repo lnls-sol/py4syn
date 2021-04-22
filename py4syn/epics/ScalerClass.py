@@ -92,7 +92,11 @@ class Scaler(StandardDevice, ICountable):
         self.pvScalerVAL.put(1)
 
     def getIntensity(self, channel=2):
-        return self.pvScalerCounters[channel-1].get()/self.factor
+        _read = self.pvScalerCounters[channel-1].get()
+        if type(_read) == type(None):
+            print("TypeNone")
+            _read = self.pvScalerCounters[channel-1].get()
+        return _read/self.factor
 
     def getIntensityInTime(self, tempoMedida, channel=2):
         self.setCountTime(tempoMedida)
