@@ -4,6 +4,7 @@ from py4syn.epics.ScalerClass import Scaler
 import collections
 from time import time
 
+
 def findMonitor():
     for k, v in py4syn.counterDB.items():
         if v['monitor'] and v['enable']:
@@ -11,8 +12,10 @@ def findMonitor():
 
     return None, None
 
+
 def createCounter(mnemonic, device, channel=None, monitor=False,
-                  factor=1, write=True, autowrite=False, path=None, plot=True): 
+                  factor=1, write=True, autowrite=False, path=None,
+                  link=None, plot=True):
     """
     Add a countable to the counterDB dictionary
 
@@ -28,6 +31,9 @@ def createCounter(mnemonic, device, channel=None, monitor=False,
         If monitor is set to True the process will be by counts and not by time
     factor : `int`
         Specify the factor to be used when reading the counter value
+    link : `string`
+        If the counter data will be link external, 
+        internal (copy and delele original data) or copy
 
     Examples
     ----------
@@ -44,21 +50,23 @@ def createCounter(mnemonic, device, channel=None, monitor=False,
     >>> counts = ctr(2, use_monitor=False) # Start a count process with 2 seconds  
     >>>                                    # of integration time. Returns the counts as a map.
     >>> print("Counts on det: ", counts['det'])
-    """ 
+    """
     try:
         if(not isinstance(device, ICountable)):
             raise Exception("The device is not a ICountable. Please check!")
 
         if(mnemonic in py4syn.counterDB):
-            raise Exception("Mnemonic already in use at counterDB. Please check!")
+            raise Exception(
+                "Mnemonic already in use at counterDB. Please check!")
 
         mne, pars = findMonitor()
         if(monitor and mne is not None):
-            raise Exception("There is already one monitor at counterDB. Monitor mnemonic is: "+str(mne)+". Please check.")
+            raise Exception(
+                "There is already one monitor at counterDB. Monitor mnemonic is: "+str(mne)+". Please check.")
 
         if(monitor and not device.canMonitor()):
-            raise Exception("The device cannot be used as a monitor. Please check.")
-
+            raise Exception(
+                "The device cannot be used as a monitor. Please check.")
         counterData = {}
         counterData['device'] = device
         counterData['channel'] = channel
@@ -66,13 +74,15 @@ def createCounter(mnemonic, device, channel=None, monitor=False,
         counterData['factor'] = factor
         counterData['enable'] = True
         counterData['write'] = write
-        counterData['autowrite']= autowrite
-        counterData['path']= path
-        counterData['plot']= plot
+        counterData['autowrite'] = autowrite
+        counterData['path'] = path
+        counterData['plot'] = plot
+        counterData['link'] = link
         py4syn.counterDB[mnemonic] = counterData
 
     except Exception as e:
-        print("\tError: ",e)
+        print("\tError: ", e)
+
 
 def waitAll(monitor=False):
     if(monitor):
@@ -87,10 +97,12 @@ def waitAll(monitor=False):
                 dev = v['device']
                 dev.wait()
 
+
 def stopAll():
     for k, v in py4syn.counterDB.items():
         dev = v['device']
         dev.stopCount()
+
 
 def startCounters(use_monitor=False):
     for k, v in py4syn.counterDB.items():
@@ -99,6 +111,7 @@ def startCounters(use_monitor=False):
             if(use_monitor and not dev.canStopCount()):
                 continue
             dev.startCount()
+
 
 def printCountersValue(data):
     print("-"*32)
@@ -110,13 +123,18 @@ def printCountersValue(data):
         else:
             print("{0:>10} {1:>20}".format(m, int(v)))
     print("-"*32)
+
+
 SETCOUNT_FLAG = True
+
+
 def ctr(t=1, use_monitor=False, wait=True):
     global SETCOUNT_FLAG
     from epics import ca
     k, v = findMonitor()
     if(k is not None and use_monitor):
-        # We have a monitor, so we start the monitor, wait until it finishes, stop all other counters and grab count values
+        # We have a monitor, so we start the monitor, wait until it finishes,
+        # stop all other counters and grab count values
         v['device'].setPresetValue(v['channel'], t)
 
         for kT, vT in py4syn.counterDB.items():
@@ -138,13 +156,14 @@ def ctr(t=1, use_monitor=False, wait=True):
             dev = v['device']
             if SETCOUNT_FLAG and (not dev.isCounting()) and v['enable']:
                 dev.setCountTime(t)
-        SETCOUNT_FLAG =False
+        SETCOUNT_FLAG = False
 
         startCounters()
         ca.poll()
         if(wait):
             waitAll()
             return getCountersData()
+
 
 def getCountersData():
     data = collections.OrderedDict()
@@ -197,6 +216,7 @@ def getActiveCountersNumber():
             cnt += 1
     return cnt
 
+
 def disableCounter(mne):
     """
     Disable an specific counter
@@ -209,9 +229,11 @@ def disableCounter(mne):
     """
 
     if(mne not in py4syn.counterDB):
-        raise Exception("Counter "+mne+" not found in counterDB. Please check!")
+        raise Exception(
+            "Counter "+mne+" not found in counterDB. Please check!")
     c = py4syn.counterDB[mne]
     c['enable'] = False
+
 
 def enableCounter(mne):
     """
@@ -225,12 +247,15 @@ def enableCounter(mne):
     """
 
     if(mne not in py4syn.counterDB):
-        raise Exception("Counter "+mne+" not found in counterDB. Please check!")
+        raise Exception(
+            "Counter "+mne+" not found in counterDB. Please check!")
     c = py4syn.counterDB[mne]
     c['enable'] = True
 
+
 def clearCounterDB():
     py4syn.counterDB = collections.OrderedDict()
+
 
 if __name__ == "__main__":
     scalerSIM = Scaler("IMX:SCALER", 13, "scalerSIM")
