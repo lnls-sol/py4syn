@@ -9,28 +9,24 @@ control of downsampling rate (averaging time).
 .. moduleauthors:: Carlos Doro Neto <carlos.doro@lnls.br>
 """
 
-from os import path
-from warnings import warn
 
+from os.path import join
+from time import sleep
 from epics import PV
-
 from py4syn.epics.StandardDevice import StandardDevice
 from py4syn.epics.ICountable import ICountable
 
 
 class CompactRIOAnalog(StandardDevice, ICountable):
 
-    def __init__(self, mnemonic, pvName):
+    # Change tdms to True to use NI tdms files instead of EPICS PVs.
+    def __init__(self, mnemonic, pvName, tdms=False):
 
         super().__init__(mnemonic)
 
-        # Change this to True to use NI tdms files instead of EPICS PVs.
-        self.tdms = False
+        self.tdms = tdms
 
         pvPrefix = pvName[:12]
-        warn("py4syn - CompactRIO debug: pvName = " +  pvName)
-        warn("py4syn - CompactRIO debug: pvPrefix = " +  pvPrefix)
-        warn("py4syn - CompactRIO debug: mnemonic = " +  mnemonic)
 
         self._pv = PV(pvName)
         self._pvAvgTime = PV(pvPrefix + "PvAvgTime")
@@ -46,74 +42,51 @@ class CompactRIOAnalog(StandardDevice, ICountable):
         self._filedir.wait_for_connection()
         self._filename.wait_for_connection()
 
+    # ICountable methods overriding
 
-    ### ICountable methods overriding ###
-
-    def getValue(self, *args, **kwargs):
-        warn("py4syn - CompactRIO debug: getValue args = {}".format(args))
-        warn("py4syn - CompactRIO debug: getVAlue kwargs = {}".format(kwargs))
+    def getValue(self, **kwargs):
         if self.tdms:
-            return self._fileGetValue(*args, **kwargs)
+            return self._fileGetValue()
         else:
-            return self._pvGetValue(*args, **kwargs)
+            return self._pv.get()
 
+    def setCountTime(self, t):
+        if self.tdms:
+            self._fileAvgTime.put(t, wait=True)
+        else:
+            self._pvAvgTime.put(t, wait=True)
 
-    def setCountTime(self, *args, **kwargs):
-        warn("py4syn - CompactRIO debug: setCountTime args = {}".format(args))
-        warn("py4syn - CompactRIO debug: setCountTime kwargs = {}".format(kwargs))
-        self._pvAvgTime.put(1)
-        self._fileAvgTime.put(1)
-
-    def setPresetValue(self, *args, **kwargs):
-        warn("py4syn - CompactRIO debug: setPresetValue args = {}".format(args))
-        warn("py4syn - CompactRIO debug: setPresetValue kwargs = {}".format(kwargs))
+    def setPresetValue(self, channel, val):
         pass
 
-    def startCount(self, *args, **kwargs):
-        warn("py4syn - CompactRIO debug: startCount args = {}".format(args))
-        warn("py4syn - CompactRIO debug: startCount kwargs = {}".format(kwargs))
-        self._acquireTrigger.put(1)
-        # wait for it to actually begin.
-        while not self.isCounting():
-            pass
+    def startCount(self):
+        self._acquireTrigger.put(1, wait=True)
 
-    def canMonitor(self, *args, **kwargs):
-        warn("py4syn - CompactRIO debug: canMonitor args = {}".format(args))
-        warn("py4syn - CompactRIO debug: canMonitor kwargs = {}".format(kwargs))
+    def stopCount(self):
+        self._acquireTrigger.put(0, wait=True)
+
+    def canStopCount(self):
         return False
 
-    def canStopCount(self, *args, **kwargs):
-        warn("py4syn - CompactRIO debug: canStopCount args = {}".format(args))
-        warn("py4syn - CompactRIO debug: canStopCount kwargs = {}".format(kwargs))
-        return True
+    def canMonitor(self):
+        return False
 
-    def isCounting(self, *args, **kwargs):
-        warn("py4syn - CompactRIO debug: isCounting args = {}".format(args))
-        warn("py4syn - CompactRIO debug: isCounting kwargs = {}".format(kwargs))
+    def isCounting(self):
         return self._acquireTrigger.get()
 
-    def wait(self, *args, **kwargs):
-        warn("py4syn - CompactRIO debug: wait args = {}".format(args))
-        warn("py4syn - CompactRIO debug: wait kwargs = {}".format(kwargs))
-        while self.isCounting():
-            pass
+    def wait(self):
+        #EMA:B:RIO01:AnalogSaving2File
+        if self.tdms:
+            sleep(self._fileAvgTime.get())
+        else:
+            sleep(self._pvAvgTime.get())
+        self.stopCount()
 
-    ### XXX specific functions ###
+    # CompactRIOAnalog specific functions
 
-    def _pvGetValue(self, *args, **kwargs):
-        return self._pv.get()
-
-    def _fileGetValue(self, *args, **kwargs):
-        #from nptdms import TdmsFile
+    def _fileGetValue(self):
         raise NotImplementedError
+        # from nptdms import TdmsFile
 
-    def stopCount(self, *args, **kwargs):
-        warn("py4syn - CompactRIO debug: stopCount args = {}".format(args))
-        warn("py4syn - CompactRIO debug: stopCount kwargs = {}".format(kwargs))
-        self._acquireTrigger.put(0)
-
-    def _fileGetPath(self, *args, **kwargs):
-        warn("py4syn - CompactRIO debug: _fileGetPath args = {}".format(args))
-        warn("py4syn - CompactRIO debug: _fileGetPath kwargs = {}".format(kwargs))
-        return path.join(self._filedir.get(), self._filename.get())
-
+    def _fileGetPath(self):
+        return join(self._filedir.get(), self._filename.get())
