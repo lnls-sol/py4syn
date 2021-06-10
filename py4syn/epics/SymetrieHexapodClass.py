@@ -5,7 +5,7 @@ Supports Symetrie"s proprietary IOC while maintaining the same API as HexapodeCl
 Tested on Bora and Breva models.
 
 :platform: Unix
-:synopsis: Python3 class for hexapods using Symetrie"s proprietary IOC
+:synopsis: Python3 class for hexapods using Symetrie's proprietary IOC
 
 .. moduleauthors:: Carlos Doro Neto <carlos.doro@lnls.br>
 """
