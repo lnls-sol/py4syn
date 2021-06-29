@@ -47,14 +47,14 @@ class Hexapode(StandardDevice, IScannable):
         self._validRbv = PV("{}:Drv:ValidateMove:Valid_RBV".format(pvName))
         self._stop = PV("{}:STOP".format(pvName))
 
-        self._sUtoAxisRbv.wait_for_connection()
-        self._movePtpAxis.wait_for_connection()
-        self._movePtp.wait_for_connection()
-        self._inPositionRbv.wait_for_connection()
-        self._userAxisNegRbv.wait_for_connection()
-        self._userAxisPosRbv.wait_for_connection()
-        self._validRbv.wait_for_connection()
-        self._stop.wait_for_connection()
+        assert self._sUtoAxisRbv.wait_for_connection()
+        assert self._movePtpAxis.wait_for_connection()
+        assert self._movePtp.wait_for_connection()
+        assert self._inPositionRbv.wait_for_connection()
+        assert self._userAxisNegRbv.wait_for_connection()
+        assert self._userAxisPosRbv.wait_for_connection()
+        assert self._validRbv.wait_for_connection()
+        assert self._stop.wait_for_connection()
 
     ### IScannable methods overriding ###
 

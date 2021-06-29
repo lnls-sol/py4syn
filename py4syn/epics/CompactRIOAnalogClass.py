@@ -45,12 +45,12 @@ class CompactRIOAnalog(StandardDevice, ICountable):
         self._filedir = PV(pvPrefix + "AnalogAcqFilepath")
         self._filename = PV(pvPrefix + "AnalogAcqFilename")
 
-        self._pv.wait_for_connection()
-        self._pvAvgTime.wait_for_connection()
-        self._fileAvgTime.wait_for_connection()
-        self._acquireTrigger.wait_for_connection()
-        self._filedir.wait_for_connection()
-        self._filename.wait_for_connection()
+        assert self._pv.wait_for_connection()
+        assert self._pvAvgTime.wait_for_connection()
+        assert self._fileAvgTime.wait_for_connection()
+        assert self._acquireTrigger.wait_for_connection()
+        assert self._filedir.wait_for_connection()
+        assert self._filename.wait_for_connection()
 
     # ICountable methods overriding
 
