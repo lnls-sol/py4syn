@@ -1,7 +1,7 @@
 
-==================================
+=============================
 CompactRIO Analog Acquisition
-==================================
+=============================
 
 .. module:: py4syn.epics.CompactRIOAnalogClass
    :synopsis: Python3 class for analog acquisitions using CompactRIO's IOC

@@ -43,7 +43,7 @@ D. Gonio as follower
     automatically following the DCM gonio.
 
     Note that in this mode we do not actually control the DCM, the class will
-    (purposely)    refuse to control the DCM and raise an error.
+    (purposely) refuse to control the DCM and raise an error.
 
 E. Fully independent (without EPICS)
 
