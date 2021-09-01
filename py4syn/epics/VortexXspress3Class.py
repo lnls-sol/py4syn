@@ -44,12 +44,14 @@ class VortexXspress3(StandardDevice, ICountable):
         self.pvStatus = epics.PV(pv + ':Acquire_RBV', callback=self.onAcquireChange)
         self.pvAcquireTime = epics.PV(pv + ':AcquireTime')
         self.pvClear = epics.PV(pv + ':ERASE')
+        self.pvImages = epics.PV(pv + ':NumImages')
 
         self.pvMcaCounters = []
         self.pvStatusScan = epics.PV(pv + ':Acquire_RBV.SCAN')
         self.pvStatusScan.put(2)
+        self.pvImages.put(1)
 
-	
+
     def close(self):
         """
         Stops an ongoing acquisition, if any, and puts the EPICS IOC in idle state.
@@ -138,3 +140,4 @@ class VortexXspress3(StandardDevice, ICountable):
         """
         while not self._done:
             epics.poll(evt=1.e-5, iot=0.1)
+        sleep(0.1)
