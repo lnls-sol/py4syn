@@ -16,139 +16,129 @@ from epics.devices.ad_fileplugin import AD_FilePlugin
 
 
 class AreaDetectorClass(StandardDevice, ICountable):
-    """
-    Class to control AreaDetector via EPICS.
-    Examples
-    --------
-    """
 
     def __init__(self, mnemonic, pv, device, fileplugin,
-                 write=None, autowrite=None, path=None, trigger=None):
-        """
-        **Constructor**
-        See :class:`py4syn.epics.StandardDevice`
+                 write, autowrite, path, trigger):
+        """Class to control Area Detector (AD) via EPICS
+
         Parameters
         ----------
         mnemonic : `string`
             A mnemonic for the detector
         pv : `string`
-            Base name of the EPICS process variable
+            Base name (prefix) of the EPICS process variables
         device : `string`
-            Area Detector camera suffix
+            AD camera suffix
         fileplugin : `string`
             NDPluginFile suffix
         write : `string`
-            Ignored, kept for compatibility purposes
+            If false does not write any data to disk
         autowrite : `string`
-            Ignored, kept for compatibility purposes
+            Indicates whether or not the IOC itself will write the data file(s)
+            Must be true for this class
         path : `string`
-            Ignored, kept for compatibility purposes
+            Directory in which to save data file(s)
         trigger : `string`
-            Ignored, kept for compatibility purposes
+            Ignored, kept for compatibility reasons
         """
+
+        assert autowrite, "autowrite must be True for AD class"
 
         super().__init__(mnemonic)
 
-        self.detector_name = pv + ":" + device + ":"
-        self.write_name = pv + ":" + fileplugin + ":"
+        detector_name = pv + ":" + device + ":"
+        write_name = pv + ":" + fileplugin + ":"
 
-        self._detector = AD_Camera(self.detector_name)
-        self._file = AD_FilePlugin(self.write_name)
+        self._detector = AD_Camera(detector_name)
+        self._detector.add_pv(detector_name+"Acquire_RBV", attr="Acquire_RBV")
 
-        self._detector.add_pv(self.detector_name + "Acquire_RBV",
-                              attr="Acquire_RBV")
-        self._file.add_pv(self.write_name+"NumExtraDims", attr="NumExtraDims")
-        self._file.add_pv(self.write_name+"ExtraDimSizeX", attr="ExtraDimSizeX")
-        self._file.add_pv(self.write_name+"ExtraDimSizeY", attr="ExtraDimSizeY")
+        self._file = AD_FilePlugin(write_name)
 
-        for i in range(3, 10):
-            self._file.add_pv(self.write_name+"ExtraDimSize"+str(i),
-                              attr="ExtraDimSize"+str(i))
+        # Extra dimensions are available only in NDFileHDF5 plugin.
+        # For other file plugins (tiff, jpg, etc) these attributes will return
+        # None without raising errors.
+        self._file.add_pv(write_name+"NumExtraDims", attr="NumExtraDims")
+        self._file.add_pv(write_name+"NumExtraDims_RBV",
+                          attr="NumExtraDims_RBV")
 
-        self._detector.ArrayCallbacks = 1
-        self.setEnableCallback(1)
+        for i in ["X", "Y", "3",  "4", "5", "6", "7", "8", "9"]:
+            suffix = "ExtraDimSize" + i
+            self._file.add_pv(write_name+suffix, attr=suffix)
+            self._file.add_pv(write_name+suffix+"_RBV", attr=suffix+"_RBV")
+
+        assert not self.isCounting(), "Already counting"
+        assert not self._file.Capture_RBV, "Already counting"
+
+        self._detector.ensure_value("ArrayCallbacks", 1)
+
+        if write:
+            self.setEnableCallback(1)
+            self.setFilePath(path)
 
         if self._detector.TriggerMode_RBV != "Internal":
             self.setImageMode(2)
 
     def getNframes(self):
-        """
-        Gets the number of frames to acquire.
+        """Returns the number of frames to acquire.
 
         Returns
-        ----------
-        nframes : `int`
-            The name of the image.
+        -------
+        `int`
         """
         return self._file.NumCapture_RBV
 
     def setNframes(self, val):
-        """
-        Sets the number of frames to acquire.
+        """Sets the number of frames to acquire.
 
         Parameters
         ----------
-        nframes : `int`
-            The name of the image.
+        val : `int`
         """
-        self._detector.NumImages = val
-        self._file.NumCapture = val
+        self._detector.ensure_value("NumImages", val)
+        self._file.ensure_value("NumCapture", val)
 
     def getFileName(self):
-        """
-        Returns the output image file name.
+        """Returns the output image file name.
 
         Returns
-        ----------
-        name : `string`
-            The name of the image.
+        -------
+        `string`
         """
         return self._file.FileName_RBV
 
     def setFileName(self, val):
-        """
-        Sets the output image file name. The image will be saved with this name
-        after the acquisition.
+        """Sets the output image file name.
 
         Parameters
         ----------
-        name : `string`
-            The name of the image.
+        val : `string`
         """
-        self._file.FileName = val
+        self._file.ensure_value("FileName", val)
 
     def getFilePath(self):
-        """
-        Gets the output image file path. The image will be saved in this location
-        after the acquisition.
+        """Returns the output image file path.
 
-        Parameters
-        ----------
-        name : `string`
-            The path of location to save the image.
+        Returns
+        -------
+        `string`
         """
         return self._file.FilePath_RBV
 
     def setFilePath(self, val):
-        """
-        Sets the output image file path. The image will be saved in this location
-        after the acquisition.
+        """Sets the output image file path.
 
         Parameters
         ----------
-        name : `string`
-            The path of location to save the image.
+        val : `string`
         """
-        self._file.FilePath = val
+        self._file.ensure_value("FilePath", val)
 
     def getImageMode(self):
-        """
-        Gets the image mode.
+        """Gets the image mode.
 
         Returns
-        ----------
-        _imagemode : `int`
-            The value of one of these options.
+        -------
+        `int`
             0 - Single
             1 - Multiple
             2 - Continuous
@@ -159,26 +149,23 @@ class AreaDetectorClass(StandardDevice, ICountable):
         """
         Sets the image mode.
 
-        Paramters
+        Parameters
         ----------
-        _imagemode : `int`
-            The value of one of these options.
-                0 - Single
-                1 - Multiple
-                2 - Continuous
+        val : `int`
+            0 - Single
+            1 - Multiple
+            2 - Continuous
         """
-        self._detector.ImageMode = val
+        self._detector.ensure_value("ImageMode", val)
 
     def getTriggerMode(self):
-        """
-        Gets the trigger mode.
+        """Returns the trigger mode.
 
         Returns
-        ----------
-        _triggermode : `int`
-            The value of one of these options:
-                0 - Internal
-                1 - External
+        -------
+        val : `int`
+            0 - Internal
+            1 - External
         """
         return self._detector.TriggerMode_RBV
 
@@ -186,38 +173,26 @@ class AreaDetectorClass(StandardDevice, ICountable):
         """
         Sets the trigger mode.
 
-        Returns
+        Parameters
         ----------
-        _triggermode : `int`
-            The value of one of these options:
-                0 - Internal
-                1 - External
+        val : `int`
+            0 - Internal
+            1 - External
         """
-        self._detector.TriggerMode = val
+        self._detector.ensure_value("TriggerMode", val)
 
     def getEnableCallback(self):
-        """
-        Gets if the Pluging to Write Files is enabled.
-
-        Returns
-        ----------
-        _enablecallbak : `int`
-            The value of one of these options:
-                0 - ON
-                1 - OFF
-        """
+        """Returns true if the NDPluginFile is enabled."""
         return self._file.EnableCallbacks_RBV
 
     def setEnableCallback(self, val):
-        """
-        Enables the Pluging to Write Files.
+        """Enables/disables the NDPluginFile.
 
         Parameters
         ----------
-        _enablecallbak : `int`
-            The value of one of these options:
-                0 - ON
-                1 - OFF
+        val : `bool`
+            0 - OFF
+            1 - ON
         """
         self._file.EnableCallbacks = val
 
@@ -225,49 +200,49 @@ class AreaDetectorClass(StandardDevice, ICountable):
         return self._file.AutoSave_RBV
 
     def setAutoSave(self, val):
-        self._file.AutoSave = val
+        self._file.ensure_value("AutoSave", val)
 
     def getNextraDim(self):  # TODO
         return self._file.NumExtraDims
 
     def setNextraDim(self, val):  # TODO
-        self._file.NumExtraDims = val
+        self._file.ensure_value("NumExtraDims", val)
 
     def getDimX(self):  # TODO
         return self._file.ExtraDimSizeX
 
     def setDimX(self, val):  # TODO
-        self._file.ExtraDimSizeX = val
+        self._file.ensure_value("ExtraDimSizeX", val)
 
     def getDimY(self):  # TODO
         return self._file.ExtraDimSizeY
 
     def setDimY(self, val):  # TODO
-        self._file.ExtraDimSizeY = val
+        self._file.ensure_value("ExtraDimSizeY", val)
 
     def getWriteMode(self):
         return self._file.FileWriteMode_RBV
 
     def setWriteMode(self, val):
-        self._file.FileWriteMode = val
+        self._file.ensure_value("FileWriteMode", val)
 
     def getOutputFormat(self):
         return self._file.FileTemplate_RBV
 
     def setOutputFormat(self, val):
-        self._file.FileTemplate = val
-
-    def setRepeatNumber(self, val):
-        self._file.FileNumber = val
+        self._file.ensure_value("FileTemplate", val)
 
     def getRepeatNumber(self):
         return self._file.FileNumber_RBV
 
+    def setRepeatNumber(self, val):
+        self._file.ensure_value("FileNumber", val)
+
     def startCapture(self):
-        self._file.Capture = 1
+        self._file.ensure_value("Capture", 1)
 
     def stopCapture(self):
-        self._file.Capture = 0
+        self._file.ensure_value("Capture", 0)
 
     def setParams(self, dictionary):  # TODO
         if self.write and self.autowrite:
@@ -275,7 +250,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
 
             nframes = 1
             for ipoints_motor in dictionary["points"]:
-                # Gambiarra pq ele conta o ultimo ponto
+                # O -1 é uma gambiarra pq ele conta o ultimo ponto
                 self.dimensions.append(len(set(ipoints_motor)) - 1)
             self.setNextraDim(len(self.dimensions))
 
@@ -294,93 +269,67 @@ class AreaDetectorClass(StandardDevice, ICountable):
 
             self.setRepeatNumber(dictionary["repetition"])
 
-    def setWriteParams(self):
-        pass
-
-    def close(self, *args, **kwargs):  # TODO
-        """
-        Stops acquiring. This method simply calls :meth:`stopCount`.
-
-        See: :meth:`stopCount`
-        """
-        return self.stopCount(*args, **kwargs)
-
-    def getIntensity(self, *args, **kwargs):  # TODO
-        return self.getValue(*args, **kwargs)
-
     def getAcquireTime(self):
         return self._detector.AcquireTime_RBV, self._detector.AcquirePeriod_RBV
+
+    def setWriteParams(self):
+        """Does nothing, kept for compatibility reasons."""
+        pass
+
+    def close(self, *args, **kwargs):
+        """Simply calls :meth:`stopCount`, kept for compatibility reasons."""
+        return self.stopCount(*args, **kwargs)
+
+    def getIntensity(self, *args, **kwargs):
+        """Simply calls :meth:`startCount`, kept for compatibility reasons."""
+        return self.getValue(*args, **kwargs)
 
     # ICountable methods overriding
 
     def getValue(self, **kwargs):
-        if self.getWriteMode() == "Single":
-            self._file.WriteFile = 1
-        elif self.getWriteMode() == "Capture":
-            self._file.WriteFile = 1
-            self.stopCapture()
-        elif self.getWriteMode() == "Stream":
-            self.stopCapture()
-        else:
-            raise RuntimeError("Unrecognized write mode")
+        self._file.ensure_value("WriteFile", 1)
+        self.stopCapture()
 
     def setCountTime(self, t):
-        """
-        Sets the image acquisition time.
+        """Sets the image acquisition time.
+
         Parameters
         ----------
         t : `float`
-            Acquisition time
         """
-        self._detector.AcquireTime = t
-        self._detector.AcquirePeriod = t
+        self._detector.ensure_value("AcquireTime", t)
+        self._detector.ensure_value("AcquirePeriod", t)
 
     def setPresetValue(self, channel, val):
-        """
-        Dummy method to set initial counter value.
-        """
+        """Does nothing, kept for compatibility reasons."""
         pass
 
     def startCount(self):
-        """
-        Starts acquiring
-        """
-        if self.isCounting() or self._file.Capture_RBV:
-            raise RuntimeError("Already counting")
+        """Starts acquiring"""
         self.startCapture()
-        self._detector.Acquire = 1
+        self._detector.ensure_value("Acquire", 1)
 
     def stopCount(self):
         """
-        Stops an ongoing acquisition, if any, and puts the EPICS IOC in idle state.
+        Stops any ongoing acquisition and puts the EPICS IOC in an idle state.
+        Saves data stored in the AD buffer.
         """
-        self._detector.Acquire = 0
+        self._detector.ensure_value("Acquire", 0)
         self.getValue()
 
     def canMonitor(self):
-        """
-        Returns false indicating that vortex cannot be used as a counter monitor.
-        """
+        """Returns false indicating that AD cannot be used as a monitor."""
         return False
 
     def canStopCount(self):
-        """
-        Returns true indicating that vortex has a stop command.
-        """
+        """Returns true indicating that AD has a stop command."""
         return True
 
     def isCounting(self):
-        """
-        Returns true if the detector is acquiring, or false otherwise.
-        Returns
-        -------
-        `bool`
-        """
+        """Returns true if the detector is acquiring."""
         return self._detector.Acquire_RBV
 
     def wait(self):
-        """
-        Blocks until the acquisition completes.
-        """
+        """Blocks until the acquisition completes."""
         while self.isCounting():
             pass
