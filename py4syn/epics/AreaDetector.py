@@ -265,14 +265,15 @@ class AreaDetectorClass(StandardDevice, ICountable):
             self.setCountTime(dictionary["time"][0][0])
             self._detector.ensure_value("NumImages", 1)
             self._detector.ensure_value("NumExposures", 1)
+            self.setImageMode(2)
 
             self.setEnableCallback(1)
             self.setNframes(nframes)
             # self.setNframes(dictionary["repeat"])
-            self.setImageMode(1)
             self.setWriteMode(2)
             self.setRepeatNumber(0)
             # self.setRepeatNumber(dictionary["repetition"])
+            self.startCapture()
 
             self.setNextraDim(num_dim)
             dim_names = ["X", "Y", "3",  "4", "5", "6", "7", "8", "9"]
@@ -310,7 +311,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
         ----------
         t : `float`
         """
-        self._detector.ensure_value("AcquireTime", t)
+        self._detector.ensure_value("AcquireTime", t - 0.1)
         self._detector.ensure_value("AcquirePeriod", t)
 
     def setPresetValue(self, channel, val):
@@ -319,17 +320,11 @@ class AreaDetectorClass(StandardDevice, ICountable):
 
     def startCount(self):
         """Starts acquiring"""
-        self.startCapture()
         self._detector.ensure_value("Acquire", 1)
 
     def stopCount(self):
-        """
-        Stops any ongoing acquisition and puts the EPICS IOC in an idle state.
-        Saves data stored in the AD buffer.
-        """
+        """Stops ongoing acquisition and puts the IOC in an idle state."""
         self._detector.ensure_value("Acquire", 0)
-        self._file.ensure_value("WriteFile", 1)
-        self.stopCapture()
 
     def canMonitor(self):
         """Returns false indicating that AD cannot be used as a monitor."""
