@@ -241,7 +241,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
         assert not self.isCounting(), "Already counting"
         assert not self._file.Capture_RBV, "Already counting"
 
-        if write:
+        if self.write:
 
             # Calculate the number of extra dimensions.
             num_dim = len(dictionary["points"])
