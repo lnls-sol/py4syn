@@ -53,7 +53,8 @@ class AreaDetectorClass(StandardDevice, ICountable):
 
         self._detector = AD_Camera(detector_name)
         self._detector.add_pv(detector_name+"Acquire_RBV", attr="Acquire_RBV")
-        self._detector.ensure_value("ArrayCallbacks", 1)
+        self._detector.add_pv(detector_name+"NumExposures", attr="NumExposures")
+        self._detector.add_pv(detector_name+"NumExposures_RBV", attr="NumExposures_RBV")
 
         self._file = AD_FilePlugin(write_name)
 
@@ -68,6 +69,8 @@ class AreaDetectorClass(StandardDevice, ICountable):
             suffix = "ExtraDimSize" + i
             self._file.add_pv(write_name+suffix, attr=suffix)
             self._file.add_pv(write_name+suffix+"_RBV", attr=suffix+"_RBV")
+
+        self._detector.ensure_value("ArrayCallbacks", 1)
 
     def getNframes(self):
         """Returns the number of frames to acquire.
@@ -85,7 +88,6 @@ class AreaDetectorClass(StandardDevice, ICountable):
         ----------
         val : `int`
         """
-        self._detector.ensure_value("NumImages", val)
         self._file.ensure_value("NumCapture", val)
 
     def getFileName(self):
@@ -261,16 +263,16 @@ class AreaDetectorClass(StandardDevice, ICountable):
             print("nframes = ", nframes)
 
             self.setCountTime(dictionary["time"][0][0])
-            self.setNframes(nframes)
-            #self.setNframes(dictionary["repeat"])
+            self._detector.ensure_value("NumImages", 1)
+            self._detector.ensure_value("NumExposures", 1)
 
             self.setEnableCallback(1)
-            # The number of images from driver must match the number of
-            # from file plugin
+            self.setNframes(nframes)
+            # self.setNframes(dictionary["repeat"])
             self.setImageMode(1)
             self.setWriteMode(2)
             self.setRepeatNumber(0)
-            #self.setRepeatNumber(dictionary["repetition"])
+            # self.setRepeatNumber(dictionary["repetition"])
 
             self.setNextraDim(num_dim)
             dim_names = ["X", "Y", "3",  "4", "5", "6", "7", "8", "9"]
