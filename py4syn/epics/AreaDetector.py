@@ -37,7 +37,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
             Indicates whether or not the IOC itself will write the data file(s)
             Must be true for this class
         path : `string`
-            Directory in which to save data file(s)
+            Ignored, kept for compatibility reasons
         trigger : `string`
             Ignored, kept for compatibility reasons
         """
@@ -55,8 +55,8 @@ class AreaDetectorClass(StandardDevice, ICountable):
         self._file = AD_FilePlugin(write_name)
 
         # Extra dimensions are available only in NDFileHDF5 plugin.
-        # For other file plugins (tiff, jpg, etc) these attributes will return
-        # None without raising errors.
+        # For other file plugins (tiff, jpeg, etc) these attributes will
+        # return None without raising errors.
         self._file.add_pv(write_name+"NumExtraDims", attr="NumExtraDims")
         self._file.add_pv(write_name+"NumExtraDims_RBV",
                           attr="NumExtraDims_RBV")
@@ -70,13 +70,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
         assert not self._file.Capture_RBV, "Already counting"
 
         self._detector.ensure_value("ArrayCallbacks", 1)
-
-        if write:
-            self.setEnableCallback(1)
-            self.setFilePath(path)
-
-        if self._detector.TriggerMode_RBV != "Internal":
-            self.setImageMode(2)
+        self.setEnableCallback(1) if write else self.setEnableCallback(0)
 
     def getNframes(self):
         """Returns the number of frames to acquire.
@@ -202,22 +196,22 @@ class AreaDetectorClass(StandardDevice, ICountable):
     def setAutoSave(self, val):
         self._file.ensure_value("AutoSave", val)
 
-    def getNextraDim(self):  # TODO
+    def getNextraDim(self):
         return self._file.NumExtraDims
 
-    def setNextraDim(self, val):  # TODO
+    def setNextraDim(self, val):
         self._file.ensure_value("NumExtraDims", val)
 
-    def getDimX(self):  # TODO
+    def getDimX(self):
         return self._file.ExtraDimSizeX
 
-    def setDimX(self, val):  # TODO
+    def setDimX(self, val):
         self._file.ensure_value("ExtraDimSizeX", val)
 
-    def getDimY(self):  # TODO
+    def getDimY(self):
         return self._file.ExtraDimSizeY
 
-    def setDimY(self, val):  # TODO
+    def setDimY(self, val):
         self._file.ensure_value("ExtraDimSizeY", val)
 
     def getWriteMode(self):
@@ -245,27 +239,37 @@ class AreaDetectorClass(StandardDevice, ICountable):
         self._file.ensure_value("Capture", 0)
 
     def setParams(self, dictionary):  # TODO
-        if self.write and self.autowrite:
-            self.dimensions = []
+        """This method is a workaround!!!"""
+        print(dictionary)
+        return
 
-            nframes = 1
-            for ipoints_motor in dictionary["points"]:
-                # O -1 é uma gambiarra pq ele conta o ultimo ponto
-                self.dimensions.append(len(set(ipoints_motor)) - 1)
-            self.setNextraDim(len(self.dimensions))
+        # RESETAR a contagem
+        # COISAS QUE VEM DO ALÈM
+        # dbpf(${PREFIX}HDF1:FileWriteMode,"Stream")
+        # dbpf(${PREFIX}HDF1:Compression,"zlib")
+        self.dimensions = []
 
-            for i in range(len(self.dimensions), 10):
-                self.dimensions.append(1)
+        nframes = 1
+        for ipoints_motor in dictionary["points"]:
+            # O -1 é uma gambiarra pq ele conta o ultimo ponto
+            self.dimensions.append(len(set(ipoints_motor)) - 1)
+        self.setNextraDim(len(self.dimensions))
 
-            self.setDimX(self.dimensions[0])
-            self.setDimY(self.dimensions[1])
+        for i in range(len(self.dimensions), 10):
+            self.dimensions.append(1)
 
-            for i in range(3, 10):
-                self._file.put("ExtraDimSize"+str(i), self.dimensions[i-1])
+        self.setDimX(self.dimensions[0])
+        self.setDimY(self.dimensions[1])
 
-            for i in self.dimensions:
-                nframes = nframes * i
-            self.setNframes(nframes)
+        for i in range(3, 10):
+            self._file.put("ExtraDimSize"+str(i), self.dimensions[i-1])
+
+        for i in self.dimensions:
+            nframes = nframes * i
+        self.setNframes(nframes)
+
+        if self._detector.TriggerMode_RBV != "Internal":
+            self.setImageMode(2)
 
             self.setRepeatNumber(dictionary["repetition"])
 
@@ -273,15 +277,15 @@ class AreaDetectorClass(StandardDevice, ICountable):
         return self._detector.AcquireTime_RBV, self._detector.AcquirePeriod_RBV
 
     def setWriteParams(self):
-        """Does nothing, kept for compatibility reasons."""
+        """This method is deprecated and is kept for compatibility reasons."""
         pass
 
     def close(self, *args, **kwargs):
-        """Simply calls :meth:`stopCount`, kept for compatibility reasons."""
+        """Simply calls :meth:`stopCount`. Kept for compatibility reasons."""
         return self.stopCount(*args, **kwargs)
 
     def getIntensity(self, *args, **kwargs):
-        """Simply calls :meth:`startCount`, kept for compatibility reasons."""
+        """Simply calls :meth:`startCount`. Kept for compatibility reasons."""
         return self.getValue(*args, **kwargs)
 
     # ICountable methods overriding
@@ -301,7 +305,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
         self._detector.ensure_value("AcquirePeriod", t)
 
     def setPresetValue(self, channel, val):
-        """Does nothing, kept for compatibility reasons."""
+        """Not available on AD, does nothing."""
         pass
 
     def startCount(self):
