@@ -260,7 +260,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
                 nframes = i * nframes
             print("nframes = ", nframes)
 
-            self.setCountTime(dictionary["time"][0])
+            self.setCountTime(dictionary["time"][0][0])
             self.setNframes(nframes)
             #self.setNframes(dictionary["repeat"])
 
