@@ -79,7 +79,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
         -------
         `int`
         """
-        return self._file.NumCapture_RBV
+        return int(self._file.NumCapture_RBV)
 
     def setNframes(self, val):
         """Sets the number of frames to acquire.
@@ -137,7 +137,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
             1 - Multiple
             2 - Continuous
         """
-        return self._detector.ImageMode_RBV
+        return int(self._detector.ImageMode_RBV)
 
     def setImageMode(self, val):
         """
@@ -161,7 +161,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
             0 - Internal
             1 - External
         """
-        return self._detector.TriggerMode_RBV
+        return int(self._detector.TriggerMode_RBV)
 
     def setTriggerMode(self, val):
         """
@@ -177,7 +177,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
 
     def getEnableCallback(self):
         """Returns true if the NDPluginFile is enabled."""
-        return self._file.EnableCallbacks_RBV
+        return bool(self._file.EnableCallbacks_RBV)
 
     def setEnableCallback(self, val):
         """Enables/disables the NDPluginFile.
@@ -191,31 +191,31 @@ class AreaDetectorClass(StandardDevice, ICountable):
         self._file.EnableCallbacks = val
 
     def getAutoSave(self):
-        return self._file.AutoSave_RBV
+        return bool(self._file.AutoSave_RBV)
 
     def setAutoSave(self, val):
         self._file.ensure_value("AutoSave", val)
 
     def getNextraDim(self):
-        return self._file.NumExtraDims
+        return int(self._file.NumExtraDims)
 
     def setNextraDim(self, val):
         self._file.ensure_value("NumExtraDims", val)
 
     def getDimX(self):
-        return self._file.ExtraDimSizeX
+        return int(self._file.ExtraDimSizeX)
 
     def setDimX(self, val):
         self._file.ensure_value("ExtraDimSizeX", val)
 
     def getDimY(self):
-        return self._file.ExtraDimSizeY
+        return int(self._file.ExtraDimSizeY)
 
     def setDimY(self, val):
         self._file.ensure_value("ExtraDimSizeY", val)
 
     def getWriteMode(self):
-        return self._file.FileWriteMode_RBV
+        return int(self._file.FileWriteMode_RBV)
 
     def setWriteMode(self, val):
         self._file.ensure_value("FileWriteMode", val)
@@ -227,7 +227,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
         self._file.ensure_value("FileTemplate", val)
 
     def getRepeatNumber(self):
-        return self._file.FileNumber_RBV
+        return int(self._file.FileNumber_RBV)
 
     def setRepeatNumber(self, val):
         self._file.ensure_value("FileNumber", val)
@@ -274,7 +274,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
             self.setRepeatNumber(dictionary["repetition"])
 
     def getAcquireTime(self):
-        return self._detector.AcquireTime_RBV, self._detector.AcquirePeriod_RBV
+        return float(self._detector.AcquireTime_RBV), float(self._detector.AcquirePeriod_RBV)
 
     def setWriteParams(self):
         """This method is deprecated and is kept for compatibility reasons."""
@@ -331,7 +331,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
 
     def isCounting(self):
         """Returns true if the detector is acquiring."""
-        return self._detector.Acquire_RBV
+        return bool(self._detector.Acquire_RBV)
 
     def wait(self):
         """Blocks until the acquisition completes."""
