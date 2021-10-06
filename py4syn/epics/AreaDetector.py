@@ -238,8 +238,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
         self._file.ensure_value("Capture", 0)
 
     def setParams(self, dictionary):
-        """Sets the AD device in a state usable by scan-utils."""
-        print(dictionary)
+        """Sets up the AD device to a state usable by scan-utils."""
         assert not self.isCounting(), "Already counting"
         assert not self._file.Capture_RBV, "Already counting"
 
@@ -247,20 +246,17 @@ class AreaDetectorClass(StandardDevice, ICountable):
 
             # Calculate the number of extra dimensions.
             num_dim = len(dictionary["points"])
-            print("num_dim = ", num_dim)
 
             # Calculate the size of each dimension.
             dim_sizes = []
             for points in dictionary["points"]:
                 # Use set to remove duplicates.
                 dim_sizes.append(len(set(points)))
-            print("dim_sizes = ", dim_sizes)
 
             # Use dim_sizes to calculate the number of frames to acquire.
             nframes = 1
             for i in dim_sizes:
                 nframes = i * nframes
-            print("nframes = ", nframes)
 
             self.setCountTime(dictionary["time"][0][0])
             self._detector.ensure_value("NumImages", 1)
@@ -269,10 +265,8 @@ class AreaDetectorClass(StandardDevice, ICountable):
 
             self.setEnableCallback(1)
             self.setNframes(nframes)
-            # self.setNframes(dictionary["repeat"])
             self.setWriteMode(2)
-            self.setRepeatNumber(0)
-            # self.setRepeatNumber(dictionary["repetition"])
+            self.setRepeatNumber(dictionary["repetition"])
             self.startCapture()
 
             self.setNextraDim(num_dim)
@@ -311,7 +305,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
         ----------
         t : `float`
         """
-        self._detector.ensure_value("AcquireTime", t - 0.1)
+        self._detector.ensure_value("AcquireTime", t)
         self._detector.ensure_value("AcquirePeriod", t)
 
     def setPresetValue(self, channel, val):
