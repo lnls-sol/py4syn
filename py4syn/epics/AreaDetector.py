@@ -98,7 +98,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
         -------
         `string`
         """
-        return self._file.FileName_RBV
+        return self._file.getName()
 
     def setFileName(self, val):
         """Sets the output image file name.
@@ -116,7 +116,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
         -------
         `string`
         """
-        return self._file.FilePath_RBV
+        return self._file.getPath()
 
     def setFilePath(self, val):
         """Sets the output image file path.
@@ -221,7 +221,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
         self._file.ensure_value("FileWriteMode", val)
 
     def getOutputFormat(self):
-        return self._file.FileTemplate_RBV
+        return self._file.getTemplate()
 
     def setOutputFormat(self, val):
         self._file.ensure_value("FileTemplate", val)
