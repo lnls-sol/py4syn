@@ -46,11 +46,14 @@ class AreaDetectorClass(StandardDevice, ICountable):
 
         super().__init__(mnemonic)
 
+        self.write = write
+
         detector_name = pv + ":" + device + ":"
         write_name = pv + ":" + fileplugin + ":"
 
         self._detector = AD_Camera(detector_name)
         self._detector.add_pv(detector_name+"Acquire_RBV", attr="Acquire_RBV")
+        self._detector.ensure_value("ArrayCallbacks", 1)
 
         self._file = AD_FilePlugin(write_name)
 
@@ -65,12 +68,6 @@ class AreaDetectorClass(StandardDevice, ICountable):
             suffix = "ExtraDimSize" + i
             self._file.add_pv(write_name+suffix, attr=suffix)
             self._file.add_pv(write_name+suffix+"_RBV", attr=suffix+"_RBV")
-
-        assert not self.isCounting(), "Already counting"
-        assert not self._file.Capture_RBV, "Already counting"
-
-        self._detector.ensure_value("ArrayCallbacks", 1)
-        self.setEnableCallback(1) if write else self.setEnableCallback(0)
 
     def getNframes(self):
         """Returns the number of frames to acquire.
@@ -238,40 +235,51 @@ class AreaDetectorClass(StandardDevice, ICountable):
     def stopCapture(self):
         self._file.ensure_value("Capture", 0)
 
-    def setParams(self, dictionary):  # TODO
-        """This method is a workaround!!!"""
+    def setParams(self, dictionary):
+        """Sets the AD device in a state usable by scan-utils."""
         print(dictionary)
-        return
+        assert not self.isCounting(), "Already counting"
+        assert not self._file.Capture_RBV, "Already counting"
 
-        # RESETAR a contagem
-        # COISAS QUE VEM DO ALÈM
-        # dbpf(${PREFIX}HDF1:FileWriteMode,"Stream")
-        # dbpf(${PREFIX}HDF1:Compression,"zlib")
-        self.dimensions = []
+        if write:
 
-        nframes = 1
-        for ipoints_motor in dictionary["points"]:
-            # O -1 é uma gambiarra pq ele conta o ultimo ponto
-            self.dimensions.append(len(set(ipoints_motor)) - 1)
-        self.setNextraDim(len(self.dimensions))
+            # Calculate the number of extra dimensions.
+            num_dim = len(dictionary["points"])
+            print("num_dim = ", num_dim)
 
-        for i in range(len(self.dimensions), 10):
-            self.dimensions.append(1)
+            # Calculate the size of each dimension.
+            dim_sizes = []
+            for points in dictionary["points"]:
+                # Use set to remove duplicates.
+                dim_sizes.append(len(set(points)))
+            print("dim_sizes = ", dim_sizes)
 
-        self.setDimX(self.dimensions[0])
-        self.setDimY(self.dimensions[1])
+            # Use dim_sizes to calculate the number of frames to acquire.
+            nframes = 1
+            for i in dim_sizes:
+                nframes = i * nframes
+            print("nframes = ", nframes)
 
-        for i in range(3, 10):
-            self._file.put("ExtraDimSize"+str(i), self.dimensions[i-1])
+            self.setCountTime(dictionary["time"][0])
+            self.setNframes(nframes)
+            #self.setNframes(dictionary["repeat"])
 
-        for i in self.dimensions:
-            nframes = nframes * i
-        self.setNframes(nframes)
+            self.setEnableCallback(1)
+            # The number of images from driver must match the number of
+            # from file plugin
+            self.setImageMode(1)
+            self.setWriteMode(2)
+            self.setRepeatNumber(0)
+            #self.setRepeatNumber(dictionary["repetition"])
 
-        if self._detector.TriggerMode_RBV != "Internal":
-            self.setImageMode(2)
+            self.setNextraDim(num_dim)
+            dim_names = ["X", "Y", "3",  "4", "5", "6", "7", "8", "9"]
+            for name, size in zip(dim_names, dim_sizes):
+                attr = "ExtraDimSize" + name
+                self._file.ensure_value(attr, size)
 
-            self.setRepeatNumber(dictionary["repetition"])
+        else:
+            self.setEnableCallback(0)
 
     def getAcquireTime(self):
         return float(self._detector.AcquireTime_RBV), float(self._detector.AcquirePeriod_RBV)
@@ -291,8 +299,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
     # ICountable methods overriding
 
     def getValue(self, **kwargs):
-        self._file.ensure_value("WriteFile", 1)
-        self.stopCapture()
+        pass
 
     def setCountTime(self, t):
         """Sets the image acquisition time.
@@ -319,7 +326,8 @@ class AreaDetectorClass(StandardDevice, ICountable):
         Saves data stored in the AD buffer.
         """
         self._detector.ensure_value("Acquire", 0)
-        self.getValue()
+        self._file.ensure_value("WriteFile", 1)
+        self.stopCapture()
 
     def canMonitor(self):
         """Returns false indicating that AD cannot be used as a monitor."""
