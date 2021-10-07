@@ -30,6 +30,7 @@ class Pilatus(AreaDetectorClass):
 
     def setParams(self, dictionary):
         super().setParams(dictionary)
+        self.setNextraDim(0)
         sleep(1)
 
     # ICountable methods overriding
