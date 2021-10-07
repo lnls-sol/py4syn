@@ -281,22 +281,25 @@ class AreaDetectorClass(StandardDevice, ICountable):
     def getAcquireTime(self):
         return float(self._detector.AcquireTime_RBV), float(self._detector.AcquirePeriod_RBV)
 
-    def setWriteParams(self):
+    def setWriteParams(self, *args, **kwargs):
         """This method is deprecated and is kept for compatibility reasons."""
         pass
 
-    def close(self, *args, **kwargs):
-        """Simply calls :meth:`stopCount`. Kept for compatibility reasons."""
-        return self.stopCount(*args, **kwargs)
+    def close(self):
+        """Stops ongoing acquisition and puts the IOC in an idle state."""
+        self.stopCount()
+        self._file.ensure_value("WriteFile", 1)
+        self.stopCapture()
 
     def getIntensity(self, *args, **kwargs):
-        """Simply calls :meth:`startCount`. Kept for compatibility reasons."""
-        return self.getValue(*args, **kwargs)
+        """This method is deprecated and is kept for compatibility reasons."""
+        pass
 
     # ICountable methods overriding
 
     def getValue(self, **kwargs):
-        pass
+        """Returns number of acquired frames. Works as a heartbeat."""
+        return int(self.__file.NumCaptured_RBV)
 
     def setCountTime(self, t):
         """Sets the image acquisition time.
