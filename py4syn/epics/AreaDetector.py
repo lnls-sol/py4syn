@@ -247,12 +247,12 @@ class AreaDetectorClass(StandardDevice, ICountable):
             self.setCountTime(dictionary["time"][0][0])
             self._detector.ensure_value("NumImages", 1)
             self._detector.ensure_value("NumExposures", 1)
-            self.setImageMode(2)
+            self.setImageMode(1)
 
             self.setEnableCallback(1)
             self.setWriteMode(2)
+            self._file.ensure_value("AutoIncrement", 0)
             self.setRepeatNumber(dictionary["repetition"])
-            self.startCapture()
 
             # Calculate the size of each dimension.
             dim_sizes = []
