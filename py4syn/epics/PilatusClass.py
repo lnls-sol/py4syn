@@ -21,6 +21,7 @@ class Pilatus(AreaDetectorClass):
         super().__init__(mnemonic, pv, device, fileplugin,
                          write, autowrite, path, trigger)
 
+        detector_name = pv + ":" + device + ":"
         self._detector.add_pv(detector_name + "Armed", attr='Armed')
 
     def armedStatus(self):
