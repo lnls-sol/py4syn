@@ -299,7 +299,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
 
     def getValue(self, **kwargs):
         """Returns number of acquired frames. Works as a heartbeat."""
-        return int(self.__file.NumCaptured_RBV)
+        return int(self._file.NumCaptured_RBV)
 
     def setCountTime(self, t):
         """Sets the image acquisition time.
