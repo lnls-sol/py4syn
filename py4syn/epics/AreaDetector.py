@@ -5,8 +5,8 @@ Python class for AreaDetector devices using EPICS area detector IOC.
 :platform: Unix
 :synopsis: Python class for AreaDetector devices
 
-.. moduleauthor::   Luciano Carneiro Guedes <luciano.guedes@lnls.br>
-                    Carlos Doro Neto <carlos.doro@lnls.br>
+.. moduleauthor:: Luciano Carneiro Guedes <luciano.guedes@lnls.br>
+                  Carlos Doro Neto <carlos.doro@lnls.br>
 """
 
 from py4syn.epics.StandardDevice import StandardDevice
@@ -244,8 +244,15 @@ class AreaDetectorClass(StandardDevice, ICountable):
 
         if self.write:
 
-            # Calculate the number of extra dimensions.
-            num_dim = len(dictionary["points"])
+            self.setCountTime(dictionary["time"][0][0])
+            self._detector.ensure_value("NumImages", 1)
+            self._detector.ensure_value("NumExposures", 1)
+            self.setImageMode(2)
+
+            self.setEnableCallback(1)
+            self.setWriteMode(2)
+            self.setRepeatNumber(dictionary["repetition"])
+            self.startCapture()
 
             # Calculate the size of each dimension.
             dim_sizes = []
@@ -253,27 +260,17 @@ class AreaDetectorClass(StandardDevice, ICountable):
                 # Use set to remove duplicates.
                 dim_sizes.append(len(set(points)))
 
-            # Use dim_sizes to calculate the number of frames to acquire.
-            nframes = 1
-            for i in dim_sizes:
-                nframes = i * nframes
-
-            self.setCountTime(dictionary["time"][0][0])
-            self._detector.ensure_value("NumImages", 1)
-            self._detector.ensure_value("NumExposures", 1)
-            self.setImageMode(2)
-
-            self.setEnableCallback(1)
-            self.setNframes(nframes)
-            self.setWriteMode(2)
-            self.setRepeatNumber(dictionary["repetition"])
-            self.startCapture()
-
-            self.setNextraDim(num_dim)
+            self.setNextraDim(len(dim_sizes))
             dim_names = ["X", "Y", "3",  "4", "5", "6", "7", "8", "9"]
             for name, size in zip(dim_names, dim_sizes):
                 attr = "ExtraDimSize" + name
                 self._file.ensure_value(attr, size)
+
+            # Use dim_sizes to calculate the number of frames to acquire.
+            nframes = 1
+            for i in dim_sizes:
+                nframes = i * nframes
+            self.setNframes(nframes)
 
         else:
             self.setEnableCallback(0)
