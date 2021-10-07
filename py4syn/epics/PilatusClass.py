@@ -10,6 +10,7 @@ IOC.
                   Carlos Doro Neto <carlos.doro@lnls.br>
 """
 
+from time import sleep
 from py4syn.epics.AreaDetector import AreaDetectorClass
 
 
@@ -26,6 +27,10 @@ class Pilatus(AreaDetectorClass):
 
     def armedStatus(self):
         return bool(self._detector.Armed)
+
+    def setParams(self, dictionary):
+        super().setParams(dictionary)
+        sleep(1)
 
     # ICountable methods overriding
 
