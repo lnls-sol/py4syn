@@ -242,12 +242,12 @@ class AreaDetectorClass(StandardDevice, ICountable):
         assert not self.isCounting(), "Already counting"
         assert not self._file.Capture_RBV, "Already counting"
 
-        if self.write:
+        self.setCountTime(dictionary["time"][0][0])
+        self._detector.ensure_value("NumImages", 1)
+        self._detector.ensure_value("NumExposures", 1)
+        self.setImageMode(1)
 
-            self.setCountTime(dictionary["time"][0][0])
-            self._detector.ensure_value("NumImages", 1)
-            self._detector.ensure_value("NumExposures", 1)
-            self.setImageMode(1)
+        if self.write:
 
             self.setEnableCallback(1)
             self.setWriteMode(2)
@@ -285,7 +285,6 @@ class AreaDetectorClass(StandardDevice, ICountable):
     def close(self):
         """Stops ongoing acquisition and puts the IOC in an idle state."""
         self.stopCount()
-        self._file.ensure_value("WriteFile", 1)
         self.stopCapture()
 
     def getIntensity(self, *args, **kwargs):
