@@ -20,7 +20,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
         print("args = ", args)
         print("kwargs = ", kwargs)
         print("---")
-        super().__init__(args["mnemonic"])
+        super().__init__(args[0])
 
     def getNframes(self, *args, **kwargs):
         print("getNframes")
