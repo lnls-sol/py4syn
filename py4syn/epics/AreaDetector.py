@@ -17,8 +17,7 @@ from epics.devices.ad_fileplugin import AD_FilePlugin
 
 class AreaDetectorClass(StandardDevice, ICountable):
 
-    def __init__(self, mnemonic, pv, device, fileplugin,
-                 write, autowrite, path, trigger):
+    def __init__(self, mnemonic, pv, device, fileplugin, write, autowrite, path, trigger):
         """Class to control Area Detector (AD) via EPICS
 
         Parameters
@@ -39,7 +38,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
         path : `string`
             Ignored, kept for compatibility reasons
         trigger : `string`
-            Ignored, kept for compatibility reasons
+            Should be set to internal for step scans and external to fly scans.
         """
 
         assert autowrite, "autowrite must be True for AD class"
@@ -47,6 +46,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
         super().__init__(mnemonic)
 
         self.write = write
+        self.trigger = trigger
 
         detector_name = pv + ":" + device + ":"
         write_name = pv + ":" + fileplugin + ":"
@@ -62,8 +62,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
         # For other file plugins (tiff, jpeg, etc) these attributes will
         # return None without raising errors.
         self._file.add_pv(write_name+"NumExtraDims", attr="NumExtraDims")
-        self._file.add_pv(write_name+"NumExtraDims_RBV",
-                          attr="NumExtraDims_RBV")
+        self._file.add_pv(write_name+"NumExtraDims_RBV", attr="NumExtraDims_RBV")
 
         for i in ["X", "Y", "3",  "4", "5", "6", "7", "8", "9"]:
             suffix = "ExtraDimSize" + i
@@ -239,16 +238,19 @@ class AreaDetectorClass(StandardDevice, ICountable):
 
     def setParams(self, dictionary):
         """Sets up the AD device to a state usable by scan-utils."""
+
         assert not self.isCounting(), "Already counting"
         assert not self._file.Capture_RBV, "Already counting"
 
         self.setCountTime(dictionary["time"][0][0])
-        self._detector.ensure_value("NumImages", 1)
+
+        if self.trigger = "Internal"
+            self.setImageMode(0)
+        else:
+            self.setImageMode(2)
         self._detector.ensure_value("NumExposures", 1)
-        self.setImageMode(1)
 
         if self.write:
-
             self.setEnableCallback(1)
             self.setWriteMode(2)
             self._file.ensure_value("AutoIncrement", 0)
