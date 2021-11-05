@@ -244,7 +244,7 @@ class AreaDetectorClass(StandardDevice, ICountable):
 
         self.setCountTime(dictionary["time"][0][0])
 
-        if self.trigger == "Internal"
+        if self.trigger == "Internal":
             self.setImageMode(0)
         else:
             self.setImageMode(2)

@@ -61,7 +61,7 @@ class Pilatus(AreaDetectorClass):
         # We set it to "Multiple" in case a future release fix this.
         self.setImageMode(1)
 
-        if self.trigger == "Internal"
+        if self.trigger == "Internal":
             self._detector.ensure_value("NumImages", 1)
         else:
             self._detector.ensure_value("NumImages", nframes)
