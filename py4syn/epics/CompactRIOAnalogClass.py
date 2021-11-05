@@ -33,21 +33,32 @@ class CompactRIOAnalog(StandardDevice, ICountable):
         """
 
         super().__init__(mnemonic)
-
         self.tdms = tdms
-
+        self._sampling_rate = 1e5
         pvPrefix = pvName[:12]
 
-        self._pv = PV(pvName)
+        # We assume that the CompactRIO is running the new firmware and if
+        # we cannot connect to the averaging time PVs we change to the old one.
+
+        self._firmware = "new"
         self._pvAvgTime = PV(pvPrefix + "PvAvgTime")
         self._fileAvgTime = PV(pvPrefix + "FileAvgTime")
+
+        if not (self._pvAvgTime.wait_for_connection() and
+                self._fileAvgTime.wait_for_connection()):
+
+            self._firmware = "old"
+            self._pvAvgTime = PV(pvPrefix + "PvDownsampling")
+            self._fileAvgTime = PV(pvPrefix + "FileDownsampling")
+            assert self._pvAvgTime.wait_for_connection()
+            assert self._fileAvgTime.wait_for_connection()
+
+        self._pv = PV(pvName)
         self._acquireTrigger = PV(pvPrefix + "AnalogAcqSwTrigger")
         self._filedir = PV(pvPrefix + "AnalogAcqFilepath")
         self._filename = PV(pvPrefix + "AnalogAcqFilename")
 
         assert self._pv.wait_for_connection()
-        assert self._pvAvgTime.wait_for_connection()
-        assert self._fileAvgTime.wait_for_connection()
         assert self._acquireTrigger.wait_for_connection()
         assert self._filedir.wait_for_connection()
         assert self._filename.wait_for_connection()
@@ -77,6 +88,9 @@ class CompactRIOAnalog(StandardDevice, ICountable):
         t : `double`
             The desired downsampling time.
         """
+
+        if self._firmware == "old":
+            t *= self._sampling_rate
 
         if self.tdms:
             self._fileAvgTime.put(t, wait=True)
@@ -119,9 +133,14 @@ class CompactRIOAnalog(StandardDevice, ICountable):
         """This is a workaround! CompactRIO does NOT set AnalogAcqSwTrigger back
            to zero after it is done acquiring so we must set it manually."""
         if self.tdms:
-            sleep(self._fileAvgTime.get())
+            sleep_time = self._fileAvgTime.get()
         else:
-            sleep(self._pvAvgTime.get())
+            sleep_time = self._pvAvgTime.get()
+
+        if self._firmware == "old":
+            sleep_time /= self._sampling_rate
+
+        sleep(sleep_time)
         self.stopCount()
 
     # CompactRIOAnalog specific functions
