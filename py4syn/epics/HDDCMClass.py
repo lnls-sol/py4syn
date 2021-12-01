@@ -11,14 +11,14 @@ The five degrees of freedom are:
 - short stroke rz (ShsRz)
 
 During the class initialization the constructor checks the current operation
-mode and the rest of the class methods adjusts their behavior accordingly.
+mode and the class methods adjust their behavior accordingly.
 
 Regardless of the operation mode the operation steps are roughly the same:
 
-1st) Send the desired set point to the DCM controller.
-2nd) Wait for the DCM controller to calculate all the trajectories.
-3rd) Confirm that we really want to move by sending the real move command.
-4th) Wait for the DCM to finish its movement and to be in position.
+1st) Send the position setpoint to the DCM controller.
+2nd) Wait for the DCM controller to calculate the trajectory.
+3rd) Send a movement confirmation if a trajectory was found.
+4th) Wait for the DCM to finish its movement and be in position.
 
 Below is a brief explanation of each operation mode.
 
@@ -34,13 +34,16 @@ B. Gonio as leader
 
 C. Gonio as leader + undulator phase control
 
-    Same as above but the DCM will control the undulator phase as well.
+    Same as above but the DCM will also control the undulator phase.
+
+    From this class point of view there is no difference between modes B and C.
+
+    >>> AS OF DEC. 1ST, 2021 THIS MODE DOES NOT WORK. DO NOT USE IT. <<<
 
 D. Gonio as follower
 
-    In this mode the gonio will move automatically following the beamline
-    undulator phase and the remaining four degrees of freedom will move
-    automatically following the DCM gonio.
+    In this mode the gonio will follow the beamline undulator phase and the
+    remaining degrees of freedom will follow the gonio.
 
     Note that in this mode we do not actually control the DCM, the class will
     (purposely) refuse to control the DCM and raise an error.
@@ -51,16 +54,15 @@ E. Fully independent (without EPICS)
     send it to the DCM controller.
 
     In this mode we can ignore the 1st and 2nd operation steps, but we still
-    need to confirm that we really want to start moving.
+    need to confirm that we want to start moving.
 
     Optionally we can also generate the trajectory for the undulator phase.
 
 :platform: Unix
-:synopsis: Python3 class for ...
+:synopsis: Python3 class for HD-DCM
 
 .. moduleauthors:: Carlos Doro Neto <carlos.doro@lnls.br>
                    João Leandro de Brito Neto <joao.brito@lnls.br>
-                   Letícia Garcez Capovilla <leticia.capovilla@lnls.br>
 """
 
 from epics import PV
@@ -90,26 +92,25 @@ class HD_DCM(StandardDevice, IScannable):
 
         super().__init__(mnemonic)
 
-        self._opMode = PV(pvPrefix + "???")
-        assert self._opMode.wait_for_connection()
-
         # Not all modes are valid and not all degrees of freedom are available
-        # for all modes, let's check everything is all right before continuing.
+        # for all modes, let's check everything is right before continuing.
 
-        if self._opMode.get() == "D":
-                raise Exception("Refusing to control the DCM in Gonio as follower")
+        self._opMode = PV(pvPrefix + "???").get()
 
-        if self._opMode.get() == "B" or self._opMode.get() == "C":
+        if self._opMode == "D":
+            raise Exception("Refusing to control the DCM in Gonio as follower")
+
+        if self._opMode in ["B", "C"]:
             if pvSuffix != "GonRx":
                 raise Exception("Can only control Gonio in Gonio as leader")
 
-        if self._opMode.get() == "E":
-            raise NotImplementedError
+        if self._opMode == "E":
             # import ref3
-
+            # import tdms
+            raise NotImplementedError
         else:
-            self._setpoint = PV(pvPrefix)
-            self._foundTrajectory = PV(pvPrefix)
+            self._setpoint = PV(pvPrefix + "???")
+            self._foundTrajectory = PV(pvPrefix + "???")
             assert self._setpoint.wait_for_connection()
             assert self._foundTrajectory.wait_for_connection()
 
@@ -151,11 +152,11 @@ class HD_DCM(StandardDevice, IScannable):
             The target position.
         """
 
-        if self._opMode.get() == "E":
+        if self._opMode == "E":
             raise NotImplementedError
 
         else:
-            # Send set point to DCM controller.
+            # Send setpoint to DCM controller.
             self._setpoint.put(v, wait=True)
 
             # Wait for the DCM controller to acknowledge out setpoint request.
