@@ -1,6 +1,6 @@
 """HD-DCM
 
-HD-DCM has five degrees of freedom and five operation modes (see below).
+HD-DCM has five degrees of freedom and four operation modes (see below).
 
 The five degrees of freedom are:
 
@@ -10,53 +10,29 @@ The five degrees of freedom are:
 - short stroke rx (ShsRx)
 - short stroke rz (ShsRz)
 
-During the class initialization the constructor checks the current operation
-mode and the class methods adjust their behavior accordingly.
-
-Regardless of the operation mode the operation steps are roughly the same:
-
-1st) Send the position setpoint to the DCM controller.
-2nd) Wait for the DCM controller to calculate the trajectory.
-3rd) Send a movement confirmation if a trajectory was found.
-4th) Wait for the DCM to finish its movement and be in position.
-
 Below is a brief explanation of each operation mode.
 
-A. Fully independent (with EPICS)
+0. Asynchronous (with EPICS)
 
-    All of the five degrees of freedom are decoupled and can be adjusted
-    individually via PVs.
+    All of the five degrees of freedom are decoupled and can be moved
+    separately via PVs.
 
-B. Gonio as leader
+1. Synchronous
 
-    We control only the gonio angle (via PV) and the other four degrees of
-    freedom adjusts accordingly.
+    >>> AS OF DEC. 3RD, 2021 THIS MODE DOES NOT WORK. DO NOT USE IT. <<<
 
-C. Gonio as leader + undulator phase control
+2. Coupled - It is the only mode supported in this class!
 
-    Same as above but the DCM will also control the undulator phase.
+    We control only the gonio (via PV) and the other four degrees of
+    freedom adjust accordingly.
 
-    From this class point of view there is no difference between modes B and C.
-
-    >>> AS OF DEC. 1ST, 2021 THIS MODE DOES NOT WORK. DO NOT USE IT. <<<
-
-D. Gonio as follower
+3. Follower
 
     In this mode the gonio will follow the beamline undulator phase and the
     remaining degrees of freedom will follow the gonio.
 
     Note that in this mode we do not actually control the DCM, the class will
     (purposely) refuse to control the DCM and raise an error.
-
-E. Fully independent (without EPICS)
-
-    We generate a file with the trajectory for all five degrees of freedom and
-    send it to the DCM controller.
-
-    In this mode we can ignore the 1st and 2nd operation steps, but we still
-    need to confirm that we want to start moving.
-
-    Optionally we can also generate the trajectory for the undulator phase.
 
 :platform: Unix
 :synopsis: Python3 class for HD-DCM
@@ -72,7 +48,7 @@ from py4syn.epics.StandardDevice import StandardDevice
 
 class HD_DCM(StandardDevice, IScannable):
 
-    def __init__(self, mnemonic, pvName):
+    def __init__(self, mnemonic, pvPrefix):
         """Class for controlling an HD-DCM.
 
         parameters
@@ -83,62 +59,42 @@ class HD_DCM(StandardDevice, IScannable):
             PV prefix.
         """
 
-        # Assuming pvName follows the PV naming convention for Sirius beamlines
-        # the pvPrefix (including the last colon) is 12 characters long.
-
-        assert len(pvName) > 12
-        pvPrefix = pvName[:12]
-        pvSuffix = pvName[12:]
-
         super().__init__(mnemonic)
 
-        # Not all modes are valid and not all degrees of freedom are available
-        # for all modes, let's check everything is right before continuing.
+        opMode = PV(pvPrefix + "DcmOpModeSel").get()
+        assert opMode == 2, "DCM not in Coupled mode. Refusing to control it."
 
-        self._opMode = PV(pvPrefix + "???").get()
+        self._setpoint = PV(pvPrefix + ":GonRxR")
+        self._velocity = PV(pvPrefix + ":GonRxTrajVdes")
+        self._planTrajectory = PV(pvPrefix + ":GonRxTrajPlan")
+        self._trajectoryFound = PV(pvPrefix + ":GonRxTrajStatus_RBV")
+        self._move = PV(pvPrefix + ":DcmTrajMove")
+        self._inPos = PV(pvPrefix + ":DcmInPos")
+        self._stop = PV(pvPrefix + ":DcmTrajAbort")
 
-        if self._opMode == "D":
-            raise Exception("Refusing to control the DCM in Gonio as follower")
-
-        if self._opMode in ["B", "C"]:
-            if pvSuffix != "GonRx":
-                raise Exception("Can only control Gonio in Gonio as leader")
-
-        if self._opMode == "E":
-            # import ref3
-            # import tdms
-            raise NotImplementedError
+        energyMode = PV(pvPrefix + ":DcmTrajEnergy").get()
+        if energyMode:
+            self._readback = PV(pvPrefix + ":GonRxEnergy_RBV")
         else:
-            self._setpoint = PV(pvPrefix + "???")
-            self._foundTrajectory = PV(pvPrefix + "???")
-            assert self._setpoint.wait_for_connection()
-            assert self._foundTrajectory.wait_for_connection()
+            self._readback = PV(pvPrefix + ":GonRxS_RBV")
 
-        # Regardless of the operation mode the readback value, move and stop
-        # commands, limits and in position flag are always read/set by PVs.
-
-        self._readback = PV(pvName + "_RBV")
-        self._move = PV(pvPrefix + "???")
-        self._stop = PV(pvPrefix + "???")
-        self._lowLimit = PV(pvPrefix + "???")
-        self._highLimit = PV(pvPrefix + "???")
-        self._inPos = PV(pvPrefix + "???")
-
-        assert self._readback.wait_for_connection()
+        assert self._setpoint.wait_for_connection()
+        assert self._velocity.wait_for_connection()
+        assert self._planTrajectory.wait_for_connection()
+        assert self._trajectoryFound.wait_for_connection()
         assert self._move.wait_for_connection()
-        assert self._stop.wait_for_connection()
-        assert self._lowLimit.wait_for_connection()
-        assert self._highLimit.wait_for_connection()
         assert self._inPos.wait_for_connection()
+        assert self._stop.wait_for_connection()
+        assert self._readback.wait_for_connection()
 
     # IScannable methods overriding
 
     def getValue(self):
-        """Return the current position.
+        """Return the current angle/energy.
 
         returns
         -------
-        `double`
+        `float`
         """
 
         return self._readback.get()
@@ -148,33 +104,21 @@ class HD_DCM(StandardDevice, IScannable):
 
         parameters
         ----------
-        v : `double`
-            The target position.
+        v : `float`
+            The target angle/energy.
         """
 
-        if self._opMode == "E":
-            raise NotImplementedError
+        max_velocity = 9e-3
+        velocity = min(max_velocity, .9*v)
 
-        else:
-            # Send setpoint to DCM controller.
-            self._setpoint.put(v, wait=True)
+        self._setpoint.put(v, wait=True)
+        self._velocity.put(velocity, wait=True)
+        self._planTrajectory.put(1, wait=True)
 
-            # Wait for the DCM controller to acknowledge out setpoint request.
-            while self.foundTrajectory():
-                pass
-
-            # Wait for tragetory calculations.
-            while not self.foundTrajectory():
-                pass
-
-        # Send move command.
-        self._moveCmd.put(1, wait=True)
-
-        # Wait for it to start moving.
-        while not self.isMoving():
+        while not self.trajectoryFound():
             pass
 
-        # Wait for it to reach target position.
+        self._move.put(1, wait=True)
         self.wait()
 
     def wait(self):
@@ -187,20 +131,20 @@ class HD_DCM(StandardDevice, IScannable):
 
         returns
         -------
-        `double`
+        `float`
         """
 
-        return self._lowLimit.get()
+        retrun float("-inf")
 
     def getHighLimitValue(self):
-        """Return the higher movement limit.
+        """Return the upper movement limit.
 
         returns
         -------
-        `double`
+        `float`
         """
 
-        return self._highLimit.get()
+        retrun float("inf")
 
     # HD-DCM specific methods
 
@@ -219,7 +163,7 @@ class HD_DCM(StandardDevice, IScannable):
 
         return not self._inPos.get()
 
-    def foundTrajectory(self):
+    def trajectoryFound(self):
         """Returns True if the DCM controller found a trajectory for the
         current setpoint.
 
@@ -228,4 +172,4 @@ class HD_DCM(StandardDevice, IScannable):
         `boolean`
         """
 
-        return self._foundTrajectory.get()
+        return self._trajectoryFound.get() == "Row 0 t 2"
