@@ -111,7 +111,8 @@ class HD_DCM(StandardDevice, IScannable):
         """
 
         max_velocity = 9e-3
-        velocity = min(max_velocity, .9*v)
+        delta = abs(v - self.getValue())
+        velocity = min(max_velocity, .9*delta)
 
         self._setpoint.put(v, wait=True)
         self._velocity.put(velocity, wait=True)
@@ -121,6 +122,11 @@ class HD_DCM(StandardDevice, IScannable):
             pass
 
         self._move.put(1, wait=True)
+
+        # Wait for motor to start moving.
+        while not self.isMoving():
+            pass
+
         self.wait()
 
     def wait(self):
