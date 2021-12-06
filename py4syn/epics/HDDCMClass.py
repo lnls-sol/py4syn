@@ -61,8 +61,9 @@ class HD_DCM(StandardDevice, IScannable):
 
         super().__init__(mnemonic)
 
-        opMode = PV(pvPrefix + "DcmOpModeSel").get()
-        assert opMode == 2, "DCM not in Coupled mode. Refusing to control it."
+        opMode = PV(pvPrefix + ":DcmOpModeSel")
+        assert opMode.wait_for_connection()
+        assert opMode.get() == 2, "DCM not in Coupled mode. Refusing to control it."
 
         self._setpoint = PV(pvPrefix + ":GonRxR")
         self._velocity = PV(pvPrefix + ":GonRxTrajVdes")
@@ -72,8 +73,9 @@ class HD_DCM(StandardDevice, IScannable):
         self._inPos = PV(pvPrefix + ":DcmInPos")
         self._stop = PV(pvPrefix + ":DcmTrajAbort")
 
-        energyMode = PV(pvPrefix + ":DcmTrajEnergy").get()
-        if energyMode:
+        energyMode = PV(pvPrefix + ":DcmTrajEnergy")
+        assert energyMode.wait_for_connection()
+        if energyMode.get():
             self._readback = PV(pvPrefix + ":GonRxEnergy_RBV")
         else:
             self._readback = PV(pvPrefix + ":GonRxS_RBV")
