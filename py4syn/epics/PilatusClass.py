@@ -90,7 +90,7 @@ class Pilatus(AreaDetectorClass):
         t : `float`
         """
         self._detector.ensure_value("AcquireTime", t)
-        self._detector.ensure_value("AcquirePeriod", t + .01)
+        self._detector.ensure_value("AcquirePeriod", t + .05)
 
     def startCount(self):
         """Starts acquiring"""
