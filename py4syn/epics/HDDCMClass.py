@@ -134,7 +134,7 @@ class HD_DCM(StandardDevice, IScannable):
         `float`
         """
 
-        retrun float("-inf")
+        return float("-inf")
 
     def getHighLimitValue(self):
         """Return the upper movement limit.
@@ -144,7 +144,7 @@ class HD_DCM(StandardDevice, IScannable):
         `float`
         """
 
-        retrun float("inf")
+        return float("inf")
 
     # HD-DCM specific methods
 
