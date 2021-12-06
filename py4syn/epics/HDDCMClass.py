@@ -110,25 +110,27 @@ class HD_DCM(StandardDevice, IScannable):
             The target angle/energy.
         """
 
-        max_velocity = 9e-3
-        delta = abs(v - self.getValue())
-        velocity = min(max_velocity, .9*delta)
+		if v != self._setpoint.get():
 
-        self.stop()
-        self._setpoint.put(v, wait=True)
-        self._velocity.put(velocity, wait=True)
-        self._planTrajectory.put(1, wait=True)
+		    max_velocity = 9e-3
+		    delta = abs(v - self.getValue())
+		    velocity = min(max_velocity, .9*delta)
 
-        while not self.trajectoryFound():
-            pass
+		    self.stop()
+		    self._setpoint.put(v, wait=True)
+		    self._velocity.put(velocity, wait=True)
+		    self._planTrajectory.put(1, wait=True)
 
-        self._move.put(1, wait=True)
+		    while not self.trajectoryFound():
+		        pass
 
-        # Wait for motor to start moving.
-        while not self.isMoving():
-            pass
+		    self._move.put(1, wait=True)
 
-        self.wait()
+		    # Wait for motor to start moving.
+		    while not self.isMoving():
+		        pass
+
+		    self.wait()
 
     def wait(self):
         """Waits for the DCM to be in position."""
