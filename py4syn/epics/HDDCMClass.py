@@ -114,6 +114,7 @@ class HD_DCM(StandardDevice, IScannable):
         delta = abs(v - self.getValue())
         velocity = min(max_velocity, .9*delta)
 
+        self.stop()
         self._setpoint.put(v, wait=True)
         self._velocity.put(velocity, wait=True)
         self._planTrajectory.put(1, wait=True)
