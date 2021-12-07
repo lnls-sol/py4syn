@@ -12,7 +12,7 @@ The five degrees of freedom are:
 
 Below is a brief explanation of each operation mode.
 
-0. Asynchronous (with EPICS)
+0. Asynchronous
 
     All of the five degrees of freedom are decoupled and can be moved
     separately via PVs.
@@ -38,9 +38,11 @@ Below is a brief explanation of each operation mode.
 :synopsis: Python3 class for HD-DCM
 
 .. moduleauthors:: Carlos Doro Neto <carlos.doro@lnls.br>
+                   Hugo Henrique Valim de Lima Campos <hugo.campos@lnls.br>
                    João Leandro de Brito Neto <joao.brito@lnls.br>
 """
 
+from time import sleep
 from epics import PV
 from py4syn.epics.IScannable import IScannable
 from py4syn.epics.StandardDevice import StandardDevice
@@ -63,7 +65,7 @@ class HD_DCM(StandardDevice, IScannable):
 
         opMode = PV(pvPrefix + ":DcmOpModeSel")
         assert opMode.wait_for_connection()
-        assert opMode.get() == 2, "DCM not in Coupled mode. Refusing to control it."
+        assert opMode.get() == 2, "DCM is not in Coupled mode."
 
         self._setpoint = PV(pvPrefix + ":GonRxR")
         self._velocity = PV(pvPrefix + ":GonRxTrajVdes")
@@ -75,6 +77,7 @@ class HD_DCM(StandardDevice, IScannable):
 
         energyMode = PV(pvPrefix + ":DcmTrajEnergy")
         assert energyMode.wait_for_connection()
+
         if energyMode.get():
             self._readback = PV(pvPrefix + ":GonRxEnergy_RBV")
         else:
@@ -89,6 +92,31 @@ class HD_DCM(StandardDevice, IScannable):
         assert self._stop.wait_for_connection()
         assert self._readback.wait_for_connection()
 
+        self._setpoint.add_callback(self._pooler)
+        self._trajectoryFound.add_callback(self._pooler)
+        self._inPos.add_callback(self._pooler)
+        self._readback.add_callback(self._pooler)
+
+        self._setpoint.run_callbacks()
+        self._trajectoryFound.run_callbacks()
+        self._inPos.run_callbacks()
+        self._readback.run_callbacks()
+
+        # Abort ongoing calculation beforehand.
+        self.stop()
+
+    def _pooler(self, **kwargs):
+        if kwargs["pvname"].endswith("GonRxR"):
+            self._setpoint_pool = kwargs["value"]
+        elif kwargs["pvname"].endswith("GonRxTrajStatus_RBV"):
+            self._trajectoryFound_pool = kwargs["value"]
+        elif kwargs["pvname"].endswith("DcmInPos"):
+            self._inPos_pool = kwargs["value"]
+        elif kwargs["pvname"].endswith("GonRxEnergy_RBV"):
+            self._readback_pool = kwargs["value"]
+        elif kwargs["pvname"].endswith("GonRxS_RBV"):
+            self._readback_pool = kwargs["value"]
+
     # IScannable methods overriding
 
     def getValue(self):
@@ -99,7 +127,7 @@ class HD_DCM(StandardDevice, IScannable):
         `float`
         """
 
-        return self._readback.get()
+        return self._readback_pool
 
     def setValue(self, v):
         """Sends move command.
@@ -110,13 +138,12 @@ class HD_DCM(StandardDevice, IScannable):
             The target angle/energy.
         """
 
-        if v != self._setpoint.get():
+        if v != self._setpoint_pool:
 
             max_velocity = 9e-3
             delta = abs(v - self.getValue())
             velocity = min(max_velocity, .9*delta)
 
-            self.stop()
             self._setpoint.put(v, wait=True)
             self._velocity.put(velocity, wait=True)
             self._planTrajectory.put(1, wait=True)
@@ -162,6 +189,8 @@ class HD_DCM(StandardDevice, IScannable):
     def stop(self):
         """Sends stop command."""
         self._stop.put(1, wait=True)
+        # DO NOT REMOVE THIS SLEEP!
+        sleep(0.5)
         self.wait()
 
     def isMoving(self):
@@ -172,7 +201,7 @@ class HD_DCM(StandardDevice, IScannable):
         `boolean`
         """
 
-        return not self._inPos.get()
+        return not self._inPos_pool
 
     def trajectoryFound(self):
         """Returns True if the DCM controller found a trajectory for the
@@ -183,4 +212,4 @@ class HD_DCM(StandardDevice, IScannable):
         `boolean`
         """
 
-        return self._trajectoryFound.get() == "Row 0 t 2"
+        return self._trajectoryFound_pool == "Row 0 t 2"
