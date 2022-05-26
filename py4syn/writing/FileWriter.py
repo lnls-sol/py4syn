@@ -316,22 +316,21 @@ class FileWriter:
         """
         self.__devicesData.append(value)
 
-    def insertDeviceData(self, device, value):
+    def insertDeviceData(self, device, value, index=None):
         """
         Insert a new data value for the informed device in the map.
-
         Parameters
         ----------
         device : `string`
             Device mnemonic
         value : `float, int, str, etc`
             Collected value
-
         """
-        if(device not in self.__devicesData.keys()):
-            self.__devicesData[device] = [value]
-        else:
-            self.__devicesData[device].append(value)
+        for i in device:
+            if device not in list(self.getDevicesData().keys()):
+                self.getDevicesData()[i] = value
+            else:
+                self.getDevicesData()[i].append(value)
 
     def setSignalsData(self, value):
         """
@@ -344,19 +343,19 @@ class FileWriter:
         """
         self.__signalsData = value
 
-    def insertSignalData(self, signal, value):
+    def insertSignalData(self, signal, value, index=None):
         """
         Insert a new data value for the informed signal in the map.
-
         Parameters
         ----------
         signal : `string`
             Signal mnemonic
         value : `float, int, str, etc`
             Collected value
-
         """
-        if(signal not in self.__signalsData.keys()):
-            self.__signalsData[signal] = [value]
-        else:
-            self.__signalsData[signal].append(value)
+
+        for i in signal:
+            if signal not in list(self.getSignalsData().keys()):
+                self.getSignalsData()[i] = value
+            else:
+                self.getSignalsData()[i].append(value)

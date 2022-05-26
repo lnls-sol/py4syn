@@ -90,25 +90,19 @@ class DefaultWriter(FileWriter):
             pass
         return '{:.{}f}'.format(n, precision)
 
-    def __scanDataToLine(self, idx = -1):
-        line = ''
-        
+    def __scanDataToLine(self, idx=-1):
+        line = ""
+
         for i in range(len(self.getDevices())):
-            line += ' ' if line != '' else ''
-            try:
-                dev = self.getDevices()[i]
-                val = self.getDevicesData()[dev][idx]
-                line += str(val)
-            except:
-                line += 'N/A'
-            
+            line += " " if line != "" else ""
+            dev = self.getDevices()[i]
+            val = self.getDevicesData()[dev][dev][idx]
+            line += str(val)
+
         for i in range(len(self.getSignals())):
-            line += ' ' if line != '' else ''
-            try:
-                sig = self.getSignals()[i]
-                val = self.getSignalsData()[sig][idx]
-                line += str(val)
-            except:
-                line += 'N/A'
+            line += " " if line != "" else ""
+            sig = self.getSignals()[i]
+            val = self.getSignalsData()[sig][sig][idx]
+            line += str(val)
 
         return line
