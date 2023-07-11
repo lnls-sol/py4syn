@@ -22,11 +22,11 @@ class Hexapode(IScannable,StandardDevice):
         super().__init__(mnemonic)
         self.hexapode = Device(pvName + ':',('STATE#PANEL:SET','STATE#PANEL:GET',
                                 'STATE#PANEL:BUTTON','MOVE#PARAM:CM',
-                                'MOVE#PARAM:X', 'MOVE#PARAM:Y',
-                                'MOVE#PARAM:Z', 'MOVE#PARAM:RX',
-                                'MOVE#PARAM:RY', 'MOVE#PARAM:RZ' ,
-                                ':POSUSER:X',':POSUSER:Y',':POSUSER:Z',
-                                ':POSUSER:RX',':POSUSER:RY',':POSUSER:RZ',
+                                'MOVE:X', 'MOVE:Y',
+                                'MOVE:Z', 'MOVE:RX',
+                                'MOVE:RY', 'MOVE:RZ' ,
+                                ':POSUSERSIRIUS:X',':POSUSERSIRIUS:Y',':POSUSERSIRIUS:Z',
+                                ':POSUSERSIRIUS:RX',':POSUSERSIRIUS:RY',':POSUSERSIRIUS:RZ',
                                 ':POSMACH:X',':POSMACH:Y',':POSMACH:Z',
                                 ':POSMACH:RX',':POSMACH:RY',':POSMACH:RZ',
                                 'CFG#CS:1','CFG#CS:2', 'STATE#POSVALID?',
@@ -38,11 +38,11 @@ class Hexapode(IScannable,StandardDevice):
         self.axis_dic={"X":1,"Y":2,"Z":3,
                        "RX":4,"RY":5,"RZ":6}
         self.axis_number=self.axis_dic[self.axis]
-        self.rbv=PV(pvName + ':'+'POSUSER:'+self.axis)
-        self.pos=self.hexapode.get('POSUSER:'+self.axis)       
-        self.hexapode.add_callback('POSUSER:'+self.axis, self.onStatusChange)
+        self.rbv=PV(pvName + ':'+'POSUSERSIRIUS:'+self.axis)
+        self.pos=self.hexapode.get('POSUSERSIRIUS:'+self.axis)       
+        self.hexapode.add_callback('POSUSERSIRIUS:'+self.axis, self.onStatusChange)
 
-        self.hexapode.put('POSUSER:'+self.axis +".SCAN",9)
+        self.hexapode.put('POSUSERSIRIUS:'+self.axis +".SCAN",9)
 
     def onStatusChange(self,value,**kw):
         """
@@ -57,7 +57,7 @@ class Hexapode(IScannable,StandardDevice):
         """
         Returns the current position from the axis
         """
-        return self.hexapode.get('POSUSER:'+self.axis)
+        return self.hexapode.get('POSUSERSIRIUS:'+self.axis)
 
     def setValue(self, v):
         """
@@ -76,7 +76,7 @@ class Hexapode(IScannable,StandardDevice):
         
         self.pos=pos
         self.hexapode.put('STATE#PANEL:SET',11)
-        self.hexapode.put('MOVE#PARAM:'+self.axis, self.pos)
+        self.hexapode.put('MOVE:'+self.axis, self.pos)
         self.moving=True
         self.wait()
 
